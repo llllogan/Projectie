@@ -19,16 +19,19 @@ struct ContentView: View {
     // MARK: Query all transactions
     @Query(sort: \Transaction.date, order: .forward) var transactions: [Transaction]
 
-    // MARK: State for new transaction input
+    // MARK: State for Add Transaction sheet
+    @State private var showingAddTransactionSheet = false
+    
+    // Fields used in the sheet
     @State private var transactionNote: String = ""
-    @State private var transactionAmount: String = ""  // store as text; convert to Double on save
+    @State private var transactionAmount: String = ""
 
     var body: some View {
         NavigationView {
             VStack {
-                // Chart of balance over time, plus a short projection
+                // CHART
                 Chart {
-                    // Actual data: plot from earliest transaction date up to now
+                    // Actual data
                     ForEach(actualChartData, id: \.date) { dataPoint in
                         LineMark(
                             x: .value("Date", dataPoint.date),
@@ -37,8 +40,7 @@ struct ContentView: View {
                         .foregroundStyle(.blue)
                     }
                     
-                    // Projection data: simple placeholder logic
-                    // If you want a more robust projection, add your own logic here
+                    // Projection data
                     ForEach(projectionChartData, id: \.date) { dataPoint in
                         LineMark(
                             x: .value("Date", dataPoint.date),
@@ -51,41 +53,63 @@ struct ContentView: View {
                 }
                 .frame(height: 200)
                 .padding()
-                
-                // Current Balance
+
+                // CURRENT BALANCE
                 Text("Current Balance: \(currentBalance, format: .number.precision(.fractionLength(2)))")
                     .font(.headline)
                     .padding(.bottom)
-
-                // Form to add a credit/debit
-                Form {
-                    Section(header: Text("Add Transaction")) {
-                        TextField("Note", text: $transactionNote)
-                        TextField("Amount (positive or negative)", text: $transactionAmount)
-                            .keyboardType(.decimalPad)
-                        Button("Add Transaction") {
-                            addTransaction()
-                        }
+                
+                // LIST OF TRANSACTIONS
+                // Display each transaction in a row
+                List(transactions) { transaction in
+                    VStack(alignment: .leading) {
+                        Text(transaction.note ?? "No note")
+                            .font(.headline)
+                        Text("Amount: \(transaction.amount, format: .number.precision(.fractionLength(2)))")
+                            .font(.subheadline)
+                        Text("Date: \(transaction.date, format: .dateTime.year().month().day())")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
                     }
                 }
-                .navigationTitle("Savings Tracker")
+            }
+            // NavigationBar / Toolbar
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showingAddTransactionSheet = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            // SHEET FOR ADDING A NEW TRANSACTION
+            .sheet(isPresented: $showingAddTransactionSheet) {
+                AddTransactionSheet(
+                    transactionNote: $transactionNote,
+                    transactionAmount: $transactionAmount,
+                    onSave: {
+                        addTransaction()
+                        showingAddTransactionSheet = false
+                    },
+                    onCancel: {
+                        showingAddTransactionSheet = false
+                    }
+                )
             }
         }
     }
 
     // MARK: - Computed Properties
 
-    /// Current total balance based on openingBalance + sum of all transaction amounts
     private var currentBalance: Double {
         openingBalance + transactions.reduce(0) { $0 + $1.amount }
     }
 
-    /// Data for the actual transactions up to the current date (for chart)
     private var actualChartData: [(date: Date, balance: Double)] {
         var dataPoints: [(Date, Double)] = []
         var runningBalance = openingBalance
 
-        // Sort transactions by date just to be sure
         let sortedTransactions = transactions.sorted { $0.date < $1.date }
         for txn in sortedTransactions {
             runningBalance += txn.amount
@@ -94,17 +118,12 @@ struct ContentView: View {
         return dataPoints
     }
     
-    /// Projection data for the future, e.g., next 5 days, weeks, or months
-    /// This is just a placeholder; replace with your own logic
     private var projectionChartData: [(date: Date, balance: Double)] {
         guard let lastEntry = actualChartData.last else { return [] }
-
-        // Example: project for next 5 days with a simplified approach
-        // We'll assume an average daily change based on the last 7 days
-        // Or just assume a constant for demonstration
+        
         let daysToProject = 5
         let dailyChange = calculateAverageDailyChange()
-
+        
         var projectedData: [(Date, Double)] = []
         var currentDate = lastEntry.date
         var runningBalance = lastEntry.balance
@@ -119,27 +138,21 @@ struct ContentView: View {
 
     // MARK: - Methods
 
-    /// Calculate average daily change over the last 7 days (simple example)
     private func calculateAverageDailyChange() -> Double {
-        // You can implement actual logic here
-        // For now, let's just use a small random value for demo
-        return Double.random(in: -10...10)
+        Double.random(in: -10...10)
     }
 
     private func addTransaction() {
-        guard let amount = Double(transactionAmount) else {
-            // You might show an alert here
-            return
-        }
+        guard let amount = Double(transactionAmount) else { return }
         
         let newTxn = Transaction(amount: amount, date: Date(), note: transactionNote)
         modelContext.insert(newTxn)
         
-        // Clear input fields
         transactionNote = ""
         transactionAmount = ""
     }
 }
+
 
 #Preview {
     ContentView()
