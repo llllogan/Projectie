@@ -11,14 +11,24 @@ import Foundation
 @Model
 class Transaction {
     @Attribute(.unique) var id: UUID
-    var amount: Double    // Positive for credit, negative for debit
+    var title: String
+    var amount: Double
     var date: Date
     var note: String?
-
-    init(amount: Double, date: Date = Date(), note: String? = nil) {
+    var category: Category?
+    
+    init(
+        title: String,
+        amount: Double,
+        date: Date = Date(),
+        note: String? = nil,
+        category: Category? = nil
+    ) {
         self.id = UUID()
+        self.title = title
         self.amount = amount
         self.date = date
         self.note = note
+        self.category = category
     }
 }

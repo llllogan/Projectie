@@ -23,6 +23,7 @@ struct ContentView: View {
     @State private var showingAddTransactionSheet = false
     
     // Fields used in the sheet
+    @State private var transactionTitle: String = ""
     @State private var transactionNote: String = ""
     @State private var transactionAmount: String = ""
 
@@ -145,9 +146,10 @@ struct ContentView: View {
     private func addTransaction() {
         guard let amount = Double(transactionAmount) else { return }
         
-        let newTxn = Transaction(amount: amount, date: Date(), note: transactionNote)
+        let newTxn = Transaction(title: transactionTitle, amount: amount, date: Date(), note: transactionNote)
         modelContext.insert(newTxn)
         
+        transactionTitle = ""
         transactionNote = ""
         transactionAmount = ""
     }
