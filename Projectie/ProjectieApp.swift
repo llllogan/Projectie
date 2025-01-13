@@ -14,7 +14,7 @@ struct ProjectieApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .modelContainer(for: [Transaction.self])
         }
-        .modelContainer(for: [Transaction.self])
     }
 }

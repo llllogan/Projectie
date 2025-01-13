@@ -15,6 +15,7 @@ struct AddTransactionSheet: View {
     @State private var isCredit = true
     @State private var selectedCategory: String?
     @State private var transactionDate = Date()
+    @State private var transactionTitle: String = ""
     
     // 2) For demonstration, we’ll track whether we show pickers
     @State private var showCategoryPicker = false
@@ -27,7 +28,7 @@ struct AddTransactionSheet: View {
         NavigationView {
             Form {
                 // ---- Amount Section ----
-                Section(header: Text("Amount")) {
+                Section(header: Text("")) {
                     HStack(spacing: 8) {
                         Text("$")
                             .font(.system(size: 40, weight: .medium, design: .rounded))
@@ -41,66 +42,69 @@ struct AddTransactionSheet: View {
                 }
                 
                 // ---- Details Section ----
-                Section(header: Text("Details")) {
-                    TextField("Note", text: $transactionNote)
+                Section {
+                    TextField("Title", text: $transactionTitle)
+                    TextEditor(text: $transactionNote)
+                        .frame(minHeight: 100)
                 }
                 
-                
-                // ---- New Section with 3 buttons horizontally ----
-                HStack(spacing: 8) {
-                    // 1) Left button: toggles between Credit and Debit
-                    
-                    Section {
-                        Button {
-                            isCredit.toggle()
-                        } label: {
-                            Text(isCredit ? "Credit" : "Debit")
-                                .foregroundColor(.primary)
-                                .frame(maxWidth: .infinity, minHeight: 90)
-                                .cornerRadius(8)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    
-                    Spacer()
-                    
-                    Section {
-                        Button {
-                            showCategoryPicker.toggle()
-                        } label: {
-                            Text(selectedCategory ?? "Uncategorized")
-                                .foregroundColor(.primary)
-                                .frame(maxWidth: .infinity, minHeight: 90)
-                                .cornerRadius(8)
-                        }
-                        .buttonStyle(.plain)
-                        .sheet(isPresented: $showCategoryPicker) {
-                            CategoryPicker { selectedSystemName in
-                                print("User selected: \(selectedSystemName)")
+                Section {
+                    Button(action: {
+                        isCredit.toggle()
+                    }) {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(isCredit ? "Credit" : "Debit")
+                                Text(isCredit ? "Add money to the account" : "Remove money from the account")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
                             }
+                            Spacer()
+                            Image(systemName: isCredit ? "tray.and.arrow.down" : "tray.and.arrow.up")
+                                .font(.system(size: 25))
                         }
+                        .frame(minHeight: 60)
                     }
                     
-                    Spacer()
-                    
-                    Section {
-                        Button {
-                            showDatePicker.toggle()
-                        } label: {
-                            Text(dateString(transactionDate))
-                                .foregroundColor(.primary)
-                                .frame(maxWidth: .infinity, minHeight: 90)
-                                .cornerRadius(8)
+                    Button(action: {
+                        showCategoryPicker.toggle()
+                    }) {
+                        HStack {
+                            VStack {
+                                if (selectedCategory != nil) {
+                                    Text(selectedCategory!)
+                                    Text("Transaction Category")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                } else {
+                                    Text("Transaction Category")
+                                }
+                            }
+                            Spacer()
+                            Image(systemName: selectedCategory ?? "plus.square.dashed")
+                                .font(.system(size: 30))
                         }
-                        .buttonStyle(.plain)
-                        .sheet(isPresented: $showDatePicker) {
-                            DateTimePickerView(selectedDate: $transactionDate)
+                        .frame(minHeight: 60)
+                    }
+                    .sheet(isPresented: $showCategoryPicker) {
+                        CategoryPicker { category in
+                            print("User selected: \(category)")
+                            selectedCategory = category
                         }
                     }
-                    
-                                        
                 }
-                .frame(maxWidth: .infinity)
+                
+                
+                Section {
+                    VStack {
+                        DatePicker(
+                            "Transaction Date/Time",
+                            selection: $transactionDate,
+                            displayedComponents: [.date, .hourAndMinute]
+                        )
+                        .datePickerStyle(.graphical)
+                    }
+                }
             }
             .navigationTitle("Add Transaction")
             .toolbar {
