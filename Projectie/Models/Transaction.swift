@@ -15,14 +15,14 @@ class Transaction {
     var amount: Double
     var date: Date
     var note: String?
-    var category: Category?
+    var category: String?
     
     init(
         title: String,
         amount: Double,
         date: Date = Date(),
         note: String? = nil,
-        category: Category? = nil
+        category: String? = nil
     ) {
         self.id = UUID()
         self.title = title

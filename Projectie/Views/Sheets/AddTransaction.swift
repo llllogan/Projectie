@@ -13,14 +13,8 @@ struct AddTransactionSheet: View {
     
     // 1) New @State properties for credit/debit toggle, category, and date
     @State private var isCredit = true
-    @State private var selectedCategory: Category?
+    @State private var selectedCategory: String?
     @State private var transactionDate = Date()
-    
-    @State private var categories: [Category] = [
-        Category(title: "Groceries", systemName: "cart.fill"),
-        Category(title: "Utilities", systemName: "lightbulb"),
-        Category(title: "Rent", systemName: "house.fill")
-    ]
     
     // 2) For demonstration, we’ll track whether we show pickers
     @State private var showCategoryPicker = false
@@ -51,46 +45,51 @@ struct AddTransactionSheet: View {
                     TextField("Note", text: $transactionNote)
                 }
                 
+                
                 // ---- New Section with 3 buttons horizontally ----
-                Section {
-                    HStack(spacing: 8) {
-                        // 1) Left button: toggles between Credit and Debit
+                HStack(spacing: 8) {
+                    // 1) Left button: toggles between Credit and Debit
+                    
+                    Section {
                         Button {
                             isCredit.toggle()
                         } label: {
                             Text(isCredit ? "Credit" : "Debit")
                                 .foregroundColor(.primary)
                                 .frame(maxWidth: .infinity, minHeight: 90)
-                                .background(Color.white)
                                 .cornerRadius(8)
                         }
                         .buttonStyle(.plain)
-                        
-                        // 2) Center button: pick a Category
+                    }
+                    
+                    Spacer()
+                    
+                    Section {
                         Button {
                             showCategoryPicker.toggle()
                         } label: {
-                            Text(selectedCategory?.title ?? "Uncategorized")
+                            Text(selectedCategory ?? "Uncategorized")
                                 .foregroundColor(.primary)
                                 .frame(maxWidth: .infinity, minHeight: 90)
-                                .background(Color.white)
                                 .cornerRadius(8)
                         }
                         .buttonStyle(.plain)
                         .sheet(isPresented: $showCategoryPicker) {
-                            CategoryPicker(categories: categories) { chosenCategory in
-                                selectedCategory = chosenCategory
+                            CategoryPicker { selectedSystemName in
+                                print("User selected: \(selectedSystemName)")
                             }
                         }
-                        
-                        // 3) Right button: pick Date/Time
+                    }
+                    
+                    Spacer()
+                    
+                    Section {
                         Button {
                             showDatePicker.toggle()
                         } label: {
                             Text(dateString(transactionDate))
                                 .foregroundColor(.primary)
                                 .frame(maxWidth: .infinity, minHeight: 90)
-                                .background(Color.white)
                                 .cornerRadius(8)
                         }
                         .buttonStyle(.plain)
@@ -98,9 +97,10 @@ struct AddTransactionSheet: View {
                             DateTimePickerView(selectedDate: $transactionDate)
                         }
                     }
-                    .frame(maxWidth: .infinity)
+                    
+                                        
                 }
-                .listRowBackground(Color.clear)
+                .frame(maxWidth: .infinity)
             }
             .navigationTitle("Add Transaction")
             .toolbar {
