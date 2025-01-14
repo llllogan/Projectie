@@ -31,7 +31,7 @@ struct TransactionListElement: View {
                         .font(.caption)
                         .fontWeight(.light)
                         .foregroundStyle(.secondary)
-                    Text("\(transaction.getCategory()?.name ?? "Unknown"), \(transaction.date, format: .dateTime.year().month().day())")
+                    Text("\(transaction.getCategory()?.name ?? "Unknown"), \(transaction.date, format: .dateTime.hour().minute().second())")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
 

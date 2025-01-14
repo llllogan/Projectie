@@ -28,15 +28,12 @@ struct CategoryPicker: View {
             LazyVGrid(columns: columns, spacing: 20) {
                 ForEach(categories) { category in
                     Button {
-                        // Print for debugging
                         print("Selected systemName: \(category.systemName)")
-                        // Send the systemName to whoever presented this view
                         onSystemNameSelected(category.systemName)
-                        // Dismiss the sheet automatically (optional)
+                        hapticButtonPress()
                         presentationMode.wrappedValue.dismiss()
                     } label: {
                         VStack(spacing: 8) {
-                            // Circle background with the systemName icon
                             ZStack {
                                 Circle()
                                     .foregroundColor(category.color)
@@ -55,6 +52,7 @@ struct CategoryPicker: View {
                 }
                 Button {
                     onSystemNameSelected("__nil_category__")
+                    hapticCancel()
                     presentationMode.wrappedValue.dismiss()
                 } label: {
                     VStack(spacing: 8) {

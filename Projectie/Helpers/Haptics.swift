@@ -12,3 +12,21 @@ func hapticButtonPress() {
     generator.prepare()
     generator.impactOccurred()
 }
+
+func hapticCancel() {
+    let generator = UINotificationFeedbackGenerator()
+    generator.prepare()
+    generator.notificationOccurred(.warning)
+}
+
+func hapticSuccess() {
+    let generator = UISelectionFeedbackGenerator()
+    generator.prepare()
+    generator.selectionChanged()
+}
+
+func hapticError() {
+    let generator = UINotificationFeedbackGenerator()
+    generator.prepare()
+    generator.notificationOccurred(.error)
+}
