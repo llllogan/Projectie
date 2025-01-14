@@ -6,23 +6,31 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct AddTransactionSheet: View {
-    @Binding var transactionNote: String
-    @Binding var transactionAmount: String
     
-    // 1) New @State properties for credit/debit toggle, category, and date
-    @State private var isCredit = true
-    @State private var selectedCategory: String?
-    @State private var transactionDate = Date()
+    @Environment(\.modelContext) private var context
+    
+    @Environment(\.dismiss) private var dismiss
+    
     @State private var transactionTitle: String = ""
+    @State private var transactionNote: String = ""
+    @State private var transactionAmount: String = ""
+    @State private var isCredit = true
+    @State private var selectedCategorySystemName: String?
+    @State private var transactionDate = Date()
     
-    // 2) For demonstration, we’ll track whether we show pickers
     @State private var showCategoryPicker = false
     @State private var showDatePicker = false
     
-    var onSave: () -> Void
-    var onCancel: () -> Void
+    @FocusState private var focusedField: Field?
+    
+    enum Field {
+       case amount
+       case title
+       case note
+   }
     
     func getCategory(by systemName: String) -> CategoryItem? {
         return categories.first { $0.systemName == systemName }
@@ -32,7 +40,7 @@ struct AddTransactionSheet: View {
         NavigationView {
             Form {
                 // ---- Amount Section ----
-                Section(header: Text("")) {
+                Section(header: Text("Amount")) {
                     HStack(spacing: 8) {
                         Text("$")
                             .font(.system(size: 40, weight: .medium, design: .rounded))
@@ -41,20 +49,24 @@ struct AddTransactionSheet: View {
                             .keyboardType(.decimalPad)
                             .font(.system(size: 40, weight: .medium, design: .rounded))
                             .multilineTextAlignment(.leading)
+                            .focused($focusedField, equals: .amount)
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                 }
                 
                 // ---- Details Section ----
-                Section {
+                Section(header: Text("Descriptors")) {
                     TextField("Title", text: $transactionTitle)
+                        .focused($focusedField, equals: .title)
                     TextEditor(text: $transactionNote)
                         .frame(minHeight: 100)
+                        .focused($focusedField, equals: .note)
                 }
                 
                 Section {
                     Button(action: {
                         isCredit.toggle()
+                        hapticButtonPress()
                     }) {
                         HStack {
                             VStack(alignment: .leading) {
@@ -75,8 +87,8 @@ struct AddTransactionSheet: View {
                     }) {
                         HStack {
                             VStack(alignment: .leading) {
-                                if (selectedCategory != nil && getCategory(by: selectedCategory!) != nil) {
-                                    Text(getCategory(by: selectedCategory!)!.name)
+                                if (selectedCategorySystemName != nil && getCategory(by: selectedCategorySystemName!) != nil) {
+                                    Text(getCategory(by: selectedCategorySystemName!)!.name)
                                     Text("Transaction Category")
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
@@ -85,7 +97,7 @@ struct AddTransactionSheet: View {
                                 }
                             }
                             Spacer()
-                            Image(systemName: selectedCategory ?? "plus.square.dashed")
+                            Image(systemName: selectedCategorySystemName ?? "plus.square.dashed")
                                 .font(.system(size: 30))
                         }
                         .frame(minHeight: 60)
@@ -93,7 +105,12 @@ struct AddTransactionSheet: View {
                     .sheet(isPresented: $showCategoryPicker) {
                         CategoryPicker { category in
                             print("User selected: \(category)")
-                            selectedCategory = category
+                            
+                            if (category != "__nil_category__") {
+                                selectedCategorySystemName = category
+                            } else {
+                                selectedCategorySystemName = nil
+                            }
                         }
                     }
                 }
@@ -122,6 +139,12 @@ struct AddTransactionSheet: View {
                         onSave()
                     }
                 }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        focusedField = nil
+                    }
+                }
             }
         }
     }
@@ -133,60 +156,45 @@ struct AddTransactionSheet: View {
         formatter.timeStyle = .short
         return formatter.string(from: date)
     }
-}
-
-
-
-// MARK: - Example Date/Time Picker View
-
-struct DateTimePickerView: View {
-    @Environment(\.dismiss) var dismiss
-    @Binding var selectedDate: Date
     
-    var body: some View {
-        NavigationView {
-            VStack {
-                DatePicker(
-                    "Transaction Date/Time",
-                    selection: $selectedDate,
-                    displayedComponents: [.date, .hourAndMinute]
-                )
-                .datePickerStyle(.graphical)
-                .padding()
-                
-                Spacer()
-            }
-            .navigationTitle("Pick Date/Time")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
+    private func onCancel() {
+        focusedField = nil
+        dismiss()
+    }
+    
+    private func onSave() {
+        guard let amount = Double(transactionAmount) else {
+            print("Invalid amount entered.")
+            return
+        }
+        focusedField = nil
+        
+        
+        
+        let newTxn = Transaction(
+            title: transactionTitle,
+            amount: amount,
+            isCredit: isCredit,
+            date: transactionDate,
+            note: transactionNote,
+            categorySystemName: selectedCategorySystemName
+        )
+        
+        print("Attempting to save transaction: \n\(newTxn.title)\n\(newTxn.amount)")
+        
+        do {
+            context.insert(newTxn)
+            try context.save()
+            
+            dismiss()
+        } catch {
+            print("Failed to save transaction to model: \(error)")
         }
     }
 }
+
 
 #Preview {
-    struct PreviewWrapper: View {
-        @State private var transactionNote = "Preview Note"
-        @State private var transactionAmount = "100.00"
-        
-        var body: some View {
-            AddTransactionSheet(
-                transactionNote: $transactionNote,
-                transactionAmount: $transactionAmount,
-                onSave: {},
-                onCancel: {}
-            )
-        }
-    }
-    
-    return PreviewWrapper()
+    AddTransactionSheet()
+        .modelContainer(for: Transaction.self)
 }

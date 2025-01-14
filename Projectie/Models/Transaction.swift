@@ -9,26 +9,34 @@ import SwiftData
 import Foundation
 
 @Model
-class Transaction {
+class Transaction: Identifiable {
     @Attribute(.unique) var id: UUID
     var title: String
     var amount: Double
+    var isCredit: Bool
     var date: Date
     var note: String?
-    var category: String?
+    var categorySystemName: String?
     
     init(
         title: String,
         amount: Double,
-        date: Date = Date(),
+        isCredit: Bool,
+        date: Date,
         note: String? = nil,
-        category: String? = nil
+        categorySystemName: String? = nil
     ) {
         self.id = UUID()
         self.title = title
         self.amount = amount
+        self.isCredit = isCredit
         self.date = date
         self.note = note
-        self.category = category
+        self.categorySystemName = categorySystemName
     }
+    
+    func getCategory() -> CategoryItem? {
+        return categories.first { $0.systemName == categorySystemName }
+    }
+
 }

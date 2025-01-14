@@ -7,73 +7,6 @@
 
 import SwiftUI
 
-struct CategoryItem: Identifiable {
-    let id = UUID()
-    let name: String
-    let systemName: String
-    let color: Color
-}
-
-let categories: [CategoryItem] = [
-    CategoryItem(
-        name: "Home",
-        systemName: "house.fill",
-        color: .blue.opacity(0.7)),
-    CategoryItem(
-        name: "Groceries",
-        systemName: "cart.fill",
-        color: .green.opacity(0.7)),
-    CategoryItem(
-        name: "Health",
-        systemName: "heart.fill",
-        color: .red.opacity(0.7)),
-    CategoryItem(
-        name: "Personal",
-        systemName: "person.fill",
-        color: .orange.opacity(0.7)),
-    CategoryItem(
-        name: "Maintenance",
-        systemName: "car.badge.gearshape",
-        color: .purple.opacity(0.7)),
-    CategoryItem(
-        name: "Transport",
-        systemName: "bus",
-        color: .brown.opacity(0.7)),
-    CategoryItem(
-        name: "Sport",
-        systemName: "american.football.fill",
-        color: .indigo.opacity(0.7)),
-    CategoryItem(
-        name: "Shopping",
-        systemName: "gift.fill",
-        color: .pink.opacity(0.7)),
-    CategoryItem(
-        name: "Utilities",
-        systemName: "lightbulb.fill",
-        color: .yellow.opacity(0.7)),
-    CategoryItem(
-        name: "Medical",
-        systemName: "stethoscope",
-        color: .mint.opacity(0.7)),
-    CategoryItem(
-        name: "Entertainment",
-        systemName: "film.fill",
-        color: .cyan.opacity(0.7)),
-    CategoryItem(
-        name: "Self Care",
-        systemName: "scissors",
-        color: .teal.opacity(0.7)),
-    CategoryItem(
-        name: "Transfer",
-        systemName: "tray.and.arrow.up.fill",
-        color: .pink.opacity(0.7)),
-    CategoryItem(
-        name: "Default",
-        systemName: "circle.dashed",
-        color: .black.opacity(0.7))
-]
-
-
 struct CategoryPicker: View {
     /// Hard-coded list of system icon names.
         
@@ -120,6 +53,26 @@ struct CategoryPicker: View {
                     }
                     .buttonStyle(.plain)
                 }
+                Button {
+                    onSystemNameSelected("__nil_category__")
+                    presentationMode.wrappedValue.dismiss()
+                } label: {
+                    VStack(spacing: 8) {
+                        ZStack {
+                            Circle()
+                                .foregroundColor(Color.blue.opacity(0.8))
+                                .frame(width: 77, height: 77)
+                            Image(systemName: "delete.left.fill")
+                                .foregroundColor(.white.opacity(0.7))
+                                .imageScale(.large)
+                        }
+                        Text("Remove category")
+                            .font(.caption)
+                            .multilineTextAlignment(.center)
+                        
+                    }
+                }
+                .buttonStyle(.plain)
             }
             .padding()
         }

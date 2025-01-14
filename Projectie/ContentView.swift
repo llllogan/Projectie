@@ -10,22 +10,17 @@ import Charts
 import SwiftData
 
 struct ContentView: View {
-    // MARK: SwiftData Context
-    @Environment(\.modelContext) private var modelContext
-    
     // MARK: Opening balance (for example, stored in UserDefaults via @AppStorage)
-    @AppStorage("openingBalance") private var openingBalance = 1000.0
+    @AppStorage("openingBalance") private var openingBalance = 0.0
+    
+    @Environment(\.modelContext) private var context
 
     // MARK: Query all transactions
-    @Query(sort: \Transaction.date, order: .forward) var transactions: [Transaction]
+    @Query(sort: \Transaction.date, order: .reverse) private var transactions: [Transaction]
 
     // MARK: State for Add Transaction sheet
     @State private var showingAddTransactionSheet = false
     
-    // Fields used in the sheet
-    @State private var transactionTitle: String = ""
-    @State private var transactionNote: String = ""
-    @State private var transactionAmount: String = ""
 
     var body: some View {
         NavigationView {
@@ -60,18 +55,12 @@ struct ContentView: View {
                     .font(.headline)
                     .padding(.bottom)
                 
+                Text("Number of transactions: \(transactions.count)")
+                
                 // LIST OF TRANSACTIONS
                 // Display each transaction in a row
                 List(transactions) { transaction in
-                    VStack(alignment: .leading) {
-                        Text(transaction.note ?? "No note")
-                            .font(.headline)
-                        Text("Amount: \(transaction.amount, format: .number.precision(.fractionLength(2)))")
-                            .font(.subheadline)
-                        Text("Date: \(transaction.date, format: .dateTime.year().month().day())")
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                    }
+                    TransactionListElement(transaction: transaction)
                 }
             }
             // NavigationBar / Toolbar
@@ -86,17 +75,7 @@ struct ContentView: View {
             }
             // SHEET FOR ADDING A NEW TRANSACTION
             .sheet(isPresented: $showingAddTransactionSheet) {
-                AddTransactionSheet(
-                    transactionNote: $transactionNote,
-                    transactionAmount: $transactionAmount,
-                    onSave: {
-                        addTransaction()
-                        showingAddTransactionSheet = false
-                    },
-                    onCancel: {
-                        showingAddTransactionSheet = false
-                    }
-                )
+                AddTransactionSheet()
             }
         }
     }
@@ -141,17 +120,6 @@ struct ContentView: View {
 
     private func calculateAverageDailyChange() -> Double {
         Double.random(in: -10...10)
-    }
-
-    private func addTransaction() {
-        guard let amount = Double(transactionAmount) else { return }
-        
-        let newTxn = Transaction(title: transactionTitle, amount: amount, date: Date(), note: transactionNote)
-        modelContext.insert(newTxn)
-        
-        transactionTitle = ""
-        transactionNote = ""
-        transactionAmount = ""
     }
 }
 
