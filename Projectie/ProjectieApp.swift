@@ -13,7 +13,7 @@ struct ProjectieApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainProjectionView()
                 .modelContainer(for: Transaction.self)
         }
     }

@@ -1,15 +1,15 @@
 //
-//  ContentView.swift
+//  MainProjectionView.swift
 //  Projectie
 //
-//  Created by Logan Janssen | Codify on 10/1/2025.
+//  Created by Logan Janssen | Codify on 14/1/2025.
 //
 
 import SwiftUI
 import Charts
 import SwiftData
 
-struct ContentView: View {
+struct MainProjectionView: View {
     // MARK: Opening balance (for example, stored in UserDefaults via @AppStorage)
     @AppStorage("openingBalance") private var openingBalance = 0.0
     
@@ -125,5 +125,5 @@ struct ContentView: View {
 
 
 #Preview {
-    ContentView()
+    MainProjectionView()
 }
