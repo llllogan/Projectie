@@ -42,7 +42,7 @@ struct AddTransactionSheet: View {
                 // ---- Amount Section ----
                 Section(header: Text("Amount")) {
                     HStack(spacing: 8) {
-                        Text("$")
+                        Text(isCredit ? "$" : "-$")
                             .font(.system(size: 40, weight: .medium, design: .rounded))
                         
                         TextField("0.00", text: $transactionAmount)
@@ -103,15 +103,18 @@ struct AddTransactionSheet: View {
                         .frame(minHeight: 60)
                     }
                     .sheet(isPresented: $showCategoryPicker) {
-                        CategoryPicker { category in
-                            print("User selected: \(category)")
-                            
-                            if (category != "__nil_category__") {
-                                selectedCategorySystemName = category
-                            } else {
-                                selectedCategorySystemName = nil
-                            }
-                        }
+                        CategoryPicker(
+                            onSystemNameSelected: { category in
+                                print("User selected: \(category)")
+                                
+                                if (category != "__nil_category__") {
+                                    selectedCategorySystemName = category
+                                } else {
+                                    selectedCategorySystemName = nil
+                                }
+                            },
+                            currentSelection: $selectedCategorySystemName
+                        )
                     }
                 }
                 
@@ -163,12 +166,15 @@ struct AddTransactionSheet: View {
     }
     
     private func onSave() {
-        guard let amount = Double(transactionAmount) else {
+        guard var amount = Double(transactionAmount) else {
             print("Invalid amount entered.")
             return
         }
-        focusedField = nil
+        if (!isCredit) {
+            amount *= -1
+        }
         
+        focusedField = nil
         
         
         let newTxn = Transaction(

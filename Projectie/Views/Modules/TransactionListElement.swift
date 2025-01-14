@@ -39,7 +39,7 @@ struct TransactionListElement: View {
             }
             Spacer()
             HStack {
-                Text("\(!transaction.isCredit ? "-" : "")$\(transaction.amount, format: .number.precision(.fractionLength(2)))")
+                Text("\(!transaction.isCredit ? "-" : "")$\(transaction.unsignedAmount, format: .number.precision(.fractionLength(2)))")
                     .font(.system(size: 20, weight: .medium, design: .rounded))
             }
         }

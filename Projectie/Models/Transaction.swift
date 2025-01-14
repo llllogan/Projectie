@@ -18,6 +18,8 @@ class Transaction: Identifiable {
     var note: String?
     var categorySystemName: String?
     
+    var unsignedAmount: Double { amount.sign == .minus ? -amount : amount }
+    
     init(
         title: String,
         amount: Double,

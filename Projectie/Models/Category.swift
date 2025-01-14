@@ -25,7 +25,7 @@ let categories: [CategoryItem] = [
         color: .blue.opacity(0.7)),
     CategoryItem(
         name: "Maintenance",
-        systemName: "car.badge.gearshape",
+        systemName: "wrench.and.screwdriver.fill",
         color: .blue.opacity(0.7)),
     
     
@@ -54,7 +54,7 @@ let categories: [CategoryItem] = [
         color: .orange.opacity(0.7)),
     CategoryItem(
         name: "Shopping",
-        systemName: "gift.fill",
+        systemName: "bag.fill",
         color: .orange.opacity(0.7)),
 
     
@@ -70,13 +70,13 @@ let categories: [CategoryItem] = [
         color: .indigo.opacity(0.7)),
     CategoryItem(
         name: "Entertainment",
-        systemName: "film.fill",
+        systemName: "ticket.fill",
         color: .indigo.opacity(0.7)),
     
     
     CategoryItem(
         name: "Transfer",
-        systemName: "tray.and.arrow.up.fill",
+        systemName: "arrow.left.arrow.right.square.fill",
         color: .pink.opacity(0.7)),
     CategoryItem(
         name: "Income",
@@ -96,8 +96,9 @@ let categories: [CategoryItem] = [
 
 
 #Preview {
-    // Example usage: print the selected name in the debug console
-    CategoryPicker { selectedName in
-        print("Parent view received: \(selectedName)")
-    }
+    CategoryPicker(
+        onSystemNameSelected: { selectedName in
+            print("Parent view received: \(selectedName)")
+        }
+    )
 }

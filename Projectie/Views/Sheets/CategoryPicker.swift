@@ -16,12 +16,20 @@ struct CategoryPicker: View {
         GridItem(.flexible())
     ]
     
-    /// Closure that “returns” the tapped systemName string.
-    /// The parent view can implement this closure to receive the selected systemName.
     var onSystemNameSelected: (String) -> Void = { _ in }
+    
+    @Binding var currentSelection: String?
 
-    // For automatically dismissing this view when an icon is tapped (optional).
     @Environment(\.presentationMode) private var presentationMode
+    
+    init(
+        onSystemNameSelected: @escaping (String) -> Void = { _ in },
+        currentSelection: Binding<String?>? = nil
+    ) {
+        self.onSystemNameSelected = onSystemNameSelected
+        // If a binding is provided, use it; otherwise, default to a constant nil binding
+        self._currentSelection = currentSelection ?? .constant(nil)
+    }
     
     var body: some View {
         ScrollView {
@@ -35,9 +43,20 @@ struct CategoryPicker: View {
                     } label: {
                         VStack(spacing: 8) {
                             ZStack {
-                                Circle()
-                                    .foregroundColor(category.color)
-                                    .frame(width: 77, height: 77)
+                                if (currentSelection == category.systemName) {
+                                    Circle()
+                                        .stroke(Color.blue, lineWidth: 3)
+                                        .frame(width: 77, height: 77)
+                                        .offset(x: 0, y: 0)
+                                    Circle()
+                                        .foregroundColor(category.color)
+                                        .frame(width: 66, height: 66)
+
+                                } else {
+                                    Circle()
+                                        .foregroundColor(category.color)
+                                        .frame(width: 77, height: 77)
+                                }
                                 Image(systemName: category.systemName)
                                     .foregroundColor(.white)
                                     .imageScale(.large)
@@ -64,7 +83,7 @@ struct CategoryPicker: View {
                                 .foregroundColor(.white.opacity(0.7))
                                 .imageScale(.large)
                         }
-                        Text("Remove category")
+                        Text("Clear")
                             .font(.caption)
                             .multilineTextAlignment(.center)
                         

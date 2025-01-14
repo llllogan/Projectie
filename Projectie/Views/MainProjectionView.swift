@@ -76,14 +76,6 @@ struct MainProjectionView: View {
                     }
                 }
                 
-                
-                // CURRENT BALANCE
-                Text("Current Balance: \(currentBalance, format: .number.precision(.fractionLength(2)))")
-                    .font(.headline)
-                    .padding(.bottom)
-                
-                Text("Number of transactions: \(transactions.count)")
-                
                 // LIST OF TRANSACTIONS
                 // Display each transaction in a row
                 List {
@@ -104,12 +96,16 @@ struct MainProjectionView: View {
             }
             // NavigationBar / Toolbar
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showingAddTransactionSheet = true
                     } label: {
                         Image(systemName: "plus")
                     }
+                }
+                ToolbarItem(placement: .topBarLeading) {
+                    Text("$\(currentBalance, format: .number.precision(.fractionLength(2)))")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
                 }
             }
             // SHEET FOR ADDING A NEW TRANSACTION
