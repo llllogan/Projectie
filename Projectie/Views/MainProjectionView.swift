@@ -119,33 +119,50 @@ struct MainProjectionView: View {
     // MARK: - Computed Properties
     
     private var currentBalance: Double {
-        openingBalance + transactions.reduce(0) { $0 + $1.amount }
+        let today = Date()
+        let validTransactions = transactions.filter { $0.date <= today }
+        return openingBalance + validTransactions.reduce(0) { $0 + $1.amount }
     }
     
-    private var actualChartData: [(date: Date, balance: Double)] {
-        var dataPoints: [(Date, Double)] = []
+    /// Generates chart data with an entry for each day, carrying forward the balance if no transactions occur.
+    private var filteredChartData: [(date: Date, balance: Double)] {
+        var dataPoints: [(date: Date, balance: Double)] = []
         var runningBalance = openingBalance
         
+        let calendar = Calendar.current
         let sortedTransactions = transactions.sorted { $0.date < $1.date }
-        for txn in sortedTransactions {
-            runningBalance += txn.amount
-            dataPoints.append((txn.date, runningBalance))
+        
+        // Create a dictionary to group transactions by day for efficient access
+        let transactionsByDay = Dictionary(grouping: sortedTransactions) { transaction in
+            calendar.startOfDay(for: transaction.date)
         }
+        
+        // Define the date range
+        let startDate = currentStartDate
+        let endDate = endDateForCurrentTimeFrame
+        
+        // Iterate through each day in the range
+        var currentDate = startDate
+        while currentDate <= endDate {
+            // Check if there are any transactions on the current day
+            if let todaysTransactions = transactionsByDay[currentDate] {
+                // Update running balance with today's transactions
+                for txn in todaysTransactions {
+                    runningBalance += txn.amount
+                }
+            }
+            // Append the data point
+            dataPoints.append((date: currentDate, balance: runningBalance))
+            
+            // Move to the next day
+            if let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) {
+                currentDate = nextDate
+            } else {
+                break // Exit the loop if date addition fails
+            }
+        }
+        
         return dataPoints
-    }
-    
-    private var filteredChartData: [(date: Date, balance: Double)] {
-        actualChartData.filter { dataPoint in
-            dataPoint.date >= currentStartDate &&
-            dataPoint.date < endDateForCurrentTimeFrame
-        }
-    }
-    
-    private var filteredTransactions: [Transaction] {
-        transactions.filter { txn in
-            txn.date >= currentStartDate &&
-            txn.date < endDateForCurrentTimeFrame
-        }
     }
     
     private var endDateForCurrentTimeFrame: Date {
@@ -157,6 +174,12 @@ struct MainProjectionView: View {
         }
     }
     
+    private var filteredTransactions: [Transaction] {
+        transactions.filter { txn in
+            txn.date >= currentStartDate &&
+            txn.date < endDateForCurrentTimeFrame
+        }
+    }
     
     // MARK: - Methods
     

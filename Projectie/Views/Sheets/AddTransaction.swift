@@ -52,6 +52,19 @@ struct AddTransactionSheet: View {
                             .focused($focusedField, equals: .amount)
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
+                    HStack{
+                        Text("Presets")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 16) {
+                                ForEach(TransactionPresets) { preset in
+                                    Text("\(preset.name)")
+                                }
+                            }
+                        }
+                    }
+                    .padding(.top, 0)
                 }
                 
                 // ---- Details Section ----
