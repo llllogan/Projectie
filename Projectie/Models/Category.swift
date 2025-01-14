@@ -94,6 +94,10 @@ let categories: [CategoryItem] = [
         color: .black.opacity(0.7))
 ]
 
+func findCategoryBySystemName(_ systemName: String) -> CategoryItem {
+    return categories.first(where: { $0.systemName == systemName }) ?? categories.first(where: { $0.systemName == "circle.dashed" })!
+}
+
 
 #Preview {
     CategoryPicker(

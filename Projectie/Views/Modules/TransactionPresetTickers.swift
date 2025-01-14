@@ -12,25 +12,20 @@ struct TransactionPresetTickers: View {
     
     @State var transactionPresets: [TransactionPreset] = [
         TransactionPreset(
-            title: "Transfer from card",
+            title: "Topup",
             note: "Topup from card.",
-            category: (categories.first(where: { $0.systemName == "arrow.left.arrow.right.square.fill" }) ?? categories.first(where: { $0.systemName == "circle.dashed" }))!,
+            category: findCategoryBySystemName("arrow.left.arrow.right.square.fill"),
             isCredit: true),
         TransactionPreset(
             title: "Transfer to card",
             note: "Remove money from account to use on card.",
-            category: (categories.first(where: { $0.systemName == "arrow.left.arrow.right.square.fill" }) ?? categories.first(where: { $0.systemName == "circle.dashed" }))!,
+            category: findCategoryBySystemName("arrow.left.arrow.right.square.fill"),
             isCredit: false),
         TransactionPreset(
-            title: "Transfer from card",
-            note: "Topup from card.",
-            category: (categories.first(where: { $0.systemName == "arrow.left.arrow.right.square.fill" }) ?? categories.first(where: { $0.systemName == "circle.dashed" }))!,
-            isCredit: true),
-        TransactionPreset(
-            title: "Transfer to card",
-            note: "Remove money from account to use on card.",
-            category: (categories.first(where: { $0.systemName == "arrow.left.arrow.right.square.fill" }) ?? categories.first(where: { $0.systemName == "circle.dashed" }))!,
-            isCredit: false),
+            title: "Add savings",
+            note: "Deposite savings into account.",
+            category: findCategoryBySystemName("dollarsign.bank.building.fill"),
+            isCredit: true)
     ]
     
     var onPresetSelected: (TransactionPreset) -> Void = { _ in }
@@ -49,6 +44,7 @@ struct TransactionPresetTickers: View {
             }
         }
     }
+    
 }
 
 struct PresetTicker: View {

@@ -15,3 +15,4 @@ struct TransactionPreset: Identifiable {
     let category: CategoryItem
     let isCredit: Bool
 }
+

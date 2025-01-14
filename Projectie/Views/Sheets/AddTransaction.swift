@@ -36,6 +36,13 @@ struct AddTransactionSheet: View {
         return categories.first { $0.systemName == systemName }
     }
     
+    func populatePreset(with preset: TransactionPreset) {
+        transactionTitle = preset.title
+        transactionNote = preset.note
+        isCredit = preset.isCredit
+        selectedCategorySystemName = preset.category.systemName
+    }
+    
     var body: some View {
         NavigationView {
             Form {
@@ -54,7 +61,7 @@ struct AddTransactionSheet: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     
                     TransactionPresetTickers { preset in
-                        
+                        populatePreset(with: preset)
                     }
                 }
                 
