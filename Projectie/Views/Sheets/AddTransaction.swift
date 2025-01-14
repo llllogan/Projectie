@@ -24,6 +24,10 @@ struct AddTransactionSheet: View {
     var onSave: () -> Void
     var onCancel: () -> Void
     
+    func getCategory(by systemName: String) -> CategoryItem? {
+        return categories.first { $0.systemName == systemName }
+    }
+    
     var body: some View {
         NavigationView {
             Form {
@@ -70,9 +74,9 @@ struct AddTransactionSheet: View {
                         showCategoryPicker.toggle()
                     }) {
                         HStack {
-                            VStack {
-                                if (selectedCategory != nil) {
-                                    Text(selectedCategory!)
+                            VStack(alignment: .leading) {
+                                if (selectedCategory != nil && getCategory(by: selectedCategory!) != nil) {
+                                    Text(getCategory(by: selectedCategory!)!.name)
                                     Text("Transaction Category")
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
