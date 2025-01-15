@@ -10,11 +10,14 @@ import SwiftUI
 struct TransactionListElement: View {
     
     @State var transaction: Transaction
+    var overrideDate: Date? = nil
     
     var lineThickness: CGFloat = 4
     var lineCornerRadius: CGFloat = 2
     
     var body: some View {
+        
+        let displayDate = overrideDate ?? transaction.date
         
         HStack {
             RoundedRectangle(cornerRadius: lineCornerRadius)
@@ -31,7 +34,7 @@ struct TransactionListElement: View {
                         .font(.caption)
                         .fontWeight(.light)
                         .foregroundStyle(.secondary)
-                    Text("\(transaction.getCategory()?.name ?? "Unknown"), \(transaction.date, format: .dateTime.hour().minute().second())")
+                    Text("\(transaction.getCategory()?.name ?? "Unknown"), \(displayDate, format: .dateTime.hour().minute().second())")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
 

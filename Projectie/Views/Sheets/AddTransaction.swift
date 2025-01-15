@@ -21,9 +21,20 @@ struct AddTransactionSheet: View {
     @State private var selectedCategorySystemName: String?
     @State private var transactionDate = Date()
     
-    @State private var showCategoryPicker = false
-    @State private var showDatePicker = false
     
+    @State private var isRecurring: Bool = false
+    @State private var recurrenceFrequency: RecurrenceFrequency = .weekly
+    @State private var recurrenceInterval: Int = 1
+    
+    // Optional End Conditions
+    @State private var endDate: Date = Date()
+    @State private var useEndDate: Bool = false
+    
+    @State private var useOccurrenceCount: Bool = false
+    @State private var occurrenceCount: String = ""
+    
+    
+    @State private var showCategoryPicker = false
     @FocusState private var focusedField: Field?
     
     enum Field {
@@ -31,17 +42,6 @@ struct AddTransactionSheet: View {
        case title
        case note
    }
-    
-    func getCategory(by systemName: String) -> CategoryItem? {
-        return categories.first { $0.systemName == systemName }
-    }
-    
-    func populatePreset(with preset: TransactionPreset) {
-        transactionTitle = preset.title
-        transactionNote = preset.note
-        isCredit = preset.isCredit
-        selectedCategorySystemName = preset.category.systemName
-    }
     
     var body: some View {
         NavigationView {
@@ -131,13 +131,39 @@ struct AddTransactionSheet: View {
                 
                 
                 Section {
-                    VStack {
-                        DatePicker(
-                            "Transaction Date/Time",
-                            selection: $transactionDate,
-                            displayedComponents: [.date, .hourAndMinute]
-                        )
-                        .datePickerStyle(.graphical)
+                    
+                    DatePicker(
+                        "Transaction Date/Time",
+                        selection: $transactionDate,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .datePickerStyle(.graphical)
+                    
+                    Toggle("Recurring Transaction", isOn: $isRecurring)
+                    
+                    if isRecurring {
+                        // If recurring, show frequency & interval
+                        Picker("Frequency", selection: $recurrenceFrequency) {
+                            ForEach(RecurrenceFrequency.allCases) { freq in
+                                Text(freq.rawValue).tag(freq)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        
+                        Stepper("Every \(recurrenceInterval) \(recurrenceFrequency.rawValue)",
+                                value: $recurrenceInterval,
+                                in: 1...30)
+                        
+                        Toggle("End by Date", isOn: $useEndDate)
+                        if useEndDate {
+                            DatePicker("End Date", selection: $endDate, displayedComponents: .date)
+                        }
+                        
+                        Toggle("End by Occurrence Count", isOn: $useOccurrenceCount)
+                        if useOccurrenceCount {
+                            TextField("Max Occurrences", text: $occurrenceCount)
+                                .keyboardType(.numberPad)
+                        }
                     }
                 }
             }
@@ -163,6 +189,20 @@ struct AddTransactionSheet: View {
         }
     }
     
+    
+    
+    
+    private func getCategory(by systemName: String) -> CategoryItem? {
+        return categories.first { $0.systemName == systemName }
+    }
+    
+    private func populatePreset(with preset: TransactionPreset) {
+        transactionTitle = preset.title
+        transactionNote = preset.note
+        isCredit = preset.isCredit
+        selectedCategorySystemName = preset.category.systemName
+    }
+    
     // Helper to format the date
     private func dateString(_ date: Date) -> String {
         let formatter = DateFormatter()
@@ -184,17 +224,50 @@ struct AddTransactionSheet: View {
         if (!isCredit) {
             amount *= -1
         }
-        
+    
         focusedField = nil
+        
+        let dateArray: [Date]
+        
+        if isRecurring {
+            // We'll compute a recurrence array from transactionDate (start), but user might not see a date picker.
+            // Let's use transactionDate as a "start date" or just default to now if needed.
+            let start = transactionDate
+            
+            // End conditions
+            let limitDate = useEndDate ? endDate : nil
+            let maxCount = useOccurrenceCount ? Int(occurrenceCount) : nil
+            
+            // Actually compute the array of dates
+            // If the user never selected transactionDate for start (since we hid the DatePicker),
+            // you could present a separate "Start Date" pick or just assume "now".
+            dateArray = computeRecurrenceDates(
+                startDate: start,
+                frequency: recurrenceFrequency,
+                interval: recurrenceInterval,
+                maxOccurrences: maxCount,
+                endDate: limitDate
+            )
+            
+            // If dateArray is empty for some reason, you might decide how to handle that.
+            
+        } else {
+            // Not recurring => just store the single chosen transactionDate
+            dateArray = [transactionDate]
+        }
         
         
         let newTxn = Transaction(
             title: transactionTitle,
             amount: amount,
             isCredit: isCredit,
-            date: transactionDate,
+            date: transactionDate,  // single "main" date, might not matter if recurring
             note: transactionNote,
-            categorySystemName: selectedCategorySystemName
+            categorySystemName: selectedCategorySystemName,
+            isRecurring: isRecurring,
+            recurrenceFrequency: isRecurring ? recurrenceFrequency : nil,
+            recurrenceInterval: recurrenceInterval,
+            recurrenceDates: dateArray
         )
         
         print("Attempting to save transaction: \n\(newTxn.title)\n\(newTxn.amount)")

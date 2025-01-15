@@ -16,16 +16,7 @@ struct MainProjectionView: View {
     
     @Query(sort: \Transaction.date, order: .reverse) private var transactions: [Transaction]
     
-    var groupedTransactions: [(key: Date, value: [Transaction])] {
-        let calendar = Calendar.current
-        let grouped = Dictionary(grouping: transactions) { trxn -> Date in
-            return calendar.startOfDay(for: trxn.date)
-        }
-        return grouped.sorted { $0.key > $1.key }
-    }
-    
     @State private var showingAddTransactionSheet = false
-    
     @State private var selectedTimeFrame: TimeFrame = .month
     @State private var currentStartDate: Date = Date()
     
@@ -34,62 +25,12 @@ struct MainProjectionView: View {
         NavigationView {
             VStack {
                 
-                // CHART
-                Chart {
-                    ForEach(filteredChartData, id: \.date) { dataPoint in
-                        LineMark(
-                            x: .value("Date", dataPoint.date),
-                            y: .value("Balance", dataPoint.balance)
-                        )
-                        .foregroundStyle(.blue)
-                    }
-                }
-                .frame(height: 200)
-                .padding()
+                chart
                 
+                chartControlls
                 
-                HStack {
-                    // Picker for Time Frame Selection
-                    Picker("Time Frame", selection: $selectedTimeFrame) {
-                        ForEach(TimeFrame.allCases, id: \.self) { frame in
-                            Text(frame.rawValue.capitalized).tag(frame)
-                        }
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
-                    
-                    Spacer()
-                    
-                    // Previous Button
-                    Button(action: {
-                        changeDate(by: -1)
-                    }) {
-                        Image(systemName: "chevron.left")
-                    }
-                    .buttonBorderShape(.circle)
-                    .buttonStyle(.borderedProminent)
-                    
-                    // Next Button
-                    Button(action: {
-                        changeDate(by: 1)
-                    }) {
-                        Image(systemName: "chevron.right")
-                    }
-                    .buttonBorderShape(.circle)
-                    .buttonStyle(.borderedProminent)
-                }
-                .padding(.horizontal)
-                
-                // LIST OF TRANSACTIONS
-                // Display each transaction in a row
-                List {
-                    ForEach(groupedTransactions, id: \.key) { (date, transactionGroup) in
-                        Section(header: Text(date, style: .date)) {
-                            ForEach(transactionGroup) { transaction in
-                                TransactionListElement(transaction: transaction)
-                            }
-                        }
-                    }
-                }
+                transactionList
+
             }
             .onAppear {
                 updateCurrentStartDate()
@@ -118,53 +59,141 @@ struct MainProjectionView: View {
         }
     }
     
+    private var chart: some View {
+        Chart {
+            ForEach(filteredChartData, id: \.date) { dataPoint in
+                LineMark(
+                    x: .value("Date", dataPoint.date),
+                    y: .value("Balance", dataPoint.balance)
+                )
+                .foregroundStyle(.blue)
+            }
+        }
+        .frame(height: 200)
+        .padding()
+    }
+    
+    private var chartControlls: some View {
+        HStack {
+            // Picker for Time Frame
+            Picker("Time Frame", selection: $selectedTimeFrame) {
+                ForEach(TimeFrame.allCases, id: \.self) { frame in
+                    Text(frame.rawValue.capitalized).tag(frame)
+                }
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            
+            Spacer()
+            
+            // Previous
+            Button(action: {
+                changeDate(by: -1)
+            }) {
+                Image(systemName: "chevron.left")
+            }
+            .buttonBorderShape(.circle)
+            .buttonStyle(.borderedProminent)
+            
+            // Next
+            Button(action: {
+                changeDate(by: 1)
+            }) {
+                Image(systemName: "chevron.right")
+            }
+            .buttonBorderShape(.circle)
+            .buttonStyle(.borderedProminent)
+        }
+        .padding(.horizontal)
+    }
+    
+    private var transactionList: some View {
+        List {
+            ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
+                Section(header: Text(date, style: .date)) {
+                    ForEach(occurrences) { occ in
+                        TransactionListElement(
+                            transaction: occ.transaction,
+                            overrideDate: occ.date // so we can see the exact date
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
     
     // MARK: - Computed Properties
     
-    private var currentBalance: Double {
-        let today = Date()
-        let validTransactions = transactions.filter { $0.date <= today }
-        return openingBalance + validTransactions.reduce(0) { $0 + $1.amount }
+    // 1) Flatten transactions into a list of all "occurrences"
+    private var allOccurrences: [TransactionOccurrence] {
+        transactions.flatMap { txn in
+            if txn.isRecurring {
+                // For recurring transactions, expand each date in recurrenceDates
+                return txn.recurrenceDates.map { d in
+                    TransactionOccurrence(transaction: txn, date: d)
+                }
+            } else {
+                // Not recurring => single occurrence
+                return [TransactionOccurrence(transaction: txn, date: txn.date)]
+            }
+        }
     }
     
-    /// Generates chart data with an entry for each day, carrying forward the balance if no transactions occur.
+    // 2) Group occurrences by day for the List
+    private var groupedOccurrences: [(key: Date, value: [TransactionOccurrence])] {
+        let calendar = Calendar.current
+        let grouped = Dictionary(grouping: allOccurrences) { occ in
+            calendar.startOfDay(for: occ.date)
+        }
+        return grouped.sorted { $0.key > $1.key }
+    }
+    
+    // 3) Current total balance
+    private var currentBalance: Double {
+        // We'll consider all occurrences up to "today"
+        let today = Date()
+        // Filter occurrences up to "today"
+        let relevant = allOccurrences.filter { $0.date <= today }
+        // Sum up amounts
+        let sum = relevant.reduce(0) { $0 + $1.amount }
+        return openingBalance + sum
+    }
+    
+    // 4) Chart data using all occurrences
     private var filteredChartData: [(date: Date, balance: Double)] {
         var dataPoints: [(date: Date, balance: Double)] = []
         var runningBalance = openingBalance
         
         let calendar = Calendar.current
-        let sortedTransactions = transactions.sorted { $0.date < $1.date }
         
-        // Create a dictionary to group transactions by day for efficient access
-        let transactionsByDay = Dictionary(grouping: sortedTransactions) { transaction in
-            calendar.startOfDay(for: transaction.date)
+        // Sort occurrences by date
+        let sortedOccurrences = allOccurrences.sorted { $0.date < $1.date }
+        
+        // Group by day
+        let occurrencesByDay = Dictionary(grouping: sortedOccurrences) { occ in
+            calendar.startOfDay(for: occ.date)
         }
         
-        // Define the date range
+        // Build a date range from currentStartDate to endDateForCurrentTimeFrame
         let startDate = currentStartDate
         let endDate = endDateForCurrentTimeFrame
         
-        // Iterate through each day in the range
+        // Iterate day by day
         var currentDate = startDate
         while currentDate <= endDate {
-            // Check if there are any transactions on the current day
-            if let todaysTransactions = transactionsByDay[currentDate] {
-                // Update running balance with today's transactions
-                for txn in todaysTransactions {
-                    runningBalance += txn.amount
+            if let todaysOccurrences = occurrencesByDay[currentDate] {
+                for occ in todaysOccurrences {
+                    runningBalance += occ.amount
                 }
             }
-            // Append the data point
             dataPoints.append((date: currentDate, balance: runningBalance))
             
-            // Move to the next day
             if let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) {
                 currentDate = nextDate
             } else {
-                break // Exit the loop if date addition fails
+                break
             }
         }
-        
         return dataPoints
     }
     
@@ -176,15 +205,6 @@ struct MainProjectionView: View {
             return Calendar.current.date(byAdding: .month, value: 1, to: currentStartDate) ?? currentStartDate
         }
     }
-    
-    private var filteredTransactions: [Transaction] {
-        transactions.filter { txn in
-            txn.date >= currentStartDate &&
-            txn.date < endDateForCurrentTimeFrame
-        }
-    }
-    
-    // MARK: - Methods
     
     private func changeDate(by value: Int) {
         switch selectedTimeFrame {
@@ -199,7 +219,6 @@ struct MainProjectionView: View {
         }
     }
     
-    // Optional: Reset to current period when time frame changes
     private func updateCurrentStartDate() {
         let calendar = Calendar.current
         switch selectedTimeFrame {
@@ -218,10 +237,23 @@ struct MainProjectionView: View {
 
 // MARK: - Supporting Types
 
+fileprivate struct TransactionOccurrence: Identifiable {
+    let transaction: Transaction
+    let date: Date
+    
+    // Combine transaction ID & date to ensure uniqueness
+    var id: String { "\(transaction.id)-\(date.timeIntervalSince1970)" }
+    
+    var amount: Double {
+        transaction.amount
+    }
+}
+
 enum TimeFrame: String, CaseIterable {
     case week
     case month
 }
+
 
 #Preview {
     MainProjectionView()

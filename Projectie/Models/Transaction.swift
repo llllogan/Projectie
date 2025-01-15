@@ -8,6 +8,15 @@
 import SwiftData
 import Foundation
 
+enum RecurrenceFrequency: String, Codable, CaseIterable, Identifiable {
+    case daily = "Daily"
+    case weekly = "Weekly"
+    case monthly = "Monthly"
+    case yearly = "Yearly"
+    
+    var id: Self { self }
+}
+
 @Model
 class Transaction: Identifiable {
     @Attribute(.unique) var id: UUID
@@ -18,6 +27,18 @@ class Transaction: Identifiable {
     var note: String?
     var categorySystemName: String?
     
+    var isRecurring: Bool
+        
+    /// Frequency, e.g. daily, weekly, monthly, yearly
+    var recurrenceFrequency: RecurrenceFrequency?
+
+    /// Interval or "modifier" (e.g. every 2 weeks)
+    var recurrenceInterval: Int
+
+    /// All the dates on which this transaction recurs
+    var recurrenceDates: [Date]
+    
+
     var unsignedAmount: Double { amount.sign == .minus ? -amount : amount }
     
     init(
@@ -26,7 +47,11 @@ class Transaction: Identifiable {
         isCredit: Bool,
         date: Date,
         note: String? = nil,
-        categorySystemName: String? = nil
+        categorySystemName: String? = nil,
+        isRecurring: Bool = false,
+        recurrenceFrequency: RecurrenceFrequency? = nil,
+        recurrenceInterval: Int = 1,
+        recurrenceDates: [Date] = []
     ) {
         self.id = UUID()
         self.title = title
@@ -35,6 +60,11 @@ class Transaction: Identifiable {
         self.date = date
         self.note = note
         self.categorySystemName = categorySystemName
+        
+        self.isRecurring = isRecurring
+        self.recurrenceFrequency = recurrenceFrequency
+        self.recurrenceInterval = recurrenceInterval
+        self.recurrenceDates = recurrenceDates
     }
     
     func getCategory() -> CategoryItem? {
