@@ -9,7 +9,7 @@ import SwiftUI
 import Charts
 import SwiftData
 
-struct MainProjectionView: View {
+struct MainView: View {
     @AppStorage("openingBalance") private var openingBalance = 0.0
     
     @Environment(\.modelContext) private var context
@@ -29,7 +29,7 @@ struct MainProjectionView: View {
                 
                 chartControlls
                 
-                transactionList
+                TransactionList()
 
             }
             .onAppear {
@@ -106,21 +106,6 @@ struct MainProjectionView: View {
         .padding(.horizontal)
     }
     
-    private var transactionList: some View {
-        List {
-            ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
-                Section(header: Text(date, style: .date)) {
-                    ForEach(occurrences) { occ in
-                        TransactionListElement(
-                            transaction: occ.transaction,
-                            overrideDate: occ.date // so we can see the exact date
-                        )
-                    }
-                }
-            }
-        }
-    }
-    
     
     // MARK: - Computed Properties
     
@@ -140,7 +125,7 @@ struct MainProjectionView: View {
     }
     
     // 2) Group occurrences by day for the List
-    private var groupedOccurrences: [(key: Date, value: [TransactionOccurrence])] {
+    var groupedOccurrences: [(key: Date, value: [TransactionOccurrence])] {
         let calendar = Calendar.current
         let grouped = Dictionary(grouping: allOccurrences) { occ in
             calendar.startOfDay(for: occ.date)
@@ -237,7 +222,7 @@ struct MainProjectionView: View {
 
 // MARK: - Supporting Types
 
-fileprivate struct TransactionOccurrence: Identifiable {
+struct TransactionOccurrence: Identifiable {
     let transaction: Transaction
     let date: Date
     
@@ -256,5 +241,5 @@ enum TimeFrame: String, CaseIterable {
 
 
 #Preview {
-    MainProjectionView()
+    MainView()
 }
