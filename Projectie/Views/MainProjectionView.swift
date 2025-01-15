@@ -47,6 +47,7 @@ struct MainProjectionView: View {
                 .frame(height: 200)
                 .padding()
                 
+                
                 HStack {
                     // Picker for Time Frame Selection
                     Picker("Time Frame", selection: $selectedTimeFrame) {
@@ -55,7 +56,6 @@ struct MainProjectionView: View {
                         }
                     }
                     .pickerStyle(SegmentedPickerStyle())
-                    .padding()
                     
                     Spacer()
                     
@@ -64,17 +64,20 @@ struct MainProjectionView: View {
                         changeDate(by: -1)
                     }) {
                         Image(systemName: "chevron.left")
-                            .padding()
                     }
+                    .buttonBorderShape(.circle)
+                    .buttonStyle(.borderedProminent)
                     
                     // Next Button
                     Button(action: {
                         changeDate(by: 1)
                     }) {
                         Image(systemName: "chevron.right")
-                            .padding()
                     }
+                    .buttonBorderShape(.circle)
+                    .buttonStyle(.borderedProminent)
                 }
+                .padding(.horizontal)
                 
                 // LIST OF TRANSACTIONS
                 // Display each transaction in a row
