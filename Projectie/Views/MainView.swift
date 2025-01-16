@@ -304,41 +304,51 @@ struct MainView: View {
     }
     
     private var filteredChartData: [(date: Date, balance: Double)] {
-        var dataPoints: [(date: Date, balance: Double)] = []
-        var runningBalance = openingBalance
-        
-        let calendar = Calendar.current
-        
-        // Sort occurrences by date
+        // Sort all occurrences by date
         let sortedOccurrences = allOccurrences.sorted { $0.date < $1.date }
-        
-        // Group by day
-        let occurrencesByDay = Dictionary(grouping: sortedOccurrences) { occ in
-            calendar.startOfDay(for: occ.date)
+
+        // 1) Compute how much the balance was before the currentStartDate
+        let balanceBeforeStartDate = sortedOccurrences
+            .filter { $0.date < currentStartDate }
+            .reduce(openingBalance) { $0 + $1.amount }
+
+        // 2) Group only the transactions that fall between startDate and endDate
+        let occurrencesByDay = Dictionary(
+            grouping: sortedOccurrences.filter {
+                $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame
+            }
+        ) {
+            Calendar.current.startOfDay(for: $0.date)
         }
-        
-        // Build a date range from currentStartDate to endDateForCurrentTimeFrame
-        let startDate = currentStartDate
+
+        // 3) Iterate day-by-day, starting from currentStartDate up to endDateForCurrentTimeFrame
+        var dataPoints: [(date: Date, balance: Double)] = []
+        var runningBalance = balanceBeforeStartDate
+
+        var currentDate = currentStartDate
         let endDate = endDateForCurrentTimeFrame
-        
-        // Iterate day by day
-        var currentDate = startDate
+
         while currentDate <= endDate {
+            // If there are any transactions on this day, add them to the running balance
             if let todaysOccurrences = occurrencesByDay[currentDate] {
                 for occ in todaysOccurrences {
                     runningBalance += occ.amount
                 }
             }
+            // Record (day, runningBalance) in the data points
             dataPoints.append((date: currentDate, balance: runningBalance))
-            
-            if let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) {
+
+            // Move currentDate forward by one day
+            if let nextDate = Calendar.current.date(byAdding: .day, value: 1, to: currentDate) {
                 currentDate = nextDate
             } else {
                 break
             }
         }
+
         return dataPoints
     }
+    
     
     private var endOfRangeBalance: Double {
         guard let lastDataPoint = filteredChartData.last else { return 0.0 }
