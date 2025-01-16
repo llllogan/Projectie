@@ -26,6 +26,8 @@ struct MainView: View {
     
     @State private var dragLocation: CGPoint = .zero
     
+    @State private var horizontalOffset: CGFloat = 0
+    
     
     
     
@@ -87,19 +89,17 @@ struct MainView: View {
                             .fontWeight(.semibold)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
-                        
                     }
                     Spacer()
-                    Text("End of Range: $\(endOfRangeBalance, specifier: "%.2f")")
+                    Text("End of \(selectedTimeFrame.rawValue): $\(endOfRangeBalance, specifier: "%.2f")")
                         .fontWeight(.semibold)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-
                 }
                 .padding(.horizontal)
             } else {
-                // When the user is interacting, show the selected date & balance:
-                if let selectedDate = selectedDate, let selectedBalance = selectedBalance {
+                if let selectedDate = selectedDate,
+                   let selectedBalance = selectedBalance {
                     VStack(alignment: .center, spacing: 4) {
                         Text("\(selectedDate, style: .date)")
                             .fontWeight(.semibold)
@@ -113,7 +113,9 @@ struct MainView: View {
             }
         }
         .frame(height: 50)
+        .offset(x: isInteracting ? horizontalOffset : 0)
     }
+    
     
     private var chart: some View {
         let allBalances = filteredChartData.map { $0.balance }
@@ -128,10 +130,27 @@ struct MainView: View {
         let showTodayLine = (today >= startDate && today <= endDate)
 
         return Chart {
-            if showTodayLine {
+            if !isInteracting && showTodayLine {
                 RuleMark(x: .value("Today", today))
                     .foregroundStyle(.gray)
                     .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 5]))
+            }
+            
+            if isInteracting, let selectedDate = selectedDate, let selectedBalance = selectedBalance {
+                // White vertical line
+                RuleMark(x: .value("Selected X", selectedDate))
+                    .foregroundStyle(Color.whiteInDarkBlackInLight)
+                    .lineStyle(StrokeStyle(lineWidth: 2))
+
+                // White circle at the intersection
+                PointMark(
+                    x: .value("Selected X", selectedDate),
+                    y: .value("Selected Y", selectedBalance)
+                )
+                .symbol(.circle)
+                // Adjust symbolSize to taste
+                .symbolSize(40)
+                .foregroundStyle(Color.whiteInDarkBlackInLight)
             }
             
             ForEach(filteredChartData, id: \.date) { dataPoint in
@@ -152,19 +171,27 @@ struct MainView: View {
             GeometryReader { geoProxy in
                 Rectangle()
                     .fill(Color.clear)
-                    .contentShape(Rectangle()) // Make entire area tappable
+                    .contentShape(Rectangle())
                     .gesture(
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
-                                // Indicate we are interacting
+                                // We are interacting
                                 isInteracting = true
 
-                                // Convert the drag’s x-position into a chart coordinate (x = Date)
+                                // Convert drag’s x-position into chart coordinate
                                 let origin = geoProxy[proxy.plotFrame!].origin
-                                let locationX = value.location.x - origin.x
+                                let locationXOnChart = value.location.x - origin.x
+                                
+                                // Distance from each edge of the *screen*
+                                let screenWidth = geoProxy.size.width
+                                let distanceToLeft = value.location.x
+                                
+                                // Update horizontal offset so dynamicTitle follows finger
+                                // (Choose whichever makes sense for your design)
+                                self.horizontalOffset = distanceToLeft - (screenWidth / 2)
                                 
                                 // Attempt to fetch the date at this x-position
-                                if let date: Date = proxy.value(atX: locationX) {
+                                if let date: Date = proxy.value(atX: locationXOnChart) {
                                     // Find the closest data point in filteredChartData
                                     if let closest = filteredChartData.min(by: {
                                         abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
@@ -178,6 +205,9 @@ struct MainView: View {
                             .onEnded { _ in
                                 // Once drag ends, revert to the default titles
                                 isInteracting = false
+                                
+                                // Optionally reset offset, or keep it where it ended
+                                // self.horizontalOffset = 0
                             }
                     )
             }
