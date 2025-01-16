@@ -24,6 +24,8 @@ struct MainView: View {
     @State private var selectedDate: Date? = nil
     @State private var selectedBalance: Double? = nil
     
+    @State private var dragLocation: CGPoint = .zero
+    
     
     
     
@@ -34,35 +36,9 @@ struct MainView: View {
         NavigationView {
             VStack {
                 
-                VStack {
-                    if !isInteracting {
-                        VStack(spacing: 4) {
-                            // e.g. "Today: Jan 16, 2025"
-                            Text("Today: \(Date.now, style: .date)")
-                                .font(.headline)
-                            
-                            // e.g. "Current Balance: $X"
-                            Text("Current Balance: $\(currentBalance, specifier: "%.2f")")
-                            
-                            // e.g. "End of Range: $Y"
-                            Text("End of Range: $\(endOfRangeBalance, specifier: "%.2f")")
-                        }
-                        .padding(.top)
-                    } else {
-                        // When the user is interacting, show the selected date & balance:
-                        if let selectedDate = selectedDate,
-                           let selectedBalance = selectedBalance {
-                            VStack(spacing: 4) {
-                                Text("\(selectedDate, style: .date)")
-                                    .font(.headline)
-                                Text("Balance: $\(selectedBalance, specifier: "%.2f")")
-                            }
-                            .padding(.top)
-                        }
-                    }
-                    
-                    chart
-                }
+                dynamicTitle
+                
+                chart
                 
                 chartControlls
                 
@@ -98,6 +74,46 @@ struct MainView: View {
     
     
     // MARK: - Child Views
+    
+    
+    private var dynamicTitle: some View {
+        VStack {
+            if !isInteracting {
+                HStack(alignment: .bottom) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("$\(currentBalance, specifier: "%.2f")")
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
+                        Text("\(Date.now, style: .date)")
+                            .fontWeight(.semibold)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        
+                    }
+                    Spacer()
+                    Text("End of Range: $\(endOfRangeBalance, specifier: "%.2f")")
+                        .fontWeight(.semibold)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                }
+                .padding(.horizontal)
+            } else {
+                // When the user is interacting, show the selected date & balance:
+                if let selectedDate = selectedDate, let selectedBalance = selectedBalance {
+                    VStack(alignment: .center, spacing: 4) {
+                        Text("\(selectedDate, style: .date)")
+                            .fontWeight(.semibold)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Text("$\(selectedBalance, specifier: "%.2f")")
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
+                    }
+                    .padding(.horizontal)
+                }
+            }
+        }
+        .frame(height: 50)
+    }
     
     private var chart: some View {
         let allBalances = filteredChartData.map { $0.balance }
