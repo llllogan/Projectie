@@ -20,12 +20,49 @@ struct MainView: View {
     @State private var selectedTimeFrame: TimeFrame = .month
     @State private var currentStartDate: Date = Date()
     
+    @State private var isInteracting: Bool = false
+    @State private var selectedDate: Date? = nil
+    @State private var selectedBalance: Double? = nil
+    
+    
+    
+    
+    // MARK: - Main View
+    
     
     var body: some View {
         NavigationView {
             VStack {
                 
-                chart
+                VStack {
+                    if !isInteracting {
+                        VStack(spacing: 4) {
+                            // e.g. "Today: Jan 16, 2025"
+                            Text("Today: \(Date.now, style: .date)")
+                                .font(.headline)
+                            
+                            // e.g. "Current Balance: $X"
+                            Text("Current Balance: $\(currentBalance, specifier: "%.2f")")
+                            
+                            // e.g. "End of Range: $Y"
+                            Text("End of Range: $\(endOfRangeBalance, specifier: "%.2f")")
+                        }
+                        .padding(.top)
+                    } else {
+                        // When the user is interacting, show the selected date & balance:
+                        if let selectedDate = selectedDate,
+                           let selectedBalance = selectedBalance {
+                            VStack(spacing: 4) {
+                                Text("\(selectedDate, style: .date)")
+                                    .font(.headline)
+                                Text("Balance: $\(selectedBalance, specifier: "%.2f")")
+                            }
+                            .padding(.top)
+                        }
+                    }
+                    
+                    chart
+                }
                 
                 chartControlls
                 
@@ -47,10 +84,10 @@ struct MainView: View {
                         Image(systemName: "plus")
                     }
                 }
-                ToolbarItem(placement: .topBarLeading) {
-                    Text("$\(currentBalance, format: .number.precision(.fractionLength(2)))")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                }
+//                ToolbarItem(placement: .topBarLeading) {
+//                    Text("$\(currentBalance, format: .number.precision(.fractionLength(2)))")
+//                        .font(.system(size: 20, weight: .bold, design: .rounded))
+//                }
             }
             .sheet(isPresented: $showingAddTransactionSheet) {
                 AddTransactionSheet()
@@ -58,8 +95,29 @@ struct MainView: View {
         }
     }
     
+    
+    
+    // MARK: - Child Views
+    
     private var chart: some View {
-        Chart {
+        let allBalances = filteredChartData.map { $0.balance }
+        let minBalance = allBalances.min() ?? 0
+        let maxBalance = allBalances.max() ?? 0
+        let chartMin = min(minBalance, 0)
+        let chartMax = maxBalance
+
+        let today = Date()
+        let startDate = currentStartDate
+        let endDate = endDateForCurrentTimeFrame
+        let showTodayLine = (today >= startDate && today <= endDate)
+
+        return Chart {
+            if showTodayLine {
+                RuleMark(x: .value("Today", today))
+                    .foregroundStyle(.gray)
+                    .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 5]))
+            }
+            
             ForEach(filteredChartData, id: \.date) { dataPoint in
                 LineMark(
                     x: .value("Date", dataPoint.date),
@@ -68,8 +126,46 @@ struct MainView: View {
                 .foregroundStyle(.blue)
             }
         }
+        .chartYAxis {
+            AxisMarks(position: .leading)
+        }
+        .chartYScale(domain: chartMin...chartMax)
         .frame(height: 200)
         .padding()
+        .chartOverlay(content: { proxy in
+            GeometryReader { geoProxy in
+                Rectangle()
+                    .fill(Color.clear)
+                    .contentShape(Rectangle()) // Make entire area tappable
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { value in
+                                // Indicate we are interacting
+                                isInteracting = true
+
+                                // Convert the drag’s x-position into a chart coordinate (x = Date)
+                                let origin = geoProxy[proxy.plotFrame!].origin
+                                let locationX = value.location.x - origin.x
+                                
+                                // Attempt to fetch the date at this x-position
+                                if let date: Date = proxy.value(atX: locationX) {
+                                    // Find the closest data point in filteredChartData
+                                    if let closest = filteredChartData.min(by: {
+                                        abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
+                                    }) {
+                                        // Update selected date & balance
+                                        self.selectedDate = closest.date
+                                        self.selectedBalance = closest.balance
+                                    }
+                                }
+                            }
+                            .onEnded { _ in
+                                // Once drag ends, revert to the default titles
+                                isInteracting = false
+                            }
+                    )
+            }
+        })
     }
     
     private var chartControlls: some View {
@@ -123,9 +219,12 @@ struct MainView: View {
 
     
     
+    
+    
+    
+    
     // MARK: - Computed Properties
     
-    // 1) Flatten transactions into a list of all "occurrences"
     private var allOccurrences: [TransactionOccurrence] {
         transactions.flatMap { txn in
             if txn.isRecurring {
@@ -140,7 +239,6 @@ struct MainView: View {
         }
     }
     
-    // 2) Group occurrences by day for the List
     var groupedOccurrences: [(key: Date, value: [TransactionOccurrence])] {
         let calendar = Calendar.current
         let grouped = Dictionary(grouping: allOccurrences) { occ in
@@ -149,7 +247,6 @@ struct MainView: View {
         return grouped.sorted { $0.key > $1.key }
     }
     
-    // 3) Current total balance
     private var currentBalance: Double {
         // We'll consider all occurrences up to "today"
         let today = Date()
@@ -160,7 +257,6 @@ struct MainView: View {
         return openingBalance + sum
     }
     
-    // 4) Chart data using all occurrences
     private var filteredChartData: [(date: Date, balance: Double)] {
         var dataPoints: [(date: Date, balance: Double)] = []
         var runningBalance = openingBalance
@@ -196,6 +292,11 @@ struct MainView: View {
             }
         }
         return dataPoints
+    }
+    
+    private var endOfRangeBalance: Double {
+        guard let lastDataPoint = filteredChartData.last else { return 0.0 }
+        return lastDataPoint.balance
     }
     
     private var endDateForCurrentTimeFrame: Date {
