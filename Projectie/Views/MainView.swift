@@ -62,10 +62,6 @@ struct MainView: View {
                         Image(systemName: "plus")
                     }
                 }
-                //                ToolbarItem(placement: .topBarLeading) {
-                //                    Text("$\(currentBalance, format: .number.precision(.fractionLength(2)))")
-                //                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                //                }
             }
             .sheet(isPresented: $showingAddTransactionSheet) {
                 AddTransactionSheet()
@@ -297,7 +293,7 @@ struct MainView: View {
         }
     }
     
-    var groupedOccurrences: [(key: Date, value: [TransactionOccurrence])] {
+    private var groupedOccurrences: [(key: Date, value: [TransactionOccurrence])] {
         let calendar = Calendar.current
         let grouped = Dictionary(grouping: allOccurrences) { occ in
             calendar.startOfDay(for: occ.date)
