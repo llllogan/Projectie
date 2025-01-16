@@ -45,7 +45,7 @@ struct MainView: View {
                 chartControlls
                 
                 transactionList
-
+                
             }
             .onAppear {
                 updateCurrentStartDate()
@@ -62,10 +62,10 @@ struct MainView: View {
                         Image(systemName: "plus")
                     }
                 }
-//                ToolbarItem(placement: .topBarLeading) {
-//                    Text("$\(currentBalance, format: .number.precision(.fractionLength(2)))")
-//                        .font(.system(size: 20, weight: .bold, design: .rounded))
-//                }
+                //                ToolbarItem(placement: .topBarLeading) {
+                //                    Text("$\(currentBalance, format: .number.precision(.fractionLength(2)))")
+                //                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                //                }
             }
             .sheet(isPresented: $showingAddTransactionSheet) {
                 AddTransactionSheet()
@@ -79,7 +79,19 @@ struct MainView: View {
     
     
     private var dynamicTitle: some View {
-        VStack {
+        
+        var endOfNoun: String {
+            switch selectedTimeFrame {
+            case .week:
+                return "week \(currentStartDate.formatted(.dateTime.week()))"
+            case .month:
+                return currentStartDate.formatted(.dateTime.month(.wide))
+            case .year:
+                return currentStartDate.formatted(.dateTime.year())
+            }
+        }
+        
+        return VStack {
             if !isInteracting {
                 HStack(alignment: .bottom) {
                     VStack(alignment: .leading, spacing: 4) {
@@ -91,7 +103,7 @@ struct MainView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Text("End of \(currentStartDate, format: .dateTime.month()): $\(endOfRangeBalance, specifier: "%.2f")")
+                    Text("End of \(endOfNoun): $\(endOfRangeBalance, specifier: "%.2f")")
                         .fontWeight(.semibold)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -123,12 +135,12 @@ struct MainView: View {
         let maxBalance = allBalances.max() ?? 0
         let chartMin = min(minBalance, 0)
         let chartMax = maxBalance
-
+        
         let today = Date()
         let startDate = currentStartDate
         let endDate = endDateForCurrentTimeFrame
         let showTodayLine = (today >= startDate && today <= endDate)
-
+        
         return Chart {
             if !isInteracting && showTodayLine {
                 RuleMark(x: .value("Today", today))
@@ -141,7 +153,7 @@ struct MainView: View {
                 RuleMark(x: .value("Selected X", selectedDate))
                     .foregroundStyle(Color.whiteInDarkBlackInLight)
                     .lineStyle(StrokeStyle(lineWidth: 2))
-
+                
                 // White circle at the intersection
                 PointMark(
                     x: .value("Selected X", selectedDate),
@@ -177,7 +189,7 @@ struct MainView: View {
                             .onChanged { value in
                                 // We are interacting
                                 isInteracting = true
-
+                                
                                 // Convert drag’s x-position into chart coordinate
                                 let origin = geoProxy[proxy.plotFrame!].origin
                                 let locationXOnChart = value.location.x - origin.x
@@ -262,7 +274,7 @@ struct MainView: View {
             }
         }
     }
-
+    
     
     
     
@@ -306,12 +318,12 @@ struct MainView: View {
     private var filteredChartData: [(date: Date, balance: Double)] {
         // Sort all occurrences by date
         let sortedOccurrences = allOccurrences.sorted { $0.date < $1.date }
-
+        
         // 1) Compute how much the balance was before the currentStartDate
         let balanceBeforeStartDate = sortedOccurrences
             .filter { $0.date < currentStartDate }
             .reduce(openingBalance) { $0 + $1.amount }
-
+        
         // 2) Group only the transactions that fall between startDate and endDate
         let occurrencesByDay = Dictionary(
             grouping: sortedOccurrences.filter {
@@ -320,14 +332,14 @@ struct MainView: View {
         ) {
             Calendar.current.startOfDay(for: $0.date)
         }
-
+        
         // 3) Iterate day-by-day, starting from currentStartDate up to endDateForCurrentTimeFrame
         var dataPoints: [(date: Date, balance: Double)] = []
         var runningBalance = balanceBeforeStartDate
-
+        
         var currentDate = currentStartDate
         let endDate = endDateForCurrentTimeFrame
-
+        
         while currentDate <= endDate {
             // If there are any transactions on this day, add them to the running balance
             if let todaysOccurrences = occurrencesByDay[currentDate] {
@@ -337,7 +349,7 @@ struct MainView: View {
             }
             // Record (day, runningBalance) in the data points
             dataPoints.append((date: currentDate, balance: runningBalance))
-
+            
             // Move currentDate forward by one day
             if let nextDate = Calendar.current.date(byAdding: .day, value: 1, to: currentDate) {
                 currentDate = nextDate
@@ -345,7 +357,7 @@ struct MainView: View {
                 break
             }
         }
-
+        
         return dataPoints
     }
     
@@ -361,6 +373,8 @@ struct MainView: View {
             return Calendar.current.date(byAdding: .weekOfYear, value: 1, to: currentStartDate) ?? currentStartDate
         case .month:
             return Calendar.current.date(byAdding: .month, value: 1, to: currentStartDate) ?? currentStartDate
+        case .year:
+            return Calendar.current.date(byAdding: .year, value: 1, to: currentStartDate) ?? currentStartDate
         }
     }
     
@@ -372,6 +386,10 @@ struct MainView: View {
             }
         case .month:
             if let newDate = Calendar.current.date(byAdding: .month, value: value, to: currentStartDate) {
+                currentStartDate = newDate
+            }
+        case .year:
+            if let newDate = Calendar.current.date(byAdding: .year, value: value, to: currentStartDate) {
                 currentStartDate = newDate
             }
         }
@@ -387,6 +405,10 @@ struct MainView: View {
         case .month:
             if let monthStart = calendar.dateInterval(of: .month, for: Date())?.start {
                 currentStartDate = monthStart
+            }
+        case .year:
+            if let yearStart = calendar.dateInterval(of: .year, for: Date())?.start {
+                currentStartDate = yearStart
             }
         }
     }
@@ -410,6 +432,7 @@ struct TransactionOccurrence: Identifiable {
 enum TimeFrame: String, CaseIterable {
     case week
     case month
+    case year
 }
 
 
