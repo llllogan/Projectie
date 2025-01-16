@@ -29,7 +29,7 @@ struct MainView: View {
                 
                 chartControlls
                 
-                TransactionList()
+                transactionList
 
             }
             .onAppear {
@@ -52,7 +52,6 @@ struct MainView: View {
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                 }
             }
-            // SHEET FOR ADDING A NEW TRANSACTION
             .sheet(isPresented: $showingAddTransactionSheet) {
                 AddTransactionSheet()
             }
@@ -105,6 +104,23 @@ struct MainView: View {
         }
         .padding(.horizontal)
     }
+    
+    
+    var transactionList: some View {
+        List {
+            ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
+                Section(header: Text(date, style: .date)) {
+                    ForEach(occurrences) { occ in
+                        TransactionListElement(
+                            transaction: occ.transaction,
+                            overrideDate: occ.date // so we can see the exact date
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     
     
     // MARK: - Computed Properties
