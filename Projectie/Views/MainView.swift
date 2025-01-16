@@ -91,7 +91,7 @@ struct MainView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Text("End of \(selectedTimeFrame.rawValue): $\(endOfRangeBalance, specifier: "%.2f")")
+                    Text("End of \(currentStartDate, format: .dateTime.month()): $\(endOfRangeBalance, specifier: "%.2f")")
                         .fontWeight(.semibold)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
