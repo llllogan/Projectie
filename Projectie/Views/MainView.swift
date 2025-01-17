@@ -17,6 +17,8 @@ struct MainView: View {
     @Query(sort: \Transaction.date, order: .reverse) private var transactions: [Transaction]
     
     @State private var showingAddTransactionSheet = false
+    @State private var showResetBalanceSheet: Bool = false
+    
     @State private var selectedTimeFrame: TimeFrame = .month
     @State private var currentStartDate: Date = Date()
     
@@ -69,7 +71,7 @@ struct MainView: View {
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
-                        Button(action: {showingAddTransactionSheet = true} ) {
+                        Button(action: {showResetBalanceSheet = true} ) {
                             Label("Reset Balance", systemImage: "dollarsign.arrow.trianglehead.counterclockwise.rotate.90")
                         }
                     } label: {
@@ -80,6 +82,9 @@ struct MainView: View {
             }
             .sheet(isPresented: $showingAddTransactionSheet) {
                 AddTransactionSheet()
+            }
+            .sheet(isPresented: $showResetBalanceSheet) {
+                ResetBalanceSheet()
             }
         }
     }
