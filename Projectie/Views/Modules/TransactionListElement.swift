@@ -27,8 +27,10 @@ struct TransactionListElement: View {
                 .padding(.trailing, 7)
             
             VStack(alignment: .leading) {
+                
                 Text(transaction.title)
                     .font(.headline)
+                
                 HStack(spacing: 3) {
                     Image(systemName: removeFillModifier(from: transaction.categorySystemName!))
                         .font(.caption)
@@ -37,8 +39,20 @@ struct TransactionListElement: View {
                     Text("\(transaction.getCategory()?.name ?? "Unknown")")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-
                 }
+                
+                if (transaction.isRecurring) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "clock.arrow.trianglehead.2.counterclockwise.rotate.90")
+                            .font(.caption)
+                            .fontWeight(.light)
+                            .foregroundStyle(.secondary)
+                        Text(getRecurrenceNoun(for: transaction))
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
             }
             Spacer()
             VStack(alignment: .trailing) {
@@ -63,6 +77,33 @@ struct TransactionListElement: View {
         } else {
             return systemName
         }
+    }
+    
+    
+    func getRecurrenceNoun(for transaction: Transaction) -> String {
+        
+        if (!transaction.isRecurring) {
+            return ""
+        }
+        
+        if (transaction.recurrenceInterval == 1) {
+            return transaction.recurrenceFrequency!.rawValue
+        }
+        
+        let pluralizedFrequency: String
+        
+        switch transaction.recurrenceFrequency! {
+        case .daily:
+            pluralizedFrequency = "days"
+        case .weekly:
+            pluralizedFrequency = "weeks"
+        case .monthly:
+            pluralizedFrequency = "months"
+        case .yearly:
+            pluralizedFrequency = "years"
+        }
+            
+        return "Every \(transaction.recurrenceInterval) \(pluralizedFrequency)"
     }
 }
 

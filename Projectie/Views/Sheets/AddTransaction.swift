@@ -38,9 +38,10 @@ struct AddTransactionSheet: View {
     @FocusState private var focusedField: Field?
     
     enum Field {
-       case amount
-       case title
-       case note
+        case amount
+        case title
+        case note
+        case occurences
    }
     
     init() {
@@ -59,148 +60,175 @@ struct AddTransactionSheet: View {
     var body: some View {
         
         NavigationView {
-            Form {
-                // ---- Amount Section ----
-                Section(header: Text("Amount")) {
-                    HStack(spacing: 8) {
-                        Text(isCredit ? "$" : "-$")
-                            .font(.system(size: 40, weight: .medium, design: .rounded))
-                        
-                        TextField("0.00", text: $transactionAmount)
-                            .keyboardType(.decimalPad)
-                            .font(.system(size: 40, weight: .medium, design: .rounded))
-                            .multilineTextAlignment(.leading)
-                            .focused($focusedField, equals: .amount)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    
-                    TransactionPresetTickers { preset in
-                        populatePreset(with: preset)
-                    }
-                }
+            ScrollViewReader { proxy in
                 
-                // ---- Details Section ----
-                Section(header: Text("Descriptors")) {
-                    TextField("Title", text: $transactionTitle)
-                        .focused($focusedField, equals: .title)
-                    TextEditor(text: $transactionNote)
-                        .frame(minHeight: 100)
-                        .focused($focusedField, equals: .note)
-                }
-                
-                Section {
-                    Button(action: {
-                        isCredit.toggle()
-                        hapticButtonPress()
-                    }) {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(isCredit ? "Credit" : "Debit")
-                                Text(isCredit ? "Add money to the account" : "Remove money from the account")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            Image(systemName: isCredit ? "tray.and.arrow.down" : "tray.and.arrow.up")
-                                .font(.system(size: 25))
+                Form {
+                    // ---- Amount Section ----
+                    Section(header: Text("Amount")) {
+                        HStack(spacing: 8) {
+                            Text(isCredit ? "$" : "-$")
+                                .font(.system(size: 40, weight: .medium, design: .rounded))
+                            
+                            TextField("0.00", text: $transactionAmount)
+                                .keyboardType(.decimalPad)
+                                .font(.system(size: 40, weight: .medium, design: .rounded))
+                                .multilineTextAlignment(.leading)
+                                .focused($focusedField, equals: .amount)
                         }
-                        .frame(minHeight: 60)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        TransactionPresetTickers { preset in
+                            populatePreset(with: preset)
+                        }
                     }
                     
-                    Button(action: {
-                        showCategoryPicker.toggle()
-                    }) {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                if (selectedCategorySystemName != nil && getCategory(by: selectedCategorySystemName!) != nil) {
-                                    Text(getCategory(by: selectedCategorySystemName!)!.name)
-                                    Text("Transaction Category")
+                    // ---- Details Section ----
+                    Section(header: Text("Descriptors")) {
+                        TextField("Title", text: $transactionTitle)
+                            .focused($focusedField, equals: .title)
+                        TextEditor(text: $transactionNote)
+                            .frame(minHeight: 100)
+                            .focused($focusedField, equals: .note)
+                    }
+                    
+                    Section {
+                        Button(action: {
+                            isCredit.toggle()
+                            hapticButtonPress()
+                        }) {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(isCredit ? "Credit" : "Debit")
+                                    Text(isCredit ? "Add money to the account" : "Remove money from the account")
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
-                                } else {
-                                    Text("Transaction Category")
                                 }
+                                Spacer()
+                                Image(systemName: isCredit ? "tray.and.arrow.down" : "tray.and.arrow.up")
+                                    .font(.system(size: 25))
                             }
-                            Spacer()
-                            Image(systemName: selectedCategorySystemName ?? "plus.square.dashed")
-                                .font(.system(size: 30))
+                            .frame(minHeight: 60)
                         }
-                        .frame(minHeight: 60)
-                    }
-                    .sheet(isPresented: $showCategoryPicker) {
-                        CategoryPicker(
-                            onSystemNameSelected: { category in
-                                print("User selected: \(category)")
-                                
-                                if (category != "__nil_category__") {
-                                    selectedCategorySystemName = category
-                                } else {
-                                    selectedCategorySystemName = nil
+                        
+                        Button(action: {
+                            showCategoryPicker.toggle()
+                        }) {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    if let systemName = selectedCategorySystemName,
+                                       let category = getCategory(by: systemName) {
+                                        Text(category.name)
+                                        Text("Transaction Category")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                    } else {
+                                        Text("Transaction Category")
+                                    }
                                 }
-                            },
-                            currentSelection: $selectedCategorySystemName
+                                Spacer()
+                                Image(systemName: selectedCategorySystemName ?? "plus.square.dashed")
+                                    .font(.system(size: 30))
+                            }
+                            .frame(minHeight: 60)
+                        }
+                        .sheet(isPresented: $showCategoryPicker) {
+                            CategoryPicker(
+                                onSystemNameSelected: { category in
+                                    if category != "__nil_category__" {
+                                        selectedCategorySystemName = category
+                                    } else {
+                                        selectedCategorySystemName = nil
+                                    }
+                                },
+                                currentSelection: $selectedCategorySystemName
+                            )
+                        }
+                    }
+                    
+                    Section(header: Text("Date")) {
+                        DatePicker(
+                            "Transaction Date/Time",
+                            selection: $transactionDate,
+                            displayedComponents: [.date, .hourAndMinute]
                         )
+                        .datePickerStyle(.graphical)
+                        
+                        Toggle("Recurring Transaction", isOn: $isRecurring)
                     }
-                }
-                
-                
-                Section {
                     
-                    DatePicker(
-                        "Transaction Date/Time",
-                        selection: $transactionDate,
-                        displayedComponents: [.date, .hourAndMinute]
-                    )
-                    .datePickerStyle(.graphical)
-                    
-                    Toggle("Recurring Transaction", isOn: $isRecurring)
-                    
+                    // Recurring Details
                     if isRecurring {
-                        // If recurring, show frequency & interval
-                        Picker("Frequency", selection: $recurrenceFrequency) {
-                            ForEach(RecurrenceFrequency.allCases) { freq in
-                                Text(freq.rawValue).tag(freq)
+                        Section(header: Text("Recurring Details")) {
+                            Picker("Frequency", selection: $recurrenceFrequency) {
+                                ForEach(RecurrenceFrequency.allCases) { freq in
+                                    Text(freq.rawValue).tag(freq)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            
+                            Stepper("Every \(recurrenceInterval) \(getRecurrenceNoun())",
+                                    value: $recurrenceInterval,
+                                    in: 1...30)
+                            
+                            Toggle("End by Date", isOn: $useEndDate)
+                            if useEndDate {
+                                DatePicker("End Date", selection: $endDate, displayedComponents: .date)
+                            }
+                            
+                            Toggle("End by Occurrence Count", isOn: $useOccurrenceCount)
+                            if useOccurrenceCount {
+                                TextField("Max Occurrences", text: $occurrenceCount)
+                                    .keyboardType(.numberPad)
+                                    .focused($focusedField, equals: .occurences)
                             }
                         }
-                        .pickerStyle(.segmented)
-                        
-                        Stepper("Every \(recurrenceInterval) \(recurrenceFrequency.rawValue)",
-                                value: $recurrenceInterval,
-                                in: 1...30)
-                        
-                        Toggle("End by Date", isOn: $useEndDate)
-                        if useEndDate {
-                            DatePicker("End Date", selection: $endDate, displayedComponents: .date)
-                        }
-                        
-                        Toggle("End by Occurrence Count", isOn: $useOccurrenceCount)
-                        if useOccurrenceCount {
-                            TextField("Max Occurrences", text: $occurrenceCount)
-                                .keyboardType(.numberPad)
+                        .id("recurringSection")
+                    }
+                }
+                .onChange(of: isRecurring) { _, newValue in
+                    if newValue {
+                        withAnimation {
+                            proxy.scrollTo("recurringSection", anchor: .bottom)
                         }
                     }
                 }
-            }
-            .navigationTitle("Add Transaction")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        onCancel()
+                .navigationTitle("Add Transaction")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            onCancel()
+                        }
                     }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        onSave()
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save") {
+                            onSave()
+                        }
                     }
-                }
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") {
-                        focusedField = nil
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") {
+                            focusedField = nil
+                        }
                     }
                 }
             }
         }
+    }
+    
+    
+    private func getRecurrenceNoun() -> String {
+        
+        switch recurrenceFrequency {
+            case .daily:
+                return "Day"
+            case .weekly:
+                return "Week"
+            case .monthly:
+                return "Month"
+            case .yearly:
+                return "Year"
+        }
+        
     }
 
     
@@ -242,17 +270,12 @@ struct AddTransactionSheet: View {
         let dateArray: [Date]
         
         if isRecurring {
-            // We'll compute a recurrence array from transactionDate (start), but user might not see a date picker.
-            // Let's use transactionDate as a "start date" or just default to now if needed.
             let start = transactionDate
             
             // End conditions
             let limitDate = useEndDate ? endDate : nil
             let maxCount = useOccurrenceCount ? Int(occurrenceCount) : nil
             
-            // Actually compute the array of dates
-            // If the user never selected transactionDate for start (since we hid the DatePicker),
-            // you could present a separate "Start Date" pick or just assume "now".
             dateArray = computeRecurrenceDates(
                 startDate: start,
                 frequency: recurrenceFrequency,
@@ -261,10 +284,8 @@ struct AddTransactionSheet: View {
                 endDate: limitDate
             )
             
-            // If dateArray is empty for some reason, you might decide how to handle that.
             
         } else {
-            // Not recurring => just store the single chosen transactionDate
             dateArray = [transactionDate]
         }
         
@@ -273,7 +294,7 @@ struct AddTransactionSheet: View {
             title: transactionTitle,
             amount: amount,
             isCredit: isCredit,
-            date: transactionDate,  // single "main" date, might not matter if recurring
+            date: transactionDate,
             note: transactionNote,
             categorySystemName: selectedCategorySystemName,
             isRecurring: isRecurring,
