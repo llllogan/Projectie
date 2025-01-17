@@ -19,7 +19,7 @@ struct AddTransactionSheet: View {
     @State private var transactionAmount: String = ""
     @State private var isCredit = true
     @State private var selectedCategorySystemName: String?
-    @State private var transactionDate = Date()
+    @State private var transactionDate: Date
     
     
     @State private var isRecurring: Bool = false
@@ -43,7 +43,21 @@ struct AddTransactionSheet: View {
        case note
    }
     
+    init() {
+        let now = Date()
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month, .day], from: now)
+        
+        if let midnight = calendar.date(from: components) {
+            _transactionDate = State(initialValue: midnight)
+        } else {
+            _transactionDate = State(initialValue: now)
+        }
+    }
+    
+    
     var body: some View {
+        
         NavigationView {
             Form {
                 // ---- Amount Section ----
@@ -188,9 +202,7 @@ struct AddTransactionSheet: View {
             }
         }
     }
-    
-    
-    
+
     
     private func getCategory(by systemName: String) -> CategoryItem? {
         return categories.first { $0.systemName == systemName }

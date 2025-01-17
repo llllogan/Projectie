@@ -27,6 +27,11 @@ let categories: [CategoryItem] = [
         name: "Maintenance",
         systemName: "wrench.and.screwdriver.fill",
         color: .blue.opacity(0.7)),
+    CategoryItem(
+        name: "Bill",
+        systemName: "text.document.fill",
+        color: .blue.opacity(0.7)),
+
     
     
     CategoryItem(
@@ -46,6 +51,12 @@ let categories: [CategoryItem] = [
         name: "Self Care",
         systemName: "scissors",
         color: .green.opacity(0.7)),
+    
+    
+    CategoryItem(
+        name: "Transport",
+        systemName: "bus",
+        color: .brown.opacity(0.7)),
 
     
     CategoryItem(
@@ -56,28 +67,17 @@ let categories: [CategoryItem] = [
         name: "Shopping",
         systemName: "bag.fill",
         color: .orange.opacity(0.7)),
-
-    
-    CategoryItem(
-        name: "Transport",
-        systemName: "bus",
-        color: .brown.opacity(0.7)),
-    
-    
-    CategoryItem(
-        name: "Sport",
-        systemName: "american.football.fill",
-        color: .indigo.opacity(0.7)),
-    CategoryItem(
-        name: "Entertainment",
-        systemName: "ticket.fill",
-        color: .indigo.opacity(0.7)),
     
     
     CategoryItem(
         name: "Transfer",
         systemName: "arrow.left.arrow.right.square.fill",
         color: .pink.opacity(0.7)),
+    CategoryItem(
+        name: "Payment",
+        systemName: "arrowshape.turn.up.right.fill",
+        color: .pink.opacity(0.7)),
+
     CategoryItem(
         name: "Income",
         systemName: "banknote.fill",
@@ -89,9 +89,13 @@ let categories: [CategoryItem] = [
     
     
     CategoryItem(
-        name: "Default",
-        systemName: "circle.dashed",
-        color: .black.opacity(0.7))
+        name: "Sport",
+        systemName: "american.football.fill",
+        color: .indigo.opacity(0.7)),
+    CategoryItem(
+        name: "Entertainment",
+        systemName: "ticket.fill",
+        color: .indigo.opacity(0.7)),
 ]
 
 func findCategoryBySystemName(_ systemName: String) -> CategoryItem {

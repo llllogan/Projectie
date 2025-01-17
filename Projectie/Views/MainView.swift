@@ -55,11 +55,16 @@ struct MainView: View {
             }
             // NavigationBar / Toolbar
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showingAddTransactionSheet = true
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button(action: {showingAddTransactionSheet = true} ) {
+                            Label("Add transaction", systemImage: "creditcard")
+                        }
+                        Button(action: {showingAddTransactionSheet = true} ) {
+                            Label("Add goal", systemImage: "trophy")
+                        }
                     } label: {
-                        Image(systemName: "plus")
+                        Image(systemName: "plus.circle.fill")
                     }
                 }
             }

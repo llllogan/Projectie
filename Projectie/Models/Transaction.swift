@@ -29,13 +29,8 @@ class Transaction: Identifiable {
     
     var isRecurring: Bool
         
-    /// Frequency, e.g. daily, weekly, monthly, yearly
     var recurrenceFrequency: RecurrenceFrequency?
-
-    /// Interval or "modifier" (e.g. every 2 weeks)
     var recurrenceInterval: Int
-
-    /// All the dates on which this transaction recurs
     var recurrenceDates: [Date]
     
 
