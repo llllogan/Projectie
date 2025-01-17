@@ -67,6 +67,16 @@ struct MainView: View {
                         Image(systemName: "plus.circle.fill")
                     }
                 }
+                ToolbarItem(placement: .topBarLeading) {
+                    Menu {
+                        Button(action: {showingAddTransactionSheet = true} ) {
+                            Label("Reset Balance", systemImage: "dollarsign.arrow.trianglehead.counterclockwise.rotate.90")
+                        }
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                    }
+                }
+
             }
             .sheet(isPresented: $showingAddTransactionSheet) {
                 AddTransactionSheet()

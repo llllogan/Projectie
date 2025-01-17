@@ -34,16 +34,20 @@ struct TransactionListElement: View {
                         .font(.caption)
                         .fontWeight(.light)
                         .foregroundStyle(.secondary)
-                    Text("\(transaction.getCategory()?.name ?? "Unknown"), \(displayDate, format: .dateTime.hour().minute().second())")
+                    Text("\(transaction.getCategory()?.name ?? "Unknown")")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
 
                 }
             }
             Spacer()
-            HStack {
+            VStack(alignment: .trailing) {
                 Text("\(!transaction.isCredit ? "-" : "")$\(transaction.unsignedAmount, format: .number.precision(.fractionLength(2)))")
                     .font(.system(size: 20, weight: .medium, design: .rounded))
+                Text("\(displayDate, format: .dateTime.hour().minute())")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
             }
         }
     }
