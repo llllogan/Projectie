@@ -10,6 +10,9 @@ import Foundation
 
 struct ResetBalanceSheet: View {
     
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+    
     @State private var isPositive: Bool = true
     @State private var resetBalance: String = ""
     @State private var resetDate: Date = Date()
@@ -77,17 +80,31 @@ struct ResetBalanceSheet: View {
                 }
             }
         }
+    }
+    
+    private func onCancel() {
+        dismiss()
+    }
+
+    private func onSave() {
         
+        guard var amount = Double(resetBalance) else {
+            print("Invalid amount entered.")
+            return
+        }
+        if (!isPositive) {
+            amount *= -1
+        }
+        
+        let newReset = BalanceReset(date: resetDate, balanceAtReset: amount)
+        context.insert(newReset)
+        try? context.save()
+        
+        dismiss()
     }
 }
 
-private func onCancel() {
-    
-}
 
-private func onSave() {
-    
-}
 
 #Preview {
     ResetBalanceSheet()

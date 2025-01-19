@@ -15,10 +15,12 @@ struct MainView: View {
     @Environment(\.modelContext) private var context
     
     @Query(sort: \Transaction.date, order: .reverse) private var transactions: [Transaction]
+    @Query(sort: \BalanceReset.date, order: .reverse) private var allBalanceResets: [BalanceReset]
     
     @State private var showingAddTransactionSheet = false
     @State private var showResetBalanceSheet: Bool = false
     
+    @State private var selectedChartStyle: ChartViewStyle = .line
     @State private var selectedTimeFrame: TimeFrame = .month
     @State private var currentStartDate: Date = Date()
     
@@ -243,15 +245,59 @@ struct MainView: View {
     }
     
     private var chartControlls: some View {
+        
         HStack {
-            // Picker for Time Frame
-            Picker("Time Frame", selection: $selectedTimeFrame) {
-                ForEach(TimeFrame.allCases, id: \.self) { frame in
-                    Text(frame.rawValue.capitalized).tag(frame)
+            HStack(spacing: 4) {
+                Text("Show")
+                Menu {
+                    Picker("", selection: $selectedTimeFrame) {
+                        ForEach(TimeFrame.allCases, id: \.self) { frame in
+                            Text(frame.rawValue.capitalized).tag(frame)
+                                .lineLimit(1)
+                        }
+                    }
+                } label: {
+                    Button(action: { }) {
+                        Text(selectedTimeFrame.rawValue.capitalized)
+                            .lineLimit(1)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.primary)
                 }
+//                Picker("", selection: $selectedTimeFrame) {
+//                    ForEach(TimeFrame.allCases, id: \.self) { frame in
+//                        Text(frame.rawValue.capitalized).tag(frame)
+//                            .lineLimit(1)
+//                    }
+//                }
+//                .pickerStyle(.menu)
+//                .buttonStyle(.bordered)
+//                .tint(.primary)
             }
-            .pickerStyle(SegmentedPickerStyle())
             
+
+            HStack(spacing: 4) {
+                Text("Chart")
+                Menu {
+                    Picker("", selection: $selectedChartStyle) {
+                        ForEach(TimeFrame.allCases, id: \.self) { style in
+                            Text(style.rawValue.capitalized).tag(style)
+                                .lineLimit(1)
+                        }
+                    }
+                } label: {
+                    Button(action: { }) {
+                        Text(selectedChartStyle.rawValue.capitalized)
+                            .lineLimit(1)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.primary)
+                }
+
+            }
+            
+            
+                                    
             Spacer()
             
             // Previous
@@ -299,6 +345,12 @@ struct MainView: View {
     
     // MARK: - Computed Properties
     
+    private var mostRecentReset: BalanceReset? {
+        // If you only want resets up to "today", you can also
+        // filter allResets by `.date <= Date()`
+        allBalanceResets.first
+    }
+    
     private var allOccurrences: [TransactionOccurrence] {
         transactions.flatMap { txn in
             if txn.isRecurring {
@@ -321,19 +373,32 @@ struct MainView: View {
         return grouped.sorted { $0.key > $1.key }
     }
     
+    
+    
     private var currentBalance: Double {
-        // We'll consider all occurrences up to "today"
-        let today = Date()
-        // Filter occurrences up to "today"
-        let relevant = allOccurrences.filter { $0.date <= today }
-        // Sum up amounts
-        let sum = relevant.reduce(0) { $0 + $1.amount }
-        return openingBalance + sum
+        guard let reset = mostRecentReset else {
+            // If no reset exists, fall back to using openingBalance
+            return openingBalance + sumOfAllTransactionsUpTo(Date())
+        }
+        
+        let baseline = reset.balanceAtReset
+        let resetDate = reset.date
+        
+        let sumAfterReset = allOccurrences
+            .filter { $0.date > resetDate && $0.date <= Date() }
+            .reduce(0) { $0 + $1.amount }
+        
+        return baseline + sumAfterReset
     }
     
+    
     private var filteredChartData: [(date: Date, balance: Double)] {
-        // Sort all occurrences by date
+        
         let sortedOccurrences = allOccurrences.sorted { $0.date < $1.date }
+        
+        
+        
+        
         
         // 1) Compute how much the balance was before the currentStartDate
         let balanceBeforeStartDate = sortedOccurrences
@@ -394,6 +459,19 @@ struct MainView: View {
         }
     }
     
+    
+    
+    
+    
+    
+    // MARK: - Helper Function
+    
+    private func sumOfAllTransactionsUpTo(_ date: Date) -> Double {
+        allOccurrences
+            .filter { $0.date <= date }
+            .reduce(0) { $0 + $1.amount }
+    }
+    
     private func changeDate(by value: Int) {
         switch selectedTimeFrame {
         case .week:
@@ -449,6 +527,11 @@ enum TimeFrame: String, CaseIterable {
     case week
     case month
     case year
+}
+
+enum ChartViewStyle: String, CaseIterable {
+    case line
+    case bar
 }
 
 
