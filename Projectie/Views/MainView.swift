@@ -57,7 +57,6 @@ struct MainView: View {
             .onChange(of: selectedTimeFrame) { _, newValue in
                 updateCurrentStartDate()
             }
-            // NavigationBar / Toolbar
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
@@ -69,6 +68,7 @@ struct MainView: View {
                         }
                     } label: {
                         Image(systemName: "plus.circle.fill")
+//                            .tint(.primary.opacity(0.8))
                     }
                 }
                 ToolbarItem(placement: .topBarLeading) {
@@ -78,6 +78,7 @@ struct MainView: View {
                         }
                     } label: {
                         Image(systemName: "gearshape.fill")
+                            .tint(.primary)
                     }
                 }
 
@@ -98,18 +99,7 @@ struct MainView: View {
     
     private var dynamicTitle: some View {
         
-        var endOfNoun: String {
-            switch selectedTimeFrame {
-            case .week:
-                return "week \(currentStartDate.formatted(.dateTime.week()))"
-            case .month:
-                return currentStartDate.formatted(.dateTime.month(.wide))
-            case .year:
-                return currentStartDate.formatted(.dateTime.year())
-            }
-        }
-        
-        return VStack {
+        VStack {
             if !isInteracting {
                 HStack(alignment: .bottom) {
                     VStack(alignment: .leading, spacing: 4) {
@@ -244,6 +234,7 @@ struct MainView: View {
         })
     }
     
+    
     private var chartControlls: some View {
         
         HStack {
@@ -279,11 +270,11 @@ struct MainView: View {
             HStack(spacing: 4) {
                 Text("Chart")
                 Menu {
-                    Picker("", selection: $selectedChartStyle) {
-                        ForEach(TimeFrame.allCases, id: \.self) { style in
-                            Text(style.rawValue.capitalized).tag(style)
-                                .lineLimit(1)
-                        }
+                    Button(action: {selectedChartStyle = .line} ) {
+                        Label("Line", systemImage: "creditcard")
+                    }
+                    Button(action: {selectedChartStyle = .bar} ) {
+                        Label("Bar", systemImage: "trophy")
                     }
                 } label: {
                     Button(action: { }) {
@@ -307,22 +298,33 @@ struct MainView: View {
                 Image(systemName: "chevron.left")
             }
             .buttonBorderShape(.circle)
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.bordered)
+            .tint(.primary)
             
             // Next
             Button(action: {
                 changeDate(by: 1)
             }) {
                 Image(systemName: "chevron.right")
+                    .tint(.primary)
             }
             .buttonBorderShape(.circle)
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.bordered)
+            .tint(.primary)
         }
         .padding(.horizontal)
     }
     
     
-    var transactionList: some View {
+    
+    
+    
+    
+    
+    // MARK: - Computed Properties
+    
+    
+    private var transactionList: some View {
         List {
             ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
                 Section(header: Text(date, style: .date)) {
@@ -338,18 +340,24 @@ struct MainView: View {
     }
     
     
+    private var endOfNoun: String {
+        switch selectedTimeFrame {
+        case .week:
+            return "week \(currentStartDate.formatted(.dateTime.week()))"
+        case .month:
+            return currentStartDate.formatted(.dateTime.month(.wide))
+        case .year:
+            return currentStartDate.formatted(.dateTime.year())
+        }
+    }
     
-    
-    
-    
-    
-    // MARK: - Computed Properties
     
     private var mostRecentReset: BalanceReset? {
         // If you only want resets up to "today", you can also
         // filter allResets by `.date <= Date()`
         allBalanceResets.first
     }
+    
     
     private var allOccurrences: [TransactionOccurrence] {
         transactions.flatMap { txn in
@@ -365,6 +373,7 @@ struct MainView: View {
         }
     }
     
+    
     private var groupedOccurrences: [(key: Date, value: [TransactionOccurrence])] {
         let calendar = Calendar.current
         let grouped = Dictionary(grouping: allOccurrences) { occ in
@@ -372,7 +381,6 @@ struct MainView: View {
         }
         return grouped.sorted { $0.key > $1.key }
     }
-    
     
     
     private var currentBalance: Double {
@@ -447,6 +455,7 @@ struct MainView: View {
         guard let lastDataPoint = filteredChartData.last else { return 0.0 }
         return lastDataPoint.balance
     }
+    
     
     private var endDateForCurrentTimeFrame: Date {
         switch selectedTimeFrame {
