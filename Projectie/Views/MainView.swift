@@ -271,10 +271,10 @@ struct MainView: View {
                 Text("Chart")
                 Menu {
                     Button(action: {selectedChartStyle = .line} ) {
-                        Label("Line", systemImage: "creditcard")
+                        Label("Line", systemImage: "chart.xyaxis.line")
                     }
                     Button(action: {selectedChartStyle = .bar} ) {
-                        Label("Bar", systemImage: "trophy")
+                        Label("Bar", systemImage: "chart.bar.xaxis")
                     }
                 } label: {
                     Button(action: { }) {
@@ -362,17 +362,16 @@ struct MainView: View {
     private var allOccurrences: [TransactionOccurrence] {
         transactions.flatMap { txn in
             if txn.isRecurring {
-                // For recurring transactions, expand each date in recurrenceDates
+                // Expand recurring transactions
                 return txn.recurrenceDates.map { d in
                     TransactionOccurrence(transaction: txn, date: d)
                 }
             } else {
-                // Not recurring => single occurrence
+                // Single occurrence
                 return [TransactionOccurrence(transaction: txn, date: txn.date)]
             }
         }
     }
-    
     
     private var groupedOccurrences: [(key: Date, value: [TransactionOccurrence])] {
         let calendar = Calendar.current
@@ -401,46 +400,71 @@ struct MainView: View {
     
     
     private var filteredChartData: [(date: Date, balance: Double)] {
+        let calendar = Calendar.current
         
-        let sortedOccurrences = allOccurrences.sorted { $0.date < $1.date }
+        // 1. Sort all transactions and resets in ascending order
+        let sortedTransactions = allOccurrences.sorted { $0.date < $1.date }
+        let sortedResets = allBalanceResets.sorted { $0.date < $1.date }
         
+        // 2. Find the latest reset before the currentStartDate
+        let latestResetBeforeStart = sortedResets.last(where: { $0.date <= currentStartDate })
         
+        // 3. Initialize running balance and last reset date
+        var runningBalance: Double
+        var lastResetDate: Date
         
-        
-        
-        // 1) Compute how much the balance was before the currentStartDate
-        let balanceBeforeStartDate = sortedOccurrences
-            .filter { $0.date < currentStartDate }
-            .reduce(openingBalance) { $0 + $1.amount }
-        
-        // 2) Group only the transactions that fall between startDate and endDate
-        let occurrencesByDay = Dictionary(
-            grouping: sortedOccurrences.filter {
-                $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame
-            }
-        ) {
-            Calendar.current.startOfDay(for: $0.date)
+        if let reset = latestResetBeforeStart {
+            runningBalance = reset.balanceAtReset
+            lastResetDate = reset.date
+        } else {
+            runningBalance = openingBalance
+            lastResetDate = Date.distantPast
         }
         
-        // 3) Iterate day-by-day, starting from currentStartDate up to endDateForCurrentTimeFrame
-        var dataPoints: [(date: Date, balance: Double)] = []
-        var runningBalance = balanceBeforeStartDate
+        // 4. Apply transactions between the last reset and the start date
+        let transactionsBeforeStart = sortedTransactions.filter { $0.date > lastResetDate && $0.date < currentStartDate }
+        for txn in transactionsBeforeStart {
+            runningBalance += txn.amount
+        }
         
+        // 5. Filter resets and transactions within the timeframe
+        let resetsWithinTimeFrame = sortedResets.filter { $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame }
+        let transactionsWithinTimeFrame = sortedTransactions.filter { $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame }
+        
+        // 6. Group transactions and resets by day
+        let transactionsByDay = Dictionary(
+            grouping: transactionsWithinTimeFrame
+        ) { calendar.startOfDay(for: $0.date) }
+        
+        let resetsByDay = Dictionary(
+            grouping: resetsWithinTimeFrame
+        ) { calendar.startOfDay(for: $0.date) }
+        
+        // 7. Iterate through each day in the timeframe
+        var dataPoints: [(date: Date, balance: Double)] = []
         var currentDate = currentStartDate
         let endDate = endDateForCurrentTimeFrame
         
         while currentDate <= endDate {
-            // If there are any transactions on this day, add them to the running balance
-            if let todaysOccurrences = occurrencesByDay[currentDate] {
-                for occ in todaysOccurrences {
-                    runningBalance += occ.amount
+            // Apply any resets on this day
+            if let todaysResets = resetsByDay[currentDate] {
+                for reset in todaysResets.sorted(by: { $0.date < $1.date }) {
+                    runningBalance = reset.balanceAtReset
                 }
             }
-            // Record (day, runningBalance) in the data points
+            
+            // Apply any transactions on this day
+            if let todaysTransactions = transactionsByDay[currentDate] {
+                for txn in todaysTransactions {
+                    runningBalance += txn.amount
+                }
+            }
+            
+            // Record the balance for this day
             dataPoints.append((date: currentDate, balance: runningBalance))
             
-            // Move currentDate forward by one day
-            if let nextDate = Calendar.current.date(byAdding: .day, value: 1, to: currentDate) {
+            // Move to the next day
+            if let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) {
                 currentDate = nextDate
             } else {
                 break
