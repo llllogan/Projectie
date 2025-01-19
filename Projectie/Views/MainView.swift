@@ -139,10 +139,12 @@ struct MainView: View {
     
     private var chart: some View {
         let allBalances = filteredChartData.map { $0.balance }
+        
         let minBalance = allBalances.min() ?? 0
         let maxBalance = allBalances.max() ?? 0
-        let chartMin = min(minBalance, 0)
-        let chartMax = maxBalance
+        
+        let chartMin = minBalance - (minBalance / 10)
+        let chartMax = maxBalance + (maxBalance / 10)
         
         let today = Date()
         let startDate = currentStartDate
@@ -238,7 +240,7 @@ struct MainView: View {
     private var chartControlls: some View {
         
         HStack {
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Text("Show")
                 Menu {
                     Picker("", selection: $selectedTimeFrame) {
@@ -255,19 +257,10 @@ struct MainView: View {
                     .buttonStyle(.bordered)
                     .tint(.primary)
                 }
-//                Picker("", selection: $selectedTimeFrame) {
-//                    ForEach(TimeFrame.allCases, id: \.self) { frame in
-//                        Text(frame.rawValue.capitalized).tag(frame)
-//                            .lineLimit(1)
-//                    }
-//                }
-//                .pickerStyle(.menu)
-//                .buttonStyle(.bordered)
-//                .tint(.primary)
             }
             
 
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Text("Chart")
                 Menu {
                     Button(action: {selectedChartStyle = .line} ) {
