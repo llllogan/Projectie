@@ -20,7 +20,7 @@ struct MainView: View {
     
     @State private var showingAddTransactionSheet = false
     @State private var showResetBalanceSheet: Bool = false
-    @State private var showBottomToggle: Bool = false
+    @State private var showBottomToggle: Bool = true
     
     @State private var selectedChartStyle: ChartViewStyle = .line
     @State private var selectedTimeFrame: TimeFrame = .month
@@ -50,7 +50,12 @@ struct MainView: View {
                 
                 chartControlls
                 
-                transactionList
+                TabView {
+                    transactionList
+                    goalList
+                }
+                .tabViewStyle(.page(indexDisplayMode: .automatic))
+                .ignoresSafeArea(edges: .bottom)
                 
             }
             .onAppear {
@@ -98,6 +103,8 @@ struct MainView: View {
     // MARK: - Child Views
     
     
+    
+    // MARK: - Dynamic Title
     private var dynamicTitle: some View {
         
         VStack {
@@ -137,7 +144,7 @@ struct MainView: View {
         .offset(x: isInteracting ? horizontalOffset : 0)
     }
     
-    
+    // MARK: - Chart
     private var chart: some View {
         let allBalances = filteredChartData.map { $0.balance }
         
@@ -188,7 +195,7 @@ struct MainView: View {
             AxisMarks(position: .leading)
         }
         .chartYScale(domain: chartMin...chartMax)
-        .frame(height: 200)
+        .frame(height: 180)
         .padding()
         .chartOverlay(content: { proxy in
             GeometryReader { geoProxy in
@@ -238,6 +245,7 @@ struct MainView: View {
     }
     
     
+    // MARK: - Chart Controlls
     private var chartControlls: some View {
         
         HStack {
@@ -310,7 +318,7 @@ struct MainView: View {
     }
     
     
-    
+    // MARK: - Transaction List
     private var transactionList: some View {
         List {
             ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
@@ -327,14 +335,39 @@ struct MainView: View {
                     }
                     
                     ForEach(resetsOfToday) { reset in
-                        ResetListElement(balance: reset.balanceAtReset)
+                        BalanceResetListElement(reset: reset)
                     }
                 }
             }
         }
+        .safeAreaPadding(.bottom, 40)
+//        .overlay(alignment: .bottom) {
+//            if showBottomToggle {
+//                ListBarToggle()
+//                    .transition(.offset(y: 300))
+//            }
+//        }
+//        .onScrollGeometryChange(for: CGFloat.self, of: { geometry in
+//                geometry.contentOffset.y
+//            }, action: { oldValue, newValue in
+//                
+//                if newValue >= oldValue {
+//                    withAnimation {
+//                        showBottomToggle = false
+//                    }
+//                } else {
+//                    withAnimation {
+//                        showBottomToggle = true
+//                    }
+//                }
+//            }
+//        )
     }
 
     
+    private var goalList: some View {
+        Text("Goals")
+    }
     
     
     

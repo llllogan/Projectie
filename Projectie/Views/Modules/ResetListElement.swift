@@ -7,20 +7,22 @@
 
 import SwiftUI
 
-struct ResetListElement: View {
+struct BalanceResetListElement: View {
     
-    @State var balance: Double
+    @State var reset: BalanceReset
     
     
     var body: some View {
         VStack(spacing: 8) {
             
-            Image(systemName: "dollarsign.arrow.trianglehead.counterclockwise.rotate.90")
+            Image(systemName: reset.isStartingBalance ? "banknote" : "dollarsign.arrow.trianglehead.counterclockwise.rotate.90")
                 .font(.title3)
-            Text("Balance Reset")
+            
+            
+            Text(reset.isStartingBalance ? "Starting Balance" : "Balance Reset")
                 .font(.headline)
             
-            Text("$\(balance, format: .number.precision(.fractionLength(2)))")
+            Text("$\(reset.balanceAtReset, format: .number.precision(.fractionLength(2)))")
                 .font(.title)
 
             
@@ -34,9 +36,20 @@ struct ResetListElement: View {
 
 #Preview {
     
-    let goals: [Double] = [100, 200, 300, 400, 500]
+    let goals: [BalanceReset] = [
+        BalanceReset(
+            date: Date(),
+            balanceAtReset: 1000
+        ),
+        BalanceReset(
+            date: Date(),
+            balanceAtReset: 1000,
+            isStartingBalance: true
+        )
+
+    ]
     
     List(goals, id: \.self) { goal in
-        ResetListElement(balance: goal)
+        BalanceResetListElement(reset: goal)
     }
 }
