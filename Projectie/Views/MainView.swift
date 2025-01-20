@@ -20,6 +20,7 @@ struct MainView: View {
     
     @State private var showingAddTransactionSheet = false
     @State private var showResetBalanceSheet: Bool = false
+    @State private var showBottomToggle: Bool = false
     
     @State private var selectedChartStyle: ChartViewStyle = .line
     @State private var selectedTimeFrame: TimeFrame = .month
