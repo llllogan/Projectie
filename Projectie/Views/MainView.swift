@@ -8,6 +8,7 @@
 import SwiftUI
 import Charts
 import SwiftData
+import Foundation
 
 struct MainView: View {
     @AppStorage("openingBalance") private var openingBalance = 0.0
@@ -68,7 +69,6 @@ struct MainView: View {
                         }
                     } label: {
                         Image(systemName: "plus.circle.fill")
-//                            .tint(.primary.opacity(0.8))
                     }
                 }
                 ToolbarItem(placement: .topBarLeading) {
@@ -310,28 +310,37 @@ struct MainView: View {
     
     
     
-    
-    
-    
-    
-    // MARK: - Computed Properties
-    
-    
     private var transactionList: some View {
         List {
             ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
                 Section(header: Text(date, style: .date)) {
+                    
+                    let calendar = Calendar.current
+                    let resetsOfToday = allBalanceResets.filter { calendar.isDate($0.date, equalTo: date, toGranularity: .day) }
+                    
                     ForEach(occurrences) { occ in
                         TransactionListElement(
                             transaction: occ.transaction,
                             overrideDate: occ.date // so we can see the exact date
                         )
                     }
+                    
+                    ForEach(resetsOfToday) { reset in
+                        ResetListElement(balance: reset.balanceAtReset)
+                    }
                 }
             }
         }
     }
+
     
+    
+    
+    
+    
+    
+    
+    // MARK: - Computed Properties
     
     private var endOfNoun: String {
         switch selectedTimeFrame {
