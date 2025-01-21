@@ -20,19 +20,24 @@ struct MainView: View {
     
     @State private var showingAddTransactionSheet = false
     @State private var showResetBalanceSheet: Bool = false
+    @State private var showManageTransactionSheet: Bool = false
     @State private var showBottomToggle: Bool = true
     
     @State private var selectedChartStyle: ChartViewStyle = .line
     @State private var selectedTimeFrame: TimeFrame = .month
-    @State private var currentStartDate: Date = Date()
+    @State private var selectedBalance: Double? = nil
+    @State private var selectedDate: Date? = nil
+    @State private var selectedTransaction: Transaction?
     
     @State private var isInteracting: Bool = false
-    @State private var selectedDate: Date? = nil
-    @State private var selectedBalance: Double? = nil
+    
+    @State private var currentStartDate: Date = Date()
     
     @State private var dragLocation: CGPoint = .zero
     
     @State private var horizontalOffset: CGFloat = 0
+    
+    @State private var activeSheet: ActiveSheet?
     
     
     
@@ -67,10 +72,10 @@ struct MainView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        Button(action: {showingAddTransactionSheet = true} ) {
+                        Button(action: { activeSheet = .addTransaction }) {
                             Label("Add transaction", systemImage: "creditcard")
                         }
-                        Button(action: {showingAddTransactionSheet = true} ) {
+                        Button(action: { activeSheet = .addTransaction }) {
                             Label("Add goal", systemImage: "trophy")
                         }
                     } label: {
@@ -79,7 +84,7 @@ struct MainView: View {
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
-                        Button(action: {showResetBalanceSheet = true} ) {
+                        Button(action: { activeSheet = .resetBalance }) {
                             Label("Reset Balance", systemImage: "dollarsign.arrow.trianglehead.counterclockwise.rotate.90")
                         }
                     } label: {
@@ -89,11 +94,15 @@ struct MainView: View {
                 }
 
             }
-            .sheet(isPresented: $showingAddTransactionSheet) {
-                AddTransactionSheet()
-            }
-            .sheet(isPresented: $showResetBalanceSheet) {
-                ResetBalanceSheet()
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .addTransaction:
+                    AddTransactionSheet()
+                case .resetBalance:
+                    ResetBalanceSheet()
+                case .manageTransaction(let transaction):
+                    ManageTransactionSheet(transaction: transaction)
+                }
             }
         }
     }
@@ -328,10 +337,16 @@ struct MainView: View {
                     let resetsOfToday = allBalanceResets.filter { calendar.isDate($0.date, equalTo: date, toGranularity: .day) }
                     
                     ForEach(occurrences) { occ in
+
                         TransactionListElement(
                             transaction: occ.transaction,
-                            overrideDate: occ.date // so we can see the exact date
+                            overrideDate: occ.date
                         )
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            activeSheet = .manageTransaction(occ.transaction)
+                        }
+                            
                     }
                     
                     ForEach(resetsOfToday) { reset in
@@ -341,27 +356,6 @@ struct MainView: View {
             }
         }
         .safeAreaPadding(.bottom, 40)
-//        .overlay(alignment: .bottom) {
-//            if showBottomToggle {
-//                ListBarToggle()
-//                    .transition(.offset(y: 300))
-//            }
-//        }
-//        .onScrollGeometryChange(for: CGFloat.self, of: { geometry in
-//                geometry.contentOffset.y
-//            }, action: { oldValue, newValue in
-//                
-//                if newValue >= oldValue {
-//                    withAnimation {
-//                        showBottomToggle = false
-//                    }
-//                } else {
-//                    withAnimation {
-//                        showBottomToggle = true
-//                    }
-//                }
-//            }
-//        )
     }
 
     
@@ -389,8 +383,6 @@ struct MainView: View {
     
     
     private var mostRecentReset: BalanceReset? {
-        // If you only want resets up to "today", you can also
-        // filter allResets by `.date <= Date()`
         allBalanceResets.first
     }
     
@@ -398,7 +390,6 @@ struct MainView: View {
     private var allOccurrences: [TransactionOccurrence] {
         transactions.flatMap { txn in
             if txn.isRecurring {
-                // Expand recurring transactions
                 return txn.recurrenceDates.map { d in
                     TransactionOccurrence(transaction: txn, date: d)
                 }
@@ -438,14 +429,11 @@ struct MainView: View {
     private var filteredChartData: [(date: Date, balance: Double)] {
         let calendar = Calendar.current
         
-        // 1. Sort all transactions and resets in ascending order
         let sortedTransactions = allOccurrences.sorted { $0.date < $1.date }
         let sortedResets = allBalanceResets.sorted { $0.date < $1.date }
         
-        // 2. Find the latest reset before the currentStartDate
         let latestResetBeforeStart = sortedResets.last(where: { $0.date <= currentStartDate })
         
-        // 3. Initialize running balance and last reset date
         var runningBalance: Double
         var lastResetDate: Date
         
@@ -457,17 +445,14 @@ struct MainView: View {
             lastResetDate = Date.distantPast
         }
         
-        // 4. Apply transactions between the last reset and the start date
         let transactionsBeforeStart = sortedTransactions.filter { $0.date > lastResetDate && $0.date < currentStartDate }
         for txn in transactionsBeforeStart {
             runningBalance += txn.amount
         }
         
-        // 5. Filter resets and transactions within the timeframe
         let resetsWithinTimeFrame = sortedResets.filter { $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame }
         let transactionsWithinTimeFrame = sortedTransactions.filter { $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame }
         
-        // 6. Group transactions and resets by day
         let transactionsByDay = Dictionary(
             grouping: transactionsWithinTimeFrame
         ) { calendar.startOfDay(for: $0.date) }
@@ -476,7 +461,6 @@ struct MainView: View {
             grouping: resetsWithinTimeFrame
         ) { calendar.startOfDay(for: $0.date) }
         
-        // 7. Iterate through each day in the timeframe
         var dataPoints: [(date: Date, balance: Double)] = []
         var currentDate = currentStartDate
         let endDate = endDateForCurrentTimeFrame
@@ -489,14 +473,12 @@ struct MainView: View {
                 }
             }
             
-            // Apply any transactions on this day
             if let todaysTransactions = transactionsByDay[currentDate] {
                 for txn in todaysTransactions {
                     runningBalance += txn.amount
                 }
             }
             
-            // Record the balance for this day
             dataPoints.append((date: currentDate, balance: runningBalance))
             
             // Move to the next day
@@ -601,6 +583,16 @@ enum TimeFrame: String, CaseIterable {
 enum ChartViewStyle: String, CaseIterable {
     case line
     case bar
+}
+
+enum ActiveSheet: Identifiable {
+    case addTransaction
+    case resetBalance
+    case manageTransaction(Transaction)
+    
+    var id: Int {
+        UUID().hashValue
+    }
 }
 
 
