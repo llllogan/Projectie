@@ -10,119 +10,166 @@ import SwiftData
 
 struct ManageTransactionSheet: View {
     
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+    
+    @State private var transactionNote: String = "__init__"
+    @State private var leadingToolbarNoun: String = "Cancel"
+    
+    @State private var isSaving: Bool = false
+    
+    @FocusState private var focusedField: Field?
+    
+    
     var transaction: Transaction
     
-    @State private var transactionNote: String = ""
-    @State private var isSaving: Bool = false
+    private var debouncer = TransactionNoteAutoSaveTimer(interval: 0.5)
+    
+    init(transaction: Transaction) {
+        self.transaction = transaction
+    }
     
     
     var body: some View {
         
-        VStack(alignment: .center) {
-            
-            Image(systemName: transaction.categorySystemName!)
-                .foregroundStyle(transaction.getCategory()?.color ?? .secondary)
-                .font(.largeTitle)
-            
-            
-            Text(transaction.title)
-                .font(.largeTitle)
-                .padding(.top)
-            
-            Text("\(!transaction.isCredit ? "-" : "")$\(transaction.unsignedAmount, format: .number.precision(.fractionLength(2)))")
-                .font(.system(size: 45, weight: .bold, design: .rounded))
-                .padding(.bottom, 8)
+        NavigationView {
+            VStack(alignment: .center) {
                 
-            
-            HStack(alignment: .top) {
+                Image(systemName: transaction.categorySystemName!)
+                    .foregroundStyle(transaction.getCategory()?.color ?? .secondary)
+                    .font(.largeTitle)
                 
-                VStack (alignment: .leading, spacing: 4) {
-                    HStack {
-                        Image(systemName: "clock")
-                        Text("\(transaction.date, format: .dateTime.minute().hour())")
-                    }
+                
+                Text(transaction.title)
+                    .font(.largeTitle)
+                    .padding(.top)
+                
+                Text("\(!transaction.isCredit ? "-" : "")$\(transaction.unsignedAmount, format: .number.precision(.fractionLength(2)))")
+                    .font(.system(size: 45, weight: .bold, design: .rounded))
+                    .padding(.bottom, 8)
                     
-                    HStack {
-                        Image(systemName: "calendar")
-                        Text("\(transaction.date, format: .dateTime.day().month().year())")
-                    }
-
-                }
-                .frame(maxWidth: .infinity)
                 
-                VStack (alignment: .leading, spacing: 4) {
-                    HStack {
-                        Image(systemName: "tray.full")
-                        Text(transaction.getCategory()?.name ?? "Unknown")
-                    }
-                    HStack {
+                HStack(alignment: .top) {
+                    
+                    VStack (alignment: .leading, spacing: 4) {
+                        HStack {
+                            Image(systemName: "clock")
+                            Text("\(transaction.date, format: .dateTime.minute().hour())")
+                        }
                         
-                        if transaction.isRecurring {
-                            Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
-                            Text(getRecurrenceDescription())
-                        } else {
-                            Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
-                                .foregroundStyle(.secondary)
-                            Text("Not recurring")
-                                .foregroundStyle(.secondary)
+                        HStack {
+                            Image(systemName: "calendar")
+                            Text("\(transaction.date, format: .dateTime.day().month().year())")
                         }
-                                               
+
                     }
+                    .frame(maxWidth: .infinity)
+                    
+                    VStack (alignment: .leading, spacing: 4) {
+                        HStack {
+                            Image(systemName: "tray.full")
+                            Text(transaction.getCategory()?.name ?? "Unknown")
+                        }
+                        HStack {
+                            
+                            if transaction.isRecurring {
+                                Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
+                                Text(getRecurrenceDescription())
+                            } else {
+                                Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
+                                    .foregroundStyle(.secondary)
+                                Text("Not recurring")
+                                    .foregroundStyle(.secondary)
+                            }
+                                                   
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
                 }
                 .frame(maxWidth: .infinity)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal)
-
-            
-            
-            Form {
-                Section(
-                    header: Text("Notes"),
-                    footer: Label(
-                        isSaving ? "Saving" : "",
-                        systemImage: isSaving ? "progress.indicator" : "")
-                        .symbolEffect(
-                            .variableColor.iterative.dimInactiveLayers.nonReversing,
-                            options: .repeat(.continuous)
-                        )
-                ) {
-                    TextField("Notes", text: $transactionNote)
-                        .onAppear {
-                            transactionNote = transaction.note ?? ""
-                        }
-                        .frame(minHeight: 100, alignment: .top)
-                }
-            }
-            
-            
-            VStack(spacing: 10) {
-                Button(action: {
-                    
-                }) {
-                    Text("Edit")
-                        .padding(.vertical, 10)
-                        .frame(maxWidth: .infinity)
-                }
                 .padding(.horizontal)
-                .buttonStyle(.bordered)
 
                 
-                Button(action: {
-                    
-                }) {
-                    Text("Delete...")
-                        .padding(.vertical, 10)
-                        .frame(maxWidth: .infinity)
+                
+                Form {
+                    Section(
+                        header: HStack {
+                            Text("Notes")
+                            Image(systemName: "progress.indicator")
+                                .symbolEffect(
+                                    .variableColor.iterative.dimInactiveLayers.nonReversing,
+                                    options: .repeat(.continuous)
+                                )
+                                .opacity(isSaving ? 1 : 0)
+                        }
+                    ) {
+                        TextField("Notes", text: $transactionNote)
+                            .focused($focusedField, equals: .notes)
+                            .onAppear {
+                                transactionNote = transaction.note ?? ""
+                            }
+                            .frame(minHeight: 100, alignment: .top)
+                            .onChange(of: transactionNote) { oldValue, newValue in
+                                debouncer.call {
+                                    if checkForDifferences(for: oldValue, and: newValue) {
+                                        print("saving")
+                                        transaction.note = newValue
+                                        try? context.save()
+                                        leadingToolbarNoun = "Done"
+                                    }
+                                }
+                            }
+                    }
                 }
-                .padding(.horizontal)
-                .buttonStyle(.borderedProminent)
-                .tint(Color.red)
-                .padding(.bottom)
+                .frame(minHeight: 200)
+                .scrollDisabled(true)
+                
+                
+                VStack(spacing: 10) {
+                    Button(action: {
+                        
+                    }) {
+                        Text("Edit")
+                            .padding(.vertical, 10)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .padding(.horizontal)
+                    .buttonStyle(.bordered)
+                    .tint(Color.primary)
+
+                    
+                    Button(action: {
+                        
+                    }) {
+                        Text("Deleting Options")
+                            .padding(.vertical, 10)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .padding(.horizontal)
+                    .buttonStyle(.bordered)
+                    .tint(Color.red)
+                    .padding(.bottom)
+                }
+                
             }
-            
+            .padding(.top, 20)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        focusedField = nil
+                    }
+                }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        Text(leadingToolbarNoun)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         }
-        .padding(.top)
     }
     
     
@@ -131,13 +178,13 @@ struct ManageTransactionSheet: View {
         if (transaction.recurrenceInterval == 1) {
             switch transaction.recurrenceFrequency {
                 case .daily:
-                    return "Day"
+                    return "Daily"
                 case .weekly:
-                    return "Week"
+                    return "Weekly"
                 case .monthly:
-                    return "Month"
+                    return "Monthly"
                 case .yearly:
-                    return "Year"
+                    return "Annually"
             case .none:
                 return ""
             }
@@ -157,6 +204,31 @@ struct ManageTransactionSheet: View {
         }
         
     }
+    
+    private func checkForDifferences(for oldNote: String, and newNote: String) -> Bool {
+        
+        if (oldNote == "__init__") {
+            return false
+        }
+        
+        if (oldNote != newNote) {
+            return true
+        }
+        
+        return false
+    }
+    
+    
+    enum Field {
+        case amount
+        case title
+        case note
+        case occurences
+        case notes
+    }
+    
+    
+    
 
 }
 

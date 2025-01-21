@@ -15,7 +15,7 @@ struct MainView: View {
     
     @Environment(\.modelContext) private var context
     
-    @Query(sort: \Transaction.date, order: .reverse) private var transactions: [Transaction]
+    @Query(sort: \Transaction.date, order: .forward) private var transactions: [Transaction]
     @Query(sort: \BalanceReset.date, order: .reverse) private var allBalanceResets: [BalanceReset]
     
     @State private var showingAddTransactionSheet = false
