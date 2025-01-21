@@ -405,7 +405,7 @@ struct MainView: View {
         let grouped = Dictionary(grouping: allOccurrences) { occ in
             calendar.startOfDay(for: occ.date)
         }
-        return grouped.sorted { $0.key > $1.key }
+        return grouped.sorted { $0.key < $1.key }
     }
     
     
