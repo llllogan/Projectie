@@ -102,8 +102,8 @@ struct MainView: View {
                 case .resetBalance:
                     ResetBalanceSheet()
                         .presentationDragIndicator(.visible)
-                case .manageTransaction(let transaction):
-                    ManageTransactionSheet(transaction: transaction)
+                case .manageTransaction(let transaction, let date):
+                    ManageTransactionSheet(transaction: transaction, instanceDate: date)
                         .presentationDragIndicator(.visible)
                 }
             }
@@ -336,7 +336,7 @@ struct MainView: View {
             ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
                 Section(header: Text(date, style: .date)) {
                     transactionListDayOrganiser(occurenceList: occurrences, onTransactionSelected: { transaction in
-                        activeSheet = .manageTransaction(transaction)
+                        activeSheet = .manageTransaction(transaction, date)
                     })
                 }
             }
@@ -638,7 +638,7 @@ enum ChartViewStyle: String, CaseIterable {
 enum ActiveSheet: Identifiable {
     case addTransaction
     case resetBalance
-    case manageTransaction(Transaction)
+    case manageTransaction(Transaction, Date)
     
     var id: Int {
         UUID().hashValue

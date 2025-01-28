@@ -24,12 +24,16 @@ struct ManageTransactionSheet: View {
     
     
     var transaction: Transaction
+    var instanceDate: Date
+    
+    init (transaction: Transaction, instanceDate: Date? = nil) {
+        self.transaction = transaction
+        self.instanceDate = instanceDate ?? transaction.date
+        
+        print(self.instanceDate)
+    }
     
     private var debouncer = TransactionNoteAutoSaveTimer(interval: 0.5)
-    
-    init(transaction: Transaction) {
-        self.transaction = transaction
-    }
     
     
     var body: some View {
@@ -181,6 +185,24 @@ struct ManageTransactionSheet: View {
             }
         }
     }
+    
+    
+//    private func handleDeleteTransaction(with choice: TransactionDeleteChoice) {
+//        switch choice {
+//        case .all:
+//            deleteAllOccurrences()
+//        case .thisOne:
+//            deleteJustThisOne()
+//        case .future:
+//            deleteFutureOccurrences()
+//        }
+//        dismiss()
+//    }
+//    
+//    private func deleteAllOccurrences() {
+//        context.delete(transaction)
+//        try? context.save()
+//    }
     
     
     private func getRecurrenceDescription() -> String {
