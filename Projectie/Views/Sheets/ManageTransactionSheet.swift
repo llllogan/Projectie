@@ -19,6 +19,7 @@ struct ManageTransactionSheet: View {
     @State private var isSaving: Bool = false
     
     @State private var showDeleteOptions = false
+    @State private var showEditTransactionAlert = false
     
     @FocusState private var focusedField: Field?
     
@@ -133,7 +134,7 @@ struct ManageTransactionSheet: View {
                 
                 VStack(spacing: 10) {
                     Button(action: {
-                        
+                        showEditTransactionAlert = true
                     }) {
                         Text("Edit")
                             .padding(.vertical, 10)
@@ -183,6 +184,13 @@ struct ManageTransactionSheet: View {
                 }
                 .presentationDetents(.init([.fraction(0.6)]))
                 .presentationDragIndicator(.visible)
+            }
+            .alert("Woah There!", isPresented: $showEditTransactionAlert) {
+                Button("OK", role: .cancel) {
+                    showEditTransactionAlert = false
+                }
+            } message: {
+                Text("You can only edit the note of this transaction. Do that by tapping in the note form, then click done. \n\nPlease let me know which aspect of the transaction you would like to edit and I will look to impliment that.")
             }
         }
     }
