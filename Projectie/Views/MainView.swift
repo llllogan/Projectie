@@ -98,10 +98,13 @@ struct MainView: View {
                 switch sheet {
                 case .addTransaction:
                     AddTransactionSheet()
+                        .presentationDragIndicator(.visible)
                 case .resetBalance:
                     ResetBalanceSheet()
+                        .presentationDragIndicator(.visible)
                 case .manageTransaction(let transaction):
                     ManageTransactionSheet(transaction: transaction)
+                        .presentationDragIndicator(.visible)
                 }
             }
         }

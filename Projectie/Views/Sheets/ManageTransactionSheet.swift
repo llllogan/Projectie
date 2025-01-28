@@ -18,6 +18,8 @@ struct ManageTransactionSheet: View {
     
     @State private var isSaving: Bool = false
     
+    @State private var showDeleteOptions = false
+    
     @FocusState private var focusedField: Field?
     
     
@@ -139,7 +141,7 @@ struct ManageTransactionSheet: View {
 
                     
                     Button(action: {
-                        
+                        showDeleteOptions = true
                     }) {
                         Text("Deleting Options")
                             .padding(.vertical, 10)
@@ -168,6 +170,14 @@ struct ManageTransactionSheet: View {
                     }
                     .buttonStyle(.plain)
                 }
+            }
+            .sheet(isPresented: $showDeleteOptions) {
+                DeleteTransactionSheet { selectedOption in
+                    print(selectedOption)
+                    showDeleteOptions = false
+                }
+                .presentationDetents(.init([.fraction(0.6)]))
+                .presentationDragIndicator(.visible)
             }
         }
     }

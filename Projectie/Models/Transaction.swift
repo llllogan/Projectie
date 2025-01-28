@@ -67,3 +67,9 @@ class Transaction: Identifiable {
     }
 
 }
+
+enum TransactionDeleteChoice: String {
+    case all = "all"
+    case thisOne = "thisOne"
+    case future = "future"
+}
