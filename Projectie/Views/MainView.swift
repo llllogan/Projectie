@@ -35,7 +35,7 @@ struct MainView: View {
     @State private var currentStartDate: Date = Date()
     
     @State private var dragLocation: CGPoint = .zero
-    
+
     @State private var horizontalOffset: CGFloat = 0
     
     @State private var activeSheet: ActiveSheet?
@@ -337,7 +337,7 @@ struct MainView: View {
     // MARK: - Transaction List
     private var transactionList: some View {
         List {
-            ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
+            ForEach(visibleGroupedOccurrences, id: \.key) { (date, occurrences) in
                 Section(header: Text(date, style: .date)) {
                     transactionListDayOrganiser(occurenceList: occurrences, onTransactionSelected: { transaction in
                         activeSheet = .manageTransaction(transaction, date)
@@ -414,12 +414,23 @@ struct MainView: View {
     
     
     
-    private var groupedOccurrences: [(key: Date, value: [TransactionOccurrence])] {
+    /// Only the occurrences (transactions + resets) whose date is visible in the current chart range
+    private var visibleGroupedOccurrences: [(key: Date, value: [TransactionOccurrence])] {
         let calendar = Calendar.current
-        let grouped = Dictionary(grouping: allOccurrences) { occ in
+
+        // 1) Filter all occurrences to just the date range
+        let visibleOccurrences = allOccurrences.filter {
+            $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame
+        }
+        
+        // 2) Group them by day
+        let grouped = Dictionary(grouping: visibleOccurrences) { occ in
             calendar.startOfDay(for: occ.date)
         }
-        return grouped.sorted { $0.key < $1.key }
+        
+        // 3) Sort by day
+        return grouped
+            .sorted { $0.key < $1.key }
     }
     
     
