@@ -17,6 +17,7 @@ struct MainView: View {
     
     @Query(sort: \Transaction.date, order: .forward) private var transactions: [Transaction]
     @Query(sort: \BalanceReset.date, order: .reverse) private var allBalanceResets: [BalanceReset]
+    @Query(sort: \Goal.createdDate, order: .forward) private var goals: [Goal]
     
     @State private var showingAddTransactionSheet = false
     @State private var showResetBalanceSheet: Bool = false
@@ -75,7 +76,7 @@ struct MainView: View {
                         Button(action: { activeSheet = .addTransaction }) {
                             Label("Add transaction", systemImage: "creditcard")
                         }
-                        Button(action: { activeSheet = .addTransaction }) {
+                        Button(action: { activeSheet = .addGoal }) {
                             Label("Add goal", systemImage: "trophy")
                         }
                     } label: {
@@ -104,6 +105,9 @@ struct MainView: View {
                         .presentationDragIndicator(.visible)
                 case .manageTransaction(let transaction, let date):
                     ManageTransactionSheet(transaction: transaction, instanceDate: date)
+                        .presentationDragIndicator(.visible)
+                case .addGoal:
+                    AddGoalSheet()
                         .presentationDragIndicator(.visible)
                 }
             }
@@ -345,8 +349,25 @@ struct MainView: View {
     }
 
     
+    // MARK: - Goal List
     private var goalList: some View {
-        Text("Goals")
+        List(goals) { goal in
+            VStack(alignment: .leading) {
+                Text(goal.title)
+                    .font(.headline)
+                
+                let dateReached = earliestDateWhenGoalIsMet(goal.targetAmount)
+                if let dateReached = dateReached {
+                    Text("Reached by: \(dateReached, style: .date)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Goal Not Met")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
     }
     
     
@@ -510,6 +531,53 @@ struct MainView: View {
     
     // MARK: - Helper Function
     
+    private func earliestDateWhenGoalIsMet(_ targetAmount: Double) -> Date? {
+        // 1) Sort occurrences by date
+        let sortedOccurrences = allOccurrences.sorted(by: { $0.date < $1.date })
+        
+        // 2) Find the latest reset before "now" or default to opening balance
+        let latestResetBeforeNow = allBalanceResets.last(where: { $0.date <= Date() })
+        
+        var runningBalance: Double
+        var lastResetDate: Date
+        
+        if let reset = latestResetBeforeNow {
+            runningBalance = reset.balanceAtReset
+            lastResetDate = reset.date
+        } else {
+            runningBalance = openingBalance
+            lastResetDate = .distantPast
+        }
+        
+        // 3) Apply any transactions from that reset up to "now"
+        let preNowOccurrences = sortedOccurrences.filter { $0.date > lastResetDate && $0.date <= Date() }
+        for occ in preNowOccurrences {
+            runningBalance += occ.transaction?.amount ?? 0
+        }
+        
+        // Check if we already met the goal at or before "now"
+        if runningBalance >= targetAmount {
+            return Date()
+        }
+        
+        // 4) Now apply future occurrences after "now"
+        let futureOccurrences = sortedOccurrences.filter { $0.date > Date() }
+        
+        for occ in futureOccurrences {
+            // Update balance
+            runningBalance += occ.transaction?.amount ?? 0
+            
+            // If we've met/exceeded the target, return this occurrence's date
+            if runningBalance >= targetAmount {
+                return occ.date
+            }
+        }
+        
+        // If we never reach or exceed the target, return nil
+        return nil
+    }
+    
+    
     private func sumOfAllTransactionsUpTo(_ date: Date) -> Double {
         allOccurrences
         
@@ -639,6 +707,7 @@ enum ActiveSheet: Identifiable {
     case addTransaction
     case resetBalance
     case manageTransaction(Transaction, Date)
+    case addGoal
     
     var id: Int {
         UUID().hashValue
