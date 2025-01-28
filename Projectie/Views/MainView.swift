@@ -332,26 +332,9 @@ struct MainView: View {
         List {
             ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
                 Section(header: Text(date, style: .date)) {
-                    
-                    let calendar = Calendar.current
-                    let resetsOfToday = allBalanceResets.filter { calendar.isDate($0.date, equalTo: date, toGranularity: .day) }
-                    
-                    ForEach(occurrences) { occ in
-
-                        TransactionListElement(
-                            transaction: occ.transaction,
-                            overrideDate: occ.date
-                        )
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            activeSheet = .manageTransaction(occ.transaction)
-                        }
-                            
-                    }
-                    
-                    ForEach(resetsOfToday) { reset in
-                        BalanceResetListElement(reset: reset)
-                    }
+                    transactionListDayOrganiser(occurenceList: occurrences, onTransactionSelected: { transaction in
+                        activeSheet = .manageTransaction(transaction)
+                    })
                 }
             }
         }
@@ -388,17 +371,24 @@ struct MainView: View {
     
     
     private var allOccurrences: [TransactionOccurrence] {
-        transactions.flatMap { txn in
+        let transactionOccurrences = transactions.flatMap { txn in
             if txn.isRecurring {
-                return txn.recurrenceDates.map { d in
-                    TransactionOccurrence(transaction: txn, date: d)
+                return txn.recurrenceDates.compactMap { date in
+                    TransactionOccurrence(type: .transaction(txn), recurringTransactionDate: date)
                 }
             } else {
-                // Single occurrence
-                return [TransactionOccurrence(transaction: txn, date: txn.date)]
+                return [TransactionOccurrence(type: .transaction(txn))]
             }
         }
+        
+        let otherTypeOccurrences = allBalanceResets.flatMap { rst in
+            return [TransactionOccurrence(type: .reset(rst))]
+        }
+        
+        return transactionOccurrences + otherTypeOccurrences
     }
+    
+    
     
     private var groupedOccurrences: [(key: Date, value: [TransactionOccurrence])] {
         let calendar = Calendar.current
@@ -420,7 +410,7 @@ struct MainView: View {
         
         let sumAfterReset = allOccurrences
             .filter { $0.date > resetDate && $0.date <= Date() }
-            .reduce(0) { $0 + $1.amount }
+            .reduce(0) { $0 + ($1.transaction?.amount ?? 0) }
         
         return baseline + sumAfterReset
     }
@@ -447,7 +437,7 @@ struct MainView: View {
         
         let transactionsBeforeStart = sortedTransactions.filter { $0.date > lastResetDate && $0.date < currentStartDate }
         for txn in transactionsBeforeStart {
-            runningBalance += txn.amount
+            runningBalance += txn.transaction?.amount ?? 0
         }
         
         let resetsWithinTimeFrame = sortedResets.filter { $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame }
@@ -475,7 +465,7 @@ struct MainView: View {
             
             if let todaysTransactions = transactionsByDay[currentDate] {
                 for txn in todaysTransactions {
-                    runningBalance += txn.amount
+                    runningBalance += txn.transaction?.amount ?? 0
                 }
             }
             
@@ -519,8 +509,9 @@ struct MainView: View {
     
     private func sumOfAllTransactionsUpTo(_ date: Date) -> Double {
         allOccurrences
+        
             .filter { $0.date <= date }
-            .reduce(0) { $0 + $1.amount }
+            .reduce(0) { $0 + $1.transaction!.amount }
     }
     
     private func changeDate(by value: Int) {
@@ -562,15 +553,71 @@ struct MainView: View {
 
 // MARK: - Supporting Types
 
+struct transactionListDayOrganiser: View {
+    
+    var occurenceList: [TransactionOccurrence]
+    
+    var onTransactionSelected: (Transaction) -> Void = { _ in }
+    
+    var body: some View {
+        
+        ForEach(occurenceList) { occ in
+            
+            switch occ.type {
+            case .transaction(let txn):
+                TransactionListElement(
+                    transaction: txn,
+                    overrideDate: occ.date
+                )
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    onTransactionSelected(occ.transaction!)
+                }
+            case .reset(let rst):
+                BalanceResetListElement(reset: rst)
+            }
+            
+        }
+        
+    }
+}
+
 struct TransactionOccurrence: Identifiable {
-    let transaction: Transaction
-    let date: Date
     
-    // Combine transaction ID & date to ensure uniqueness
-    var id: String { "\(transaction.id)-\(date.timeIntervalSince1970)" }
+    let type: OccurrenceType
+    let recurringTransactionDate: Date?
     
-    var amount: Double {
-        transaction.amount
+    init(type: OccurrenceType, recurringTransactionDate: Date? = nil) {
+        self.type = type
+        self.recurringTransactionDate = recurringTransactionDate
+    }
+    
+    var transaction: Transaction? {
+        switch type {
+        case .transaction(let transaction):
+            return transaction
+        case .reset(_):
+            return nil
+        }
+    }
+    
+    var date: Date {
+        switch type {
+        case .transaction(let transaction):
+            return recurringTransactionDate ?? transaction.date
+        case .reset(let balanceReset):
+            return balanceReset.date
+        }
+    }
+    
+    var id: String {
+        switch type {
+        case .transaction(let transaction):
+            return "\(transaction.id)-\(date.timeIntervalSince1970)"
+        case .reset(let balanceReset):
+            return "\(balanceReset.id)-\(date.timeIntervalSince1970)"
+        }
+
     }
 }
 
@@ -593,6 +640,11 @@ enum ActiveSheet: Identifiable {
     var id: Int {
         UUID().hashValue
     }
+}
+
+enum OccurrenceType {
+    case transaction(Transaction)
+    case reset(BalanceReset)
 }
 
 
