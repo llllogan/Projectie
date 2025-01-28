@@ -179,6 +179,7 @@ struct ManageTransactionSheet: View {
                 DeleteTransactionSheet { selectedOption in
                     print(selectedOption)
                     showDeleteOptions = false
+                    handleDeleteTransaction(with: selectedOption)
                 }
                 .presentationDetents(.init([.fraction(0.6)]))
                 .presentationDragIndicator(.visible)
@@ -187,22 +188,40 @@ struct ManageTransactionSheet: View {
     }
     
     
-//    private func handleDeleteTransaction(with choice: TransactionDeleteChoice) {
-//        switch choice {
-//        case .all:
-//            deleteAllOccurrences()
-//        case .thisOne:
-//            deleteJustThisOne()
-//        case .future:
-//            deleteFutureOccurrences()
-//        }
-//        dismiss()
-//    }
-//    
-//    private func deleteAllOccurrences() {
-//        context.delete(transaction)
-//        try? context.save()
-//    }
+    private func handleDeleteTransaction(with choice: TransactionDeleteChoice) {
+        switch choice {
+        case .all:
+            deleteAllOccurrences()
+        case .thisOne:
+            deleteJustThisOne()
+        case .future:
+            deleteFutureOccurrences()
+        }
+        dismiss()
+    }
+    
+    private func deleteAllOccurrences() {
+        context.delete(transaction)
+        try? context.save()
+    }
+    
+    private func deleteJustThisOne() {
+        if let index = transaction.recurrenceDates.firstIndex(of: instanceDate) {
+            transaction.recurrenceDates.remove(at: index)
+            
+            try? context.save()
+        } else {
+            print("Instance date not found in recurrenceDates.")
+        }
+    }
+    
+    private func deleteFutureOccurrences() {
+        transaction.recurrenceDates = transaction.recurrenceDates.filter { $0 < instanceDate }
+        
+        // Save the updated transaction
+        try? context.save()
+    }
+    
     
     
     private func getRecurrenceDescription() -> String {
