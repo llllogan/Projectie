@@ -306,7 +306,6 @@ struct MainView: View {
             }
             
             
-                                    
             Spacer()
             
             // Previous
@@ -569,6 +568,8 @@ struct MainView: View {
         // Check if we already met the goal at or before "now"
         if runningBalance >= targetAmount {
             return Date()
+        } else {
+            print("\(runningBalance) < \(targetAmount)")
         }
         
         // 4) Now apply future occurrences after "now"
