@@ -542,10 +542,8 @@ struct MainView: View {
     // MARK: - Helper Function
     
     private func earliestDateWhenGoalIsMet(_ targetAmount: Double) -> Date? {
-        // 1) Sort occurrences by date
         let sortedOccurrences = allOccurrences.sorted(by: { $0.date < $1.date })
         
-        // 2) Find the latest reset before "now" or default to opening balance
         let latestResetBeforeNow = allBalanceResets.last(where: { $0.date <= Date() })
         
         var runningBalance: Double
@@ -559,33 +557,27 @@ struct MainView: View {
             lastResetDate = .distantPast
         }
         
-        // 3) Apply any transactions from that reset up to "now"
         let preNowOccurrences = sortedOccurrences.filter { $0.date > lastResetDate && $0.date <= Date() }
         for occ in preNowOccurrences {
             runningBalance += occ.transaction?.amount ?? 0
         }
         
-        // Check if we already met the goal at or before "now"
         if runningBalance >= targetAmount {
             return Date()
         } else {
             print("\(runningBalance) < \(targetAmount)")
         }
         
-        // 4) Now apply future occurrences after "now"
         let futureOccurrences = sortedOccurrences.filter { $0.date > Date() }
         
         for occ in futureOccurrences {
-            // Update balance
             runningBalance += occ.transaction?.amount ?? 0
             
-            // If we've met/exceeded the target, return this occurrence's date
             if runningBalance >= targetAmount {
                 return occ.date
             }
         }
         
-        // If we never reach or exceed the target, return nil
         return nil
     }
     
