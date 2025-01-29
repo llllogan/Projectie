@@ -54,15 +54,18 @@ struct MainView: View {
                 dynamicTitle
                 
                 chart
+                    .frame(height: 200)
                 
                 chartControlls
                 
-                TabView {
-                    transactionList
-                    goalList
-                }
-                .tabViewStyle(.page(indexDisplayMode: .automatic))
-                .ignoresSafeArea(edges: .bottom)
+                transactionList
+                
+//                TabView {
+//                    transactionList
+//                    goalList
+//                }
+//                .tabViewStyle(.page(indexDisplayMode: .automatic))
+//                .ignoresSafeArea(edges: .bottom)
                 
             }
             .onAppear {
@@ -92,15 +95,11 @@ struct MainView: View {
                         Button(action: { activeSheet = .resetBalance }) {
                             Label("Correct Balance", systemImage: "dollarsign.arrow.trianglehead.counterclockwise.rotate.90")
                         }
-                        Menu {
-                            Picker("Graph Style", selection: $selectedChartStyle) {
-                                Label("Line", systemImage: "chart.xyaxis.line")
-                                    .tag(ChartViewStyle.line)
-                                Label("Bar", systemImage: "chart.bar.xaxis")
-                                    .tag(ChartViewStyle.bar)
-                            }
-                        } label: {
-                            Text("Graph Style")
+                        Picker("Graph Style", selection: $selectedChartStyle) {
+                            Label("Line", systemImage: "chart.xyaxis.line")
+                                .tag(ChartViewStyle.line)
+                            Label("Bar", systemImage: "chart.bar.xaxis")
+                                .tag(ChartViewStyle.bar)
                         }
                     } label: {
                         Image(systemName: "gearshape.fill")
@@ -174,8 +173,24 @@ struct MainView: View {
         .offset(x: isInteracting ? horizontalOffset : 0)
     }
     
-    // MARK: - Chart
+    
+    
     private var chart: some View {
+        // TODO: make this look cool with animations
+        
+        return Section {
+            if (selectedChartStyle == .line) {
+                chartLine
+            } else {
+                chartBar(occurrences: visibleOccurrencesForPeriod)
+            }
+        }
+    }
+    
+    
+    
+    // MARK: - Chart (line)
+    private var chartLine: some View {
         let allBalances = filteredChartData.map { $0.balance }
         
         let minBalance = allBalances.min() ?? 0
@@ -235,43 +250,69 @@ struct MainView: View {
                     .gesture(
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
-                                // We are interacting
                                 isInteracting = true
                                 
-                                // Convert drag’s x-position into chart coordinate
                                 let origin = geoProxy[proxy.plotFrame!].origin
                                 let locationXOnChart = value.location.x - origin.x
                                 
-                                // Distance from each edge of the *screen*
                                 let screenWidth = geoProxy.size.width
                                 let distanceToLeft = value.location.x
                                 
-                                // Update horizontal offset so dynamicTitle follows finger
-                                // (Choose whichever makes sense for your design)
                                 self.horizontalOffset = distanceToLeft - (screenWidth / 2)
                                 
-                                // Attempt to fetch the date at this x-position
                                 if let date: Date = proxy.value(atX: locationXOnChart) {
                                     // Find the closest data point in filteredChartData
                                     if let closest = filteredChartData.min(by: {
                                         abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
                                     }) {
-                                        // Update selected date & balance
                                         self.selectedDate = closest.date
                                         self.selectedBalance = closest.balance
                                     }
                                 }
                             }
                             .onEnded { _ in
-                                // Once drag ends, revert to the default titles
                                 isInteracting = false
-                                
-                                // Optionally reset offset, or keep it where it ended
-                                // self.horizontalOffset = 0
                             }
                     )
             }
         })
+    }
+    
+    
+    // MARK: - Chart (bar)
+    struct chartBar: View {
+        var occurrences: [TransactionOccurrence]
+
+        var body: some View {
+            let totalCredits = occurrences
+                .map { $0.transaction?.amount ?? 0 }
+                .filter { $0 > 0 }
+                .reduce(0, +)
+            
+            let totalDebits = occurrences
+                .map { $0.transaction?.amount ?? 0 }
+                .filter { $0 < 0 }
+                .reduce(0, +)
+
+            Chart {
+                BarMark(
+                    x: .value("Type", "Credits"),
+                    y: .value("Amount", totalCredits)
+                )
+                .foregroundStyle(.green)
+                
+                BarMark(
+                    x: .value("Type", "Debits"),
+                    y: .value("Amount", abs(totalDebits))
+                )
+                .foregroundStyle(.red)
+            }
+            .frame(height: 180)
+            .chartYAxis {
+                AxisMarks(position: .leading)
+            }
+            .padding()
+        }
     }
     
     
@@ -431,6 +472,13 @@ struct MainView: View {
         }
         
         return transactionOccurrences + otherTypeOccurrences
+    }
+    
+    
+    private var visibleOccurrencesForPeriod: [TransactionOccurrence] {
+        allOccurrences.filter {
+            $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame
+        }
     }
     
     
