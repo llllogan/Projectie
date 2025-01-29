@@ -77,6 +77,9 @@ struct MainView: View {
                         Button(action: { activeSheet = .addTransaction }) {
                             Label("Add transaction", systemImage: "creditcard")
                         }
+                        Button(action: { activeSheet = .addTransaction }) {
+                            Label("Add interest", systemImage: "dollarsign.circle.fill")
+                        }
                         Button(action: { activeSheet = .addGoal }) {
                             Label("Add goal", systemImage: "trophy")
                         }
