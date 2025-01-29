@@ -544,7 +544,7 @@ struct MainView: View {
     private func earliestDateWhenGoalIsMet(_ targetAmount: Double) -> Date? {
         let sortedOccurrences = allOccurrences.sorted(by: { $0.date < $1.date })
         
-        let latestResetBeforeNow = allBalanceResets.last(where: { $0.date <= Date() })
+        let latestResetBeforeNow = allBalanceResets.first(where: { $0.date <= Date() })
         
         var runningBalance: Double
         var lastResetDate: Date
@@ -564,8 +564,6 @@ struct MainView: View {
         
         if runningBalance >= targetAmount {
             return Date()
-        } else {
-            print("\(runningBalance) < \(targetAmount)")
         }
         
         let futureOccurrences = sortedOccurrences.filter { $0.date > Date() }
