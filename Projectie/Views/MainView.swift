@@ -26,6 +26,7 @@ struct MainView: View {
     
     @State private var selectedChartStyle: ChartViewStyle = .line
     @State private var selectedTimeFrame: TimeFrame = .month
+    @State private var selectedBottomView: BottomViewChoice = .transactions
     @State private var selectedBalance: Double? = nil
     @State private var selectedDate: Date? = nil
     @State private var selectedTransaction: Transaction?
@@ -86,7 +87,17 @@ struct MainView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
                         Button(action: { activeSheet = .resetBalance }) {
-                            Label("Reset Balance", systemImage: "dollarsign.arrow.trianglehead.counterclockwise.rotate.90")
+                            Label("Correct Balance", systemImage: "dollarsign.arrow.trianglehead.counterclockwise.rotate.90")
+                        }
+                        Menu {
+                            Picker("Graph Style", selection: $selectedChartStyle) {
+                                Label("Line", systemImage: "chart.xyaxis.line")
+                                    .tag(ChartViewStyle.line)
+                                Label("Bar", systemImage: "chart.bar.xaxis")
+                                    .tag(ChartViewStyle.bar)
+                            }
+                        } label: {
+                            Text("Graph Style")
                         }
                     } label: {
                         Image(systemName: "gearshape.fill")
@@ -265,8 +276,37 @@ struct MainView: View {
     private var chartControlls: some View {
         
         HStack {
+            
+            Menu {
+                Picker("", selection: $selectedBottomView) {
+                    ForEach(BottomViewChoice.allCases, id: \.self) { choice in
+                        Text(choice.rawValue.capitalized).tag(choice)
+                            .lineLimit(1)
+                    }
+                }
+            } label: {
+                Button(action: { }) {
+                    HStack(alignment: .center, spacing: 4) {
+                        Text(selectedBottomView.rawValue.capitalized)
+                            .lineLimit(1)
+                            .font(.title2)
+                            .fontWeight(.bold)
+                        Image(systemName: "chevron.down")
+                            .font(.body)
+                            .fontWeight(.bold)
+                    }
+                }
+                .buttonStyle(.plain)
+                .tint(.primary)
+            }
+
+            Spacer()
+
+            
+            
             HStack(spacing: 6) {
-                Text("Show")
+                Text("Date Range")
+                    .foregroundStyle(.secondary)
                 Menu {
                     Picker("", selection: $selectedTimeFrame) {
                         ForEach(TimeFrame.allCases, id: \.self) { frame in
@@ -284,50 +324,29 @@ struct MainView: View {
                 }
             }
             
-
-            HStack(spacing: 6) {
-                Text("Chart")
-                Menu {
-                    Button(action: {selectedChartStyle = .line} ) {
-                        Label("Line", systemImage: "chart.xyaxis.line")
-                    }
-                    Button(action: {selectedChartStyle = .bar} ) {
-                        Label("Bar", systemImage: "chart.bar.xaxis")
-                    }
-                } label: {
-                    Button(action: { }) {
-                        Text(selectedChartStyle.rawValue.capitalized)
-                            .lineLimit(1)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(.primary)
-                }
-
-            }
             
+//            Spacer()
             
-            Spacer()
-            
-            // Previous
-            Button(action: {
-                changeDate(by: -1)
-            }) {
-                Image(systemName: "chevron.left")
-            }
-            .buttonBorderShape(.circle)
-            .buttonStyle(.bordered)
-            .tint(.primary)
-            
-            // Next
-            Button(action: {
-                changeDate(by: 1)
-            }) {
-                Image(systemName: "chevron.right")
-                    .tint(.primary)
-            }
-            .buttonBorderShape(.circle)
-            .buttonStyle(.bordered)
-            .tint(.primary)
+//            // Previous
+//            Button(action: {
+//                changeDate(by: -1)
+//            }) {
+//                Image(systemName: "chevron.left")
+//            }
+//            .buttonBorderShape(.circle)
+//            .buttonStyle(.bordered)
+//            .tint(.primary)
+//            
+//            // Next
+//            Button(action: {
+//                changeDate(by: 1)
+//            }) {
+//                Image(systemName: "chevron.right")
+//                    .tint(.primary)
+//            }
+//            .buttonBorderShape(.circle)
+//            .buttonStyle(.bordered)
+//            .tint(.primary)
         }
         .padding(.horizontal)
     }
@@ -692,6 +711,11 @@ struct TransactionOccurrence: Identifiable {
         }
 
     }
+}
+
+enum BottomViewChoice: String, CaseIterable {
+    case transactions
+    case goals
 }
 
 enum TimeFrame: String, CaseIterable {
