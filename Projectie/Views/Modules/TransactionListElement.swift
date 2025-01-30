@@ -90,6 +90,10 @@ struct TransactionListElement: View {
             return transaction.recurrenceFrequency!.rawValue
         }
         
+        if (transaction.recurrenceInterval == 2 && transaction.recurrenceFrequency == .weekly) {
+            return "Fortnightly"
+        }
+        
         let pluralizedFrequency: String
         
         switch transaction.recurrenceFrequency! {

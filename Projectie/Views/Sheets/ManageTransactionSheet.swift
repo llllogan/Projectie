@@ -249,6 +249,10 @@ struct ManageTransactionSheet: View {
             }
         }
         
+        if (transaction.recurrenceInterval == 2 && transaction.recurrenceFrequency == .weekly) {
+            return "Fortnightly"
+        }
+        
         switch transaction.recurrenceFrequency {
         case .daily:
             return "\(transaction.recurrenceInterval) Days"

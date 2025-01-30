@@ -41,6 +41,9 @@ struct MainView: View {
     
     @State private var activeSheet: ActiveSheet?
     
+    @State private var filteredChartData: [(date: Date, balance: Double)] = []
+
+    
     
     
     
@@ -70,10 +73,14 @@ struct MainView: View {
             }
             .onAppear {
                 updateCurrentStartDate()
+                recalculateChartDataPoints()
             }
             .onChange(of: selectedTimeFrame) { _, newValue in
                 updateCurrentStartDate()
+                recalculateChartDataPoints()
             }
+            .onChange(of: transactions) { _, newValue in recalculateChartDataPoints() }
+            .onChange(of: allBalanceResets) { _, newValue in recalculateChartDataPoints() }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
@@ -155,8 +162,7 @@ struct MainView: View {
                 }
                 .padding(.horizontal)
             } else {
-                if let selectedDate = selectedDate,
-                   let selectedBalance = selectedBalance {
+                if let selectedDate = selectedDate, let selectedBalance = selectedBalance {
                     VStack(alignment: .center, spacing: 4) {
                         Text("\(selectedDate, style: .date)")
                             .fontWeight(.semibold)
@@ -174,7 +180,7 @@ struct MainView: View {
     }
     
     
-    
+    // MARK: - Chart Parent
     private var chart: some View {
         // TODO: make this look cool with animations
         
@@ -520,11 +526,43 @@ struct MainView: View {
     }
     
     
-    private var filteredChartData: [(date: Date, balance: Double)] {
+    private var endOfRangeBalance: Double {
+        guard let lastDataPoint = filteredChartData.last else { return 0.0 }
+        return lastDataPoint.balance
+    }
+    
+    
+    private var endDateForCurrentTimeFrame: Date {
+        switch selectedTimeFrame {
+        case .week:
+            return Calendar.current.date(byAdding: .weekOfYear, value: 1, to: currentStartDate) ?? currentStartDate
+        case .month:
+            return Calendar.current.date(byAdding: .month, value: 1, to: currentStartDate) ?? currentStartDate
+        case .year:
+            return Calendar.current.date(byAdding: .year, value: 1, to: currentStartDate) ?? currentStartDate
+        }
+    }
+    
+    
+    
+    
+    
+    
+    // MARK: - Helper Function
+    
+    private func recalculateChartDataPoints() {
         let calendar = Calendar.current
         
-        let sortedTransactions = allOccurrences.sorted { $0.date < $1.date }
-        let sortedResets = allBalanceResets.sorted { $0.date < $1.date }
+        let occurencesWithinTimeScale = allOccurrences.filter {
+            $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame
+        }
+        
+        let resetsWithinTImeScale = allBalanceResets.filter {
+            $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame
+        }
+        
+        let sortedTransactions = occurencesWithinTimeScale.sorted { $0.date < $1.date }
+        let sortedResets = resetsWithinTImeScale.sorted { $0.date < $1.date }
         
         let latestResetBeforeStart = sortedResets.last(where: { $0.date <= currentStartDate })
         
@@ -544,15 +582,12 @@ struct MainView: View {
             runningBalance += txn.transaction?.amount ?? 0
         }
         
-        let resetsWithinTimeFrame = sortedResets.filter { $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame }
-        let transactionsWithinTimeFrame = sortedTransactions.filter { $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame }
-        
         let transactionsByDay = Dictionary(
-            grouping: transactionsWithinTimeFrame
+            grouping: sortedTransactions
         ) { calendar.startOfDay(for: $0.date) }
         
         let resetsByDay = Dictionary(
-            grouping: resetsWithinTimeFrame
+            grouping: sortedResets
         ) { calendar.startOfDay(for: $0.date) }
         
         var dataPoints: [(date: Date, balance: Double)] = []
@@ -583,33 +618,9 @@ struct MainView: View {
             }
         }
         
-        return dataPoints
+        filteredChartData = dataPoints
     }
-    
-    
-    private var endOfRangeBalance: Double {
-        guard let lastDataPoint = filteredChartData.last else { return 0.0 }
-        return lastDataPoint.balance
-    }
-    
-    
-    private var endDateForCurrentTimeFrame: Date {
-        switch selectedTimeFrame {
-        case .week:
-            return Calendar.current.date(byAdding: .weekOfYear, value: 1, to: currentStartDate) ?? currentStartDate
-        case .month:
-            return Calendar.current.date(byAdding: .month, value: 1, to: currentStartDate) ?? currentStartDate
-        case .year:
-            return Calendar.current.date(byAdding: .year, value: 1, to: currentStartDate) ?? currentStartDate
-        }
-    }
-    
-    
-    
-    
-    
-    
-    // MARK: - Helper Function
+
     
     private func earliestDateWhenGoalIsMet(_ targetAmount: Double) -> Date? {
         let sortedOccurrences = allOccurrences.sorted(by: { $0.date < $1.date })
