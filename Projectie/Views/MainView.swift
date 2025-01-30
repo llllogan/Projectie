@@ -61,7 +61,7 @@ struct MainView: View {
                 
                 chartControlls
                 
-                transactionList
+                bottomList
                 
 //                TabView {
 //                    transactionList
@@ -402,6 +402,21 @@ struct MainView: View {
     }
     
     
+    
+    // MARK: - Bottom List Parent
+    private var bottomList: some View {
+        
+        return Section {
+            if (selectedBottomView == .goals) {
+                goalList
+            } else {
+                transactionList
+            }
+        }
+        
+    }
+    
+    
     // MARK: - Transaction List
     private var transactionList: some View {
         List {
@@ -551,6 +566,7 @@ struct MainView: View {
     // MARK: - Helper Function
     
     private func recalculateChartDataPoints() {
+        
         let calendar = Calendar.current
         
         let occurencesWithinTimeScale = allOccurrences.filter {
