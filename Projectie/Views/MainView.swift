@@ -63,13 +63,6 @@ struct MainView: View {
                 
                 bottomList
                 
-//                TabView {
-//                    transactionList
-//                    goalList
-//                }
-//                .tabViewStyle(.page(indexDisplayMode: .automatic))
-//                .ignoresSafeArea(edges: .bottom)
-                
             }
             .onAppear {
                 updateCurrentStartDate()
@@ -419,16 +412,7 @@ struct MainView: View {
     
     // MARK: - Transaction List
     private var transactionList: some View {
-        List {
-            ForEach(visibleGroupedOccurrences, id: \.key) { (date, occurrences) in
-                Section(header: Text(date, style: .date)) {
-                    transactionListDayOrganiser(occurenceList: occurrences, onTransactionSelected: { transaction in
-                        activeSheet = .manageTransaction(transaction, date)
-                    })
-                }
-            }
-        }
-        .safeAreaPadding(.bottom, 40)
+        TransactionListView(groupedOccurrences: groupedOccurrences(rangeOffset: .none), activeSheet: $activeSheet)
     }
 
     
@@ -503,27 +487,6 @@ struct MainView: View {
     }
     
     
-    
-    /// Only the occurrences (transactions + resets) whose date is visible in the current chart range
-    private var visibleGroupedOccurrences: [(key: Date, value: [TransactionOccurrence])] {
-        let calendar = Calendar.current
-
-        // 1) Filter all occurrences to just the date range
-        let visibleOccurrences = allOccurrences.filter {
-            $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame
-        }
-        
-        // 2) Group them by day
-        let grouped = Dictionary(grouping: visibleOccurrences) { occ in
-            calendar.startOfDay(for: occ.date)
-        }
-        
-        // 3) Sort by day
-        return grouped
-            .sorted { $0.key < $1.key }
-    }
-    
-    
     private var currentBalance: Double {
         guard let reset = mostRecentReset else {
             // If no reset exists, fall back to using openingBalance
@@ -564,6 +527,71 @@ struct MainView: View {
     
     
     // MARK: - Helper Function
+    
+    func groupedOccurrences(rangeOffset: RangeOffset) -> [(key: Date, value: [TransactionOccurrence])] {
+        let calendar = Calendar.current
+        
+        // 1. Convert the enum into an integer offset
+        let offsetValue = rangeOffset.rawValue
+
+        // 2. Determine the “base” start date — e.g., currentStartDate
+        //    and your “base” end date — e.g., endDateForCurrentTimeFrame.
+        //    (The code below references variables from your existing code, like selectedTimeFrame.)
+        
+        // Existing “currentStartDate” for the 'none' offset
+        var offsetStartDate = currentStartDate
+        // Existing “endDateForCurrentTimeFrame” for the 'none' offset
+        var offsetEndDate   = endDateForCurrentTimeFrame
+
+        // 3. Shift the start/end date based on your selectedTimeFrame + offsetValue
+        switch selectedTimeFrame {
+        case .week:
+            // Move the start date by N weeks
+            if let newStart = calendar.date(byAdding: .weekOfYear, value: offsetValue, to: currentStartDate) {
+                offsetStartDate = newStart
+            }
+            
+            // Then recalculate the end date from that new start date
+            // For example: 1 week from offsetStartDate
+            if let newEnd = calendar.date(byAdding: .weekOfYear, value: 1, to: offsetStartDate) {
+                offsetEndDate = newEnd
+            }
+
+        case .month:
+            if let newStart = calendar.date(byAdding: .month, value: offsetValue, to: currentStartDate) {
+                offsetStartDate = newStart
+            }
+            // 1 month from offsetStartDate
+            if let newEnd = calendar.date(byAdding: .month, value: 1, to: offsetStartDate) {
+                offsetEndDate = newEnd
+            }
+
+        case .year:
+            if let newStart = calendar.date(byAdding: .year, value: offsetValue, to: currentStartDate) {
+                offsetStartDate = newStart
+            }
+            // 1 year from offsetStartDate
+            if let newEnd = calendar.date(byAdding: .year, value: 1, to: offsetStartDate) {
+                offsetEndDate = newEnd
+            }
+        }
+
+        // 4. Filter occurrences that lie within this shifted range
+        let visibleOccurrences = allOccurrences.filter {
+            $0.date >= offsetStartDate && $0.date <= offsetEndDate
+        }
+
+        // 5. Group by start of day
+        let grouped = Dictionary(grouping: visibleOccurrences) { occ in
+            calendar.startOfDay(for: occ.date)
+        }
+
+        // 6. Return them sorted by day
+        return grouped
+            .sorted { $0.key < $1.key }
+    }
+    
+    
     
     private func recalculateChartDataPoints() {
         
@@ -816,6 +844,16 @@ enum ActiveSheet: Identifiable {
     var id: Int {
         UUID().hashValue
     }
+}
+
+enum RangeOffset: Int {
+    case minus3 = -3
+    case minus2 = -2
+    case minus1 = -1
+    case none   =  0
+    case plus1  =  1
+    case plus2  =  2
+    case plus3  =  3
 }
 
 enum OccurrenceType {

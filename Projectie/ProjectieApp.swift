@@ -13,7 +13,7 @@ struct ProjectieApp: App {
 
     var body: some Scene {
         WindowGroup {
-            CustomPagingView()
+            MainView()
                 .modelContainer(for: [Transaction.self, BalanceReset.self, Goal.self])
         }
     }
