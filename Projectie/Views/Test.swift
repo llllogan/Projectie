@@ -17,12 +17,15 @@ import Foundation
 
 struct CustomPagingView: View {
     
-    @State private var xOffset: CGFloat = 0
-    
     @State private var today: Date = Date()
     @State private var timeFrameOffset: Int = 0
+    @State private var directionToMoveInTime: Int = 0
     
     @State private var mainID: Int?
+    
+    @State private var swipeStartIndex: Int = 0
+    @State private var swipeEndIndex: Int = 0
+    @State private var overwriteSwipeIndexStart: Bool = true
     
     
     var body: some View {
@@ -32,45 +35,61 @@ struct CustomPagingView: View {
                     Image(systemName: "progress.indicator")
                         .symbolEffect(.variableColor.iterative.dimInactiveLayers.nonReversing, options: .repeat(.continuous))
                     
-                    MockCircleView(item: ItemBalls(title: "Item 1"))
-                    .id(-2)
-                    .scrollTransition { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0.5)
-                            .blur(radius: phase.isIdentity ? 0 : 20)
-                    }
+                    MockCircleView(item: ItemBalls(title: "One", timeFrameOffset: timeFrameOffset - 3))
+                        .id(-3)
+                        .scrollTransition { content, phase in
+                            content
+                                .opacity(phase.isIdentity ? 1 : 0.5)
+                                .blur(radius: phase.isIdentity ? 0 : 20)
+                        }
                     
-                    MockCircleView(item: ItemBalls(title: "Item 2"))
-                    .id(-1)
-                    .scrollTransition { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0.5)
-                            .blur(radius: phase.isIdentity ? 0 : 20)
-                    }
+                    MockCircleView(item: ItemBalls(title: "Two", timeFrameOffset: timeFrameOffset - 2))
+                        .id(-2)
+                        .scrollTransition { content, phase in
+                            content
+                                .opacity(phase.isIdentity ? 1 : 0.5)
+                                .blur(radius: phase.isIdentity ? 0 : 20)
+                        }
                     
-                    MockCircleView(item: ItemBalls(title: "Item 3"))
-                    .id(0)
-                    .scrollTransition { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0.5)
-                            .blur(radius: phase.isIdentity ? 0 : 20)
-                    }
+                    MockCircleView(item: ItemBalls(title: "Three", timeFrameOffset: timeFrameOffset - 1))
+                        .id(-1)
+                        .scrollTransition { content, phase in
+                            content
+                                .opacity(phase.isIdentity ? 1 : 0.5)
+                                .blur(radius: phase.isIdentity ? 0 : 20)
+                        }
                     
-                    MockCircleView(item: ItemBalls(title: "Item 4"))
-                    .id(1)
-                    .scrollTransition { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0.5)
-                            .blur(radius: phase.isIdentity ? 0 : 20)
-                    }
+                    MockCircleView(item: ItemBalls(title: "Four", timeFrameOffset: timeFrameOffset))
+                        .id(0)
+                        .scrollTransition { content, phase in
+                            content
+                                .opacity(phase.isIdentity ? 1 : 0.5)
+                                .blur(radius: phase.isIdentity ? 0 : 20)
+                        }
                     
-                    MockCircleView(item: ItemBalls(title: "Item 5"))
-                    .id(2)
-                    .scrollTransition { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0.5)
-                            .blur(radius: phase.isIdentity ? 0 : 20)
-                    }
+                    MockCircleView(item: ItemBalls(title: "Five", timeFrameOffset: timeFrameOffset + 1))
+                        .id(1)
+                        .scrollTransition { content, phase in
+                            content
+                                .opacity(phase.isIdentity ? 1 : 0.5)
+                                .blur(radius: phase.isIdentity ? 0 : 20)
+                        }
+                    MockCircleView(item: ItemBalls(title: "Four", timeFrameOffset: timeFrameOffset + 2))
+                        .id(2)
+                        .scrollTransition { content, phase in
+                            content
+                                .opacity(phase.isIdentity ? 1 : 0.5)
+                                .blur(radius: phase.isIdentity ? 0 : 20)
+                        }
+                    
+                    MockCircleView(item: ItemBalls(title: "Five", timeFrameOffset: timeFrameOffset + 3))
+                        .id(3)
+                        .scrollTransition { content, phase in
+                            content
+                                .opacity(phase.isIdentity ? 1 : 0.5)
+                                .blur(radius: phase.isIdentity ? 0 : 20)
+                        }
+
                     
                     Image(systemName: "progress.indicator")
                         .symbolEffect(.variableColor.iterative.dimInactiveLayers.nonReversing, options: .repeat(.continuous))
@@ -82,6 +101,10 @@ struct CustomPagingView: View {
                 print("Scroll phase: \(newPhase)")
                 if (newPhase == .idle) {
                     mainID = 0
+                    overwriteSwipeIndexStart = true
+                    directionToMoveInTime = swipeEndIndex - swipeStartIndex
+                    timeFrameOffset += directionToMoveInTime
+                    directionToMoveInTime = 0
                 }
             }
             .scrollTargetBehavior(.viewAligned)
@@ -93,7 +116,8 @@ struct CustomPagingView: View {
             }
             
             
-            Text("\(mainID ?? 99)")
+            Text("ID of cirelce: \(mainID ?? 99)")
+            Text("Time frame offset: \(timeFrameOffset)")
             
             Text("\(today, format: .dateTime.day().month().year())")
         }
@@ -107,13 +131,16 @@ struct CustomPagingView: View {
             return
         }
         
-        if (newValue > oldValue) {
-            print("Going from \(oldValue) to \(newValue). Moving Forwards")
-            today = calendar.date(byAdding: .day, value: 1, to: today)!
-        } else {
-            print("Going from \(oldValue) to \(newValue). Moving Backwards")
-            today = calendar.date(byAdding: .day, value: -1, to: today)!
+        print("Going from \(oldValue) to \(newValue). Moving \(newValue > oldValue ? "Forwards" : "Backwards")")
+        
+        today = calendar.date(byAdding: .day, value: newValue - oldValue, to: today)!
+        
+        if (overwriteSwipeIndexStart) {
+            swipeStartIndex = oldValue
+            overwriteSwipeIndexStart = false
         }
+        swipeEndIndex = newValue
+//        directionToMoveInTime = newValue - oldValue
         
     }
 }
@@ -128,9 +155,14 @@ struct MockCircleView: View {
             Circle()
                 .fill(Color.blue)
                 .containerRelativeFrame(.horizontal, count: 1, spacing: 16)
-            Text(item.title)
-                .font(.headline)
-                .foregroundColor(.white)
+            VStack {
+                Text(item.title)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                Text("\(item.timeFrameOffset)")
+                    .font(.largeTitle)
+                    .foregroundColor(.white)
+            }
         }
     }
 }
@@ -138,6 +170,7 @@ struct MockCircleView: View {
 struct ItemBalls: Identifiable {
     let id = UUID()
     let title: String
+    let timeFrameOffset: Int
 }
 
 
