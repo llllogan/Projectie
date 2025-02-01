@@ -43,7 +43,15 @@ struct MainView: View {
     
     @State private var filteredChartData: [(date: Date, balance: Double)] = []
     
-    @State private var mainID: Int?
+    @State private var centeredTransactionViewId: Int?
+    
+    
+    @State private var transactionListMinus2: [(key: Date, value: [TransactionOccurrence])]?
+    @State private var transactionListMinus1: [(key: Date, value: [TransactionOccurrence])]?
+    @State private var transactionListToday: [(key: Date, value: [TransactionOccurrence])]?
+    @State private var transactionListPlus1: [(key: Date, value: [TransactionOccurrence])]?
+    @State private var transactionListPlus2: [(key: Date, value: [TransactionOccurrence])]?
+    
 
     
     
@@ -69,6 +77,7 @@ struct MainView: View {
             .onAppear {
                 updateCurrentStartDate()
                 recalculateChartDataPoints()
+                populateTransactionLists()
             }
             .onChange(of: selectedTimeFrame) { _, newValue in
                 updateCurrentStartDate()
@@ -417,21 +426,21 @@ struct MainView: View {
 
         ScrollView(.horizontal) {
             HStack {
-                TransactionListView(groupedOccurrences: groupedOccurrences(rangeOffset: .minus1), activeSheet: $activeSheet)
+                TransactionListView(groupedOccurrences: transactionListMinus1 ?? [], activeSheet: $activeSheet)
                     .id(-1)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
                             .blur(radius: phase.isIdentity ? 0 : 20)
                     }
-                TransactionListView(groupedOccurrences: groupedOccurrences(rangeOffset: .none), activeSheet: $activeSheet)
+                TransactionListView(groupedOccurrences: transactionListToday ?? [], activeSheet: $activeSheet)
                     .id(0)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
                             .blur(radius: phase.isIdentity ? 0 : 20)
                     }
-                TransactionListView(groupedOccurrences: groupedOccurrences(rangeOffset: .plus1), activeSheet: $activeSheet)
+                TransactionListView(groupedOccurrences: transactionListPlus1 ?? [], activeSheet: $activeSheet)
                     .id(1)
                     .scrollTransition { content, phase in
                         content
@@ -443,7 +452,7 @@ struct MainView: View {
         }
         .scrollTargetBehavior(.viewAligned)
         .defaultScrollAnchor(.center)
-        .scrollPosition(id: $mainID, anchor: .center)
+        .scrollPosition(id: $centeredTransactionViewId, anchor: .center)
         .scrollIndicators(.never)
         
     }
@@ -560,6 +569,17 @@ struct MainView: View {
     
     
     // MARK: - Helper Function
+    
+    func populateTransactionLists() {
+        
+        transactionListMinus2 = groupedOccurrences(rangeOffset: .minus2)
+        transactionListMinus1 = groupedOccurrences(rangeOffset: .minus1)
+        transactionListToday = groupedOccurrences(rangeOffset: .none)
+        transactionListPlus1 = groupedOccurrences(rangeOffset: .plus1)
+        transactionListPlus2 = groupedOccurrences(rangeOffset: .plus2)
+        
+    }
+    
     
     func groupedOccurrences(rangeOffset: RangeOffset) -> [(key: Date, value: [TransactionOccurrence])] {
         let calendar = Calendar.current
