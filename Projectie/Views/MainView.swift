@@ -52,6 +52,15 @@ struct MainView: View {
     @State private var transactionListPlus1: [(key: Date, value: [TransactionOccurrence])]?
     @State private var transactionListPlus2: [(key: Date, value: [TransactionOccurrence])]?
     
+    
+    @State private var today: Date = Date()
+    @State private var timeFrameOffset: Int = 0
+    @State private var directionToMoveInTime: Int = 0
+    
+    @State private var swipeStartIndex: Int = 0
+    @State private var swipeEndIndex: Int = 0
+    @State private var overwriteSwipeIndexStart: Bool = true
+    
 
     
     
@@ -469,6 +478,21 @@ struct MainView: View {
         .defaultScrollAnchor(.center)
         .scrollPosition(id: $centeredTransactionViewId, anchor: .center)
         .scrollIndicators(.never)
+        .onScrollPhaseChange { _, newPhase in
+            print("Scroll phase: \(newPhase)")
+            if (newPhase == .idle) {
+                centeredTransactionViewId = 0
+                overwriteSwipeIndexStart = true
+                directionToMoveInTime = swipeEndIndex - swipeStartIndex
+//                timeFrameOffset += directionToMoveInTime
+                changeDate(by: directionToMoveInTime)
+                populateTransactionLists()
+                directionToMoveInTime = 0
+            }
+        }
+        .onChange(of: centeredTransactionViewId ?? 0) { oldValue, newValue in
+            handleChangeOfScrollView(oldValue: oldValue, newValue: newValue)
+        }
         
     }
 
@@ -584,6 +608,26 @@ struct MainView: View {
     
     
     // MARK: - Helper Function
+    
+    func handleChangeOfScrollView(oldValue: Int, newValue: Int) {
+        
+//        let calendar = Calendar.current
+        
+        if (newValue == 0) {
+            return
+        }
+        
+        print("Going from \(oldValue) to \(newValue). Moving \(newValue > oldValue ? "Forwards" : "Backwards")")
+        
+//        today = calendar.date(byAdding: .day, value: newValue - oldValue, to: today)!
+        
+        if (overwriteSwipeIndexStart) {
+            swipeStartIndex = oldValue
+            overwriteSwipeIndexStart = false
+        }
+        swipeEndIndex = newValue
+    }
+    
     
     func populateTransactionLists() {
         
