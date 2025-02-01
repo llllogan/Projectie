@@ -426,6 +426,13 @@ struct MainView: View {
 
         ScrollView(.horizontal) {
             HStack {
+                TransactionListView(groupedOccurrences: transactionListMinus2 ?? [], activeSheet: $activeSheet)
+                    .id(-2)
+                    .scrollTransition { content, phase in
+                        content
+                            .opacity(phase.isIdentity ? 1 : 0.5)
+                            .blur(radius: phase.isIdentity ? 0 : 20)
+                    }
                 TransactionListView(groupedOccurrences: transactionListMinus1 ?? [], activeSheet: $activeSheet)
                     .id(-1)
                     .scrollTransition { content, phase in
@@ -447,6 +454,14 @@ struct MainView: View {
                             .opacity(phase.isIdentity ? 1 : 0.5)
                             .blur(radius: phase.isIdentity ? 0 : 20)
                     }
+                TransactionListView(groupedOccurrences: transactionListPlus2 ?? [], activeSheet: $activeSheet)
+                    .id(2)
+                    .scrollTransition { content, phase in
+                        content
+                            .opacity(phase.isIdentity ? 1 : 0.5)
+                            .blur(radius: phase.isIdentity ? 0 : 20)
+                    }
+
             }
             .scrollTargetLayout()
         }
