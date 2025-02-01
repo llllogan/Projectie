@@ -24,6 +24,35 @@ struct TransactionListView: View {
                 }
             }
         }
-        .safeAreaPadding(.bottom, 40)
+        .containerRelativeFrame(.horizontal, count: 1, spacing: 0)
+    }
+}
+
+struct transactionListDayOrganiser: View {
+    
+    var occurenceList: [TransactionOccurrence]
+    
+    var onTransactionSelected: (Transaction) -> Void = { _ in }
+    
+    var body: some View {
+        
+        ForEach(occurenceList) { occ in
+            
+            switch occ.type {
+            case .transaction(let txn):
+                TransactionListElement(
+                    transaction: txn,
+                    overrideDate: occ.date
+                )
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    onTransactionSelected(occ.transaction!)
+                }
+            case .reset(let rst):
+                BalanceResetListElement(reset: rst)
+            }
+            
+        }
+        
     }
 }

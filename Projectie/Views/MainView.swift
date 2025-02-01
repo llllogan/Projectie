@@ -42,6 +42,8 @@ struct MainView: View {
     @State private var activeSheet: ActiveSheet?
     
     @State private var filteredChartData: [(date: Date, balance: Double)] = []
+    
+    @State private var mainID: Int?
 
     
     
@@ -412,7 +414,38 @@ struct MainView: View {
     
     // MARK: - Transaction List
     private var transactionList: some View {
-        TransactionListView(groupedOccurrences: groupedOccurrences(rangeOffset: .none), activeSheet: $activeSheet)
+
+        ScrollView(.horizontal) {
+            HStack {
+                TransactionListView(groupedOccurrences: groupedOccurrences(rangeOffset: .minus1), activeSheet: $activeSheet)
+                    .id(-1)
+                    .scrollTransition { content, phase in
+                        content
+                            .opacity(phase.isIdentity ? 1 : 0.5)
+                            .blur(radius: phase.isIdentity ? 0 : 20)
+                    }
+                TransactionListView(groupedOccurrences: groupedOccurrences(rangeOffset: .none), activeSheet: $activeSheet)
+                    .id(0)
+                    .scrollTransition { content, phase in
+                        content
+                            .opacity(phase.isIdentity ? 1 : 0.5)
+                            .blur(radius: phase.isIdentity ? 0 : 20)
+                    }
+                TransactionListView(groupedOccurrences: groupedOccurrences(rangeOffset: .plus1), activeSheet: $activeSheet)
+                    .id(1)
+                    .scrollTransition { content, phase in
+                        content
+                            .opacity(phase.isIdentity ? 1 : 0.5)
+                            .blur(radius: phase.isIdentity ? 0 : 20)
+                    }
+            }
+            .scrollTargetLayout()
+        }
+        .scrollTargetBehavior(.viewAligned)
+        .defaultScrollAnchor(.center)
+        .scrollPosition(id: $mainID, anchor: .center)
+        .scrollIndicators(.never)
+        
     }
 
     
@@ -750,35 +783,6 @@ struct MainView: View {
 
 
 // MARK: - Supporting Types
-
-struct transactionListDayOrganiser: View {
-    
-    var occurenceList: [TransactionOccurrence]
-    
-    var onTransactionSelected: (Transaction) -> Void = { _ in }
-    
-    var body: some View {
-        
-        ForEach(occurenceList) { occ in
-            
-            switch occ.type {
-            case .transaction(let txn):
-                TransactionListElement(
-                    transaction: txn,
-                    overrideDate: occ.date
-                )
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    onTransactionSelected(occ.transaction!)
-                }
-            case .reset(let rst):
-                BalanceResetListElement(reset: rst)
-            }
-            
-        }
-        
-    }
-}
 
 struct TransactionOccurrence: Identifiable {
     
