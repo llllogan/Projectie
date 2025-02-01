@@ -91,9 +91,14 @@ struct MainView: View {
             .onChange(of: selectedTimeFrame) { _, newValue in
                 updateCurrentStartDate()
                 recalculateChartDataPoints()
+                populateTransactionLists()
             }
-            .onChange(of: transactions) { _, newValue in recalculateChartDataPoints() }
-            .onChange(of: allBalanceResets) { _, newValue in recalculateChartDataPoints() }
+            .onChange(of: transactions) { _, newValue in
+                recalculateChartDataPoints()
+            }
+            .onChange(of: allBalanceResets) { _, newValue in
+                recalculateChartDataPoints()
+            }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
@@ -386,30 +391,6 @@ struct MainView: View {
                     .tint(.primary)
                 }
             }
-            
-            
-//            Spacer()
-            
-//            // Previous
-//            Button(action: {
-//                changeDate(by: -1)
-//            }) {
-//                Image(systemName: "chevron.left")
-//            }
-//            .buttonBorderShape(.circle)
-//            .buttonStyle(.bordered)
-//            .tint(.primary)
-//            
-//            // Next
-//            Button(action: {
-//                changeDate(by: 1)
-//            }) {
-//                Image(systemName: "chevron.right")
-//                    .tint(.primary)
-//            }
-//            .buttonBorderShape(.circle)
-//            .buttonStyle(.bordered)
-//            .tint(.primary)
         }
         .padding(.horizontal)
     }
@@ -440,35 +421,35 @@ struct MainView: View {
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
-                            .blur(radius: phase.isIdentity ? 0 : 20)
+//                            .blur(radius: phase.isIdentity ? 0 : 20)
                     }
                 TransactionListView(groupedOccurrences: transactionListMinus1 ?? [], activeSheet: $activeSheet)
                     .id(-1)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
-                            .blur(radius: phase.isIdentity ? 0 : 20)
+//                            .blur(radius: phase.isIdentity ? 0 : 20)
                     }
                 TransactionListView(groupedOccurrences: transactionListToday ?? [], activeSheet: $activeSheet)
                     .id(0)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
-                            .blur(radius: phase.isIdentity ? 0 : 20)
+//                            .blur(radius: phase.isIdentity ? 0 : 20)
                     }
                 TransactionListView(groupedOccurrences: transactionListPlus1 ?? [], activeSheet: $activeSheet)
                     .id(1)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
-                            .blur(radius: phase.isIdentity ? 0 : 20)
+//                            .blur(radius: phase.isIdentity ? 0 : 20)
                     }
                 TransactionListView(groupedOccurrences: transactionListPlus2 ?? [], activeSheet: $activeSheet)
                     .id(2)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
-                            .blur(radius: phase.isIdentity ? 0 : 20)
+//                            .blur(radius: phase.isIdentity ? 0 : 20)
                     }
 
             }
@@ -484,7 +465,6 @@ struct MainView: View {
                 centeredTransactionViewId = 0
                 overwriteSwipeIndexStart = true
                 directionToMoveInTime = swipeEndIndex - swipeStartIndex
-//                timeFrameOffset += directionToMoveInTime
                 changeDate(by: directionToMoveInTime)
                 populateTransactionLists()
                 directionToMoveInTime = 0
@@ -839,6 +819,7 @@ struct MainView: View {
                 currentStartDate = newDate
             }
         }
+        recalculateChartDataPoints()
     }
     
     private func updateCurrentStartDate() {
