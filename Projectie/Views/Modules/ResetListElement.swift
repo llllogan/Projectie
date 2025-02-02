@@ -10,22 +10,51 @@ import SwiftUI
 struct BalanceResetListElement: View {
     
     @State var reset: BalanceReset
+    @Environment(\.modelContext) private var context
+    
     
     
     var body: some View {
-        VStack(spacing: 8) {
+        HStack(alignment: .bottom) {
             
-            Image(systemName: reset.isStartingBalance ? "banknote" : "dollarsign.arrow.trianglehead.counterclockwise.rotate.90")
-                .font(.title3)
+            Button(action: {
+                context.delete(reset)
+                try? context.save()
+            }) {
+                Image(systemName: "trash")
+                    .foregroundColor(.secondary)
+                    .font(.subheadline)
+            }
+            .buttonBorderShape(.circle)
+            .buttonStyle(.bordered)
+            
+            Spacer()
             
             
-            Text(reset.isStartingBalance ? "Starting Balance" : "Balance Reset")
-                .font(.headline)
-            
-            Text("$\(reset.balanceAtReset, format: .number.precision(.fractionLength(2)))")
-                .font(.title)
+            VStack(spacing: 8) {
+                
+                Image(systemName: reset.isStartingBalance ? "banknote" : "dollarsign.arrow.trianglehead.counterclockwise.rotate.90")
+                    .font(.title3)
+                
+                
+                Text(reset.isStartingBalance ? "Starting Balance" : "Balance Reset")
+                    .font(.headline)
+                
+                Text("$\(reset.balanceAtReset, format: .number.precision(.fractionLength(2)))")
+                    .font(.title)
 
+                
+            }
             
+            Spacer()
+            
+            Button(action: { }) {
+                Image(systemName: "pencil")
+                    .foregroundColor(.secondary)
+                    .font(.subheadline)
+            }
+            .buttonBorderShape(.circle)
+            .buttonStyle(.bordered)
         }
         .frame(maxWidth: .infinity)
     }
