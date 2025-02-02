@@ -133,7 +133,7 @@ struct MainView: View {
                                 .tag(ChartViewStyle.bar)
                         }
                     } label: {
-                        Image(systemName: "gearshape.fill")
+                        Image(systemName: "ellipsis.circle")
                             .tint(.primary)
                     }
                 }
@@ -179,10 +179,16 @@ struct MainView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Text("End of \(endOfNoun): $\(endOfRangeBalance, specifier: "%.2f")")
-                        .fontWeight(.semibold)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    ViewThatFits {
+                        Text("End of \(endOfNoun): $\(endOfRangeBalance, specifier: "%.2f")")
+                            .fontWeight(.semibold)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Text("End of \(endOfNounShort): $\(endOfRangeBalance, specifier: "%.2f")")
+                            .fontWeight(.semibold)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 .padding(.horizontal)
             } else {
@@ -523,6 +529,17 @@ struct MainView: View {
             return "week \(currentStartDate.formatted(.dateTime.week()))"
         case .month:
             return currentStartDate.formatted(.dateTime.month(.wide))
+        case .year:
+            return currentStartDate.formatted(.dateTime.year())
+        }
+    }
+    
+    private var endOfNounShort: String {
+        switch selectedTimeFrame {
+        case .week:
+            return "week \(currentStartDate.formatted(.dateTime.week()))"
+        case .month:
+            return currentStartDate.formatted(.dateTime.month(.abbreviated))
         case .year:
             return currentStartDate.formatted(.dateTime.year())
         }
