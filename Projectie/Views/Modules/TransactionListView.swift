@@ -25,6 +25,7 @@ struct TransactionListView: View {
             }
         }
         .containerRelativeFrame(.horizontal, count: 1, spacing: 0)
+        .defaultScrollAnchor(.top)
     }
 }
 

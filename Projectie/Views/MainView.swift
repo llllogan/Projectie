@@ -61,6 +61,10 @@ struct MainView: View {
     @State private var swipeEndIndex: Int = 0
     @State private var overwriteSwipeIndexStart: Bool = true
     
+    @State private var ignoreChangeInCenteredTransactionViewId: Bool = false
+    
+    @State private var isFirstLoadForTransactionList: Bool = true
+    
 
     
     
@@ -95,9 +99,11 @@ struct MainView: View {
             }
             .onChange(of: transactions) { _, newValue in
                 recalculateChartDataPoints()
+                populateTransactionLists()
             }
             .onChange(of: allBalanceResets) { _, newValue in
                 recalculateChartDataPoints()
+                populateTransactionLists()
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -462,12 +468,18 @@ struct MainView: View {
         .onScrollPhaseChange { _, newPhase in
             print("Scroll phase: \(newPhase)")
             if (newPhase == .idle) {
+                ignoreChangeInCenteredTransactionViewId = true
                 centeredTransactionViewId = 0
                 overwriteSwipeIndexStart = true
                 directionToMoveInTime = swipeEndIndex - swipeStartIndex
                 changeDate(by: directionToMoveInTime)
                 populateTransactionLists()
                 directionToMoveInTime = 0
+                
+                if (isFirstLoadForTransactionList) {
+                    ignoreChangeInCenteredTransactionViewId = false
+                    isFirstLoadForTransactionList = false
+                }
             }
         }
         .onChange(of: centeredTransactionViewId ?? 0) { oldValue, newValue in
@@ -591,15 +603,12 @@ struct MainView: View {
     
     func handleChangeOfScrollView(oldValue: Int, newValue: Int) {
         
-//        let calendar = Calendar.current
-        
-        if (newValue == 0) {
+        if (ignoreChangeInCenteredTransactionViewId) {
+            ignoreChangeInCenteredTransactionViewId = false
             return
         }
         
         print("Going from \(oldValue) to \(newValue). Moving \(newValue > oldValue ? "Forwards" : "Backwards")")
-        
-//        today = calendar.date(byAdding: .day, value: newValue - oldValue, to: today)!
         
         if (overwriteSwipeIndexStart) {
             swipeStartIndex = oldValue
