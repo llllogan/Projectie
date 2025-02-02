@@ -24,7 +24,8 @@ struct TransactionListElement: View {
                 .fill(transaction.getCategory()?.color ?? Color.gray)
                 .frame(width: lineThickness)
                 .frame(maxHeight: .infinity)
-                .padding(.trailing, 7)
+                .padding(.trailing, 5)
+                .padding(.vertical, 8)
             
             VStack(alignment: .leading) {
                 
