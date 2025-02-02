@@ -65,6 +65,8 @@ struct MainView: View {
     
     @State private var isFirstLoadForTransactionList: Bool = true
     
+    @State private var graphLinearStyle: Bool = true
+    
 
     
     
@@ -131,6 +133,11 @@ struct MainView: View {
                                 .tag(ChartViewStyle.line)
                             Label("Bar", systemImage: "chart.bar.xaxis")
                                 .tag(ChartViewStyle.bar)
+                        }
+                        Button(action: {
+                            graphLinearStyle.toggle()
+                        }) {
+                            Label("Line Interpolation Style", systemImage: "arrow.trianglehead.2.clockwise")
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -232,8 +239,10 @@ struct MainView: View {
         let minBalance = allBalances.min() ?? 0
         let maxBalance = allBalances.max() ?? 0
         
-        let chartMin = minBalance - (minBalance / 10)
-        let chartMax = maxBalance + (maxBalance / 10)
+        let chartMin = minBalance - (minBalance / 90)
+        let chartMax = maxBalance + (maxBalance / 90)
+        
+        print("Min balance: \(minBalance) Chart min: \(chartMin) Max balance: \(maxBalance) Chart max: \(chartMax)")
         
         let today = Date()
         let startDate = currentStartDate
@@ -270,6 +279,7 @@ struct MainView: View {
                     y: .value("Balance", dataPoint.balance)
                 )
                 .foregroundStyle(.blue)
+                .interpolationMethod(graphLinearStyle ? .linear : .stepEnd)
             }
         }
         .chartYAxis {
