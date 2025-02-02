@@ -17,7 +17,7 @@ struct TransactionListView: View {
         
         List {
             ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
-                Section(header: Text(date, style: .date)) {
+                Section(header: Text(date, format: .dateTime.weekday(.wide).day().month(.wide))) {
                     transactionListDayOrganiser(occurenceList: occurrences, onTransactionSelected: { transaction in
                         activeSheet = .manageTransaction(transaction, date)
                     })
