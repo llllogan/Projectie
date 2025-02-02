@@ -697,23 +697,15 @@ struct MainView: View {
     private func recalculateChartDataPoints() {
         
         let calendar = Calendar.current
-        
-        let occurencesWithinTimeScale = allOccurrences.filter {
-            $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame
-        }
-        
-        let resetsWithinTImeScale = allBalanceResets.filter {
-            $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame
-        }
-        
-        let sortedTransactions = occurencesWithinTimeScale.sorted { $0.date < $1.date }
-        let sortedResets = resetsWithinTImeScale.sorted { $0.date < $1.date }
-        
+
+        let sortedTransactions = allOccurrences.sorted { $0.date < $1.date }
+        let sortedResets = allBalanceResets.sorted { $0.date < $1.date }
+
         let latestResetBeforeStart = sortedResets.last(where: { $0.date <= currentStartDate })
-        
+
         var runningBalance: Double
         var lastResetDate: Date
-        
+
         if let reset = latestResetBeforeStart {
             runningBalance = reset.balanceAtReset
             lastResetDate = reset.date
@@ -721,24 +713,27 @@ struct MainView: View {
             runningBalance = openingBalance
             lastResetDate = Date.distantPast
         }
-        
+
         let transactionsBeforeStart = sortedTransactions.filter { $0.date > lastResetDate && $0.date < currentStartDate }
         for txn in transactionsBeforeStart {
             runningBalance += txn.transaction?.amount ?? 0
         }
+
+        let resetsWithinTimeFrame = sortedResets.filter { $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame }
+        let transactionsWithinTimeFrame = sortedTransactions.filter { $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame }
         
         let transactionsByDay = Dictionary(
-            grouping: sortedTransactions
+            grouping: transactionsWithinTimeFrame
         ) { calendar.startOfDay(for: $0.date) }
-        
+
         let resetsByDay = Dictionary(
-            grouping: sortedResets
+            grouping: resetsWithinTimeFrame
         ) { calendar.startOfDay(for: $0.date) }
-        
+
         var dataPoints: [(date: Date, balance: Double)] = []
         var currentDate = currentStartDate
         let endDate = endDateForCurrentTimeFrame
-        
+
         while currentDate <= endDate {
             // Apply any resets on this day
             if let todaysResets = resetsByDay[currentDate] {
@@ -746,15 +741,15 @@ struct MainView: View {
                     runningBalance = reset.balanceAtReset
                 }
             }
-            
+
             if let todaysTransactions = transactionsByDay[currentDate] {
                 for txn in todaysTransactions {
                     runningBalance += txn.transaction?.amount ?? 0
                 }
             }
-            
+
             dataPoints.append((date: currentDate, balance: runningBalance))
-            
+
             // Move to the next day
             if let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) {
                 currentDate = nextDate
