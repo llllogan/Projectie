@@ -15,17 +15,25 @@ struct TransactionListView: View {
     
     var body: some View {
         
-        List {
-            ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
-                Section(header: Text(date, format: .dateTime.weekday(.wide).day().month(.wide))) {
-                    transactionListDayOrganiser(occurenceList: occurrences, onTransactionSelected: { transaction in
-                        activeSheet = .manageTransaction(transaction, date)
-                    })
+        if(groupedOccurrences.isEmpty) {
+            
+            Text("None")
+                .containerRelativeFrame(.horizontal, count: 1, spacing: 0)
+            
+        } else {
+            
+            List {
+                ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
+                    Section(header: Text(date, format: .dateTime.weekday(.wide).day().month(.wide))) {
+                        transactionListDayOrganiser(occurenceList: occurrences, onTransactionSelected: { transaction in
+                            activeSheet = .manageTransaction(transaction, date)
+                        })
+                    }
                 }
             }
+            .containerRelativeFrame(.horizontal, count: 1, spacing: 0)
+            .defaultScrollAnchor(.top)
         }
-        .containerRelativeFrame(.horizontal, count: 1, spacing: 0)
-        .defaultScrollAnchor(.top)
     }
 }
 

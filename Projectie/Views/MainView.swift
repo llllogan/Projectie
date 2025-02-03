@@ -40,7 +40,7 @@ struct MainView: View {
     
     // MARK: - Chart & Time Frame States
     @State private var selectedChartStyle: ChartViewStyle = .line
-    @State private var selectedTimeFrame: TimeFrame = .month
+    @State private var selectedTimeFrame: TimeFrame = .week
     @State private var filteredChartData: [(date: Date, balance: Double)] = []
     @State private var currentStartDate: Date = Date()
     @State private var timeFrameOffset: Int = 0
@@ -144,6 +144,9 @@ struct MainView: View {
                         Button(action: { activeSheet = .addGoal }) {
                             Label("Add goal", systemImage: "trophy")
                         }
+                        Button(action: { activeSheet = .resetBalance }) {
+                            Label("Correct Balance", systemImage: "dollarsign.arrow.trianglehead.counterclockwise.rotate.90")
+                        }
                     } label: {
                         Image(systemName: "plus.circle.fill")
                             .foregroundColor(Color(hue: 34/360, saturation: 0.99, brightness: 0.95))
@@ -151,9 +154,6 @@ struct MainView: View {
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
-                        Button(action: { activeSheet = .resetBalance }) {
-                            Label("Correct Balance", systemImage: "dollarsign.arrow.trianglehead.counterclockwise.rotate.90")
-                        }
                         Picker("Graph Style", selection: $selectedChartStyle) {
                             Label("Line", systemImage: "chart.xyaxis.line")
                                 .tag(ChartViewStyle.line)
@@ -265,6 +265,28 @@ struct MainView: View {
         let endDate = endDateForCurrentTimeFrame
         let showTodayLine = (today >= startDate && today <= endDate)
         
+        var xAxisDates: [Date] = stride(from: startDate, to: endDate, by: 86400).map { $0 }
+        
+        if (showTodayLine) {
+            xAxisDates.append(today)
+        }
+        
+        var filteredXAxisDates: [Date] = []
+
+        for date in xAxisDates {
+            // Always add the first element
+            if filteredXAxisDates.isEmpty {
+                filteredXAxisDates.append(date)
+            } else if let lastDate = filteredXAxisDates.last {
+                // Only append if the difference is 86400 seconds or more
+                if date.timeIntervalSince(lastDate) >= 86400 {
+                    filteredXAxisDates.append(date)
+                } else if date == today {
+                    filteredXAxisDates.append(date)
+                }
+            }
+        }
+        
         return Chart {
             if !isInteracting && showTodayLine {
                 RuleMark(x: .value("Today", today))
@@ -316,7 +338,31 @@ struct MainView: View {
             }
         }
         .chartYAxis {
-            AxisMarks(position: .leading)
+            AxisMarks(
+                position: .leading,
+                values: .automatic(desiredCount: 4)
+            )
+        }
+        .chartXAxis {
+            AxisMarks(values: filteredXAxisDates) { value in
+                if let date = value.as(Date.self) {
+                    AxisGridLine()
+                    AxisTick()
+                    AxisValueLabel {
+                        
+                        if (date == today) {
+                            Text("Today")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text(ordinalDayString(from: date))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                    }
+                }
+            }
         }
         .chartYScale(domain: chartMin...chartMax)
         .frame(height: 180)
@@ -660,6 +706,19 @@ struct MainView: View {
     
     
     // MARK: - Helper Function
+    
+    
+    func ordinalDayString(from date: Date) -> String {
+        // Extract the day component from the date
+        let day = Calendar.current.component(.day, from: date)
+        
+        // Create and configure the NumberFormatter for ordinal numbers
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .ordinal
+        
+        // Return the formatted string (or fallback to the plain day number)
+        return formatter.string(from: NSNumber(value: day)) ?? "\(day)"
+    }
     
     func handleChangeOfScrollView(oldValue: Int, newValue: Int) {
         
