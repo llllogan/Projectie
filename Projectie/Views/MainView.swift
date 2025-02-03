@@ -517,35 +517,35 @@ struct MainView: View {
 
         ScrollView(.horizontal) {
             HStack {
-                TransactionListView(groupedOccurrences: transactionListMinus2 ?? [], activeSheet: $activeSheet)
+                TransactionListView(groupedOccurrences: transactionListMinus2 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: selectedTimeFrame)
                     .id(-2)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
 //                            .blur(radius: phase.isIdentity ? 0 : 20)
                     }
-                TransactionListView(groupedOccurrences: transactionListMinus1 ?? [], activeSheet: $activeSheet)
+                TransactionListView(groupedOccurrences: transactionListMinus1 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: selectedTimeFrame)
                     .id(-1)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
 //                            .blur(radius: phase.isIdentity ? 0 : 20)
                     }
-                TransactionListView(groupedOccurrences: transactionListToday ?? [], activeSheet: $activeSheet)
+                TransactionListView(groupedOccurrences: transactionListToday ?? [], activeSheet: $activeSheet, transactionGroupPeriod: selectedTimeFrame)
                     .id(0)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
 //                            .blur(radius: phase.isIdentity ? 0 : 20)
                     }
-                TransactionListView(groupedOccurrences: transactionListPlus1 ?? [], activeSheet: $activeSheet)
+                TransactionListView(groupedOccurrences: transactionListPlus1 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: selectedTimeFrame)
                     .id(1)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
 //                            .blur(radius: phase.isIdentity ? 0 : 20)
                     }
-                TransactionListView(groupedOccurrences: transactionListPlus2 ?? [], activeSheet: $activeSheet)
+                TransactionListView(groupedOccurrences: transactionListPlus2 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: selectedTimeFrame)
                     .id(2)
                     .scrollTransition { content, phase in
                         content

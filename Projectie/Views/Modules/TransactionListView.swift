@@ -11,15 +11,21 @@ import Foundation
 struct TransactionListView: View {
     
     var groupedOccurrences: [(key: Date, value: [TransactionOccurrence])]
+    
     @Binding var activeSheet: ActiveSheet?
+    
+    var transactionGroupPeriod: TimeFrame
     
     var body: some View {
         
         if(groupedOccurrences.isEmpty) {
-            
-            Text("None")
-                .containerRelativeFrame(.horizontal, count: 1, spacing: 0)
-            
+            VStack {
+                Spacer()
+                Text("No transactions for this \(transactionGroupPeriod.rawValue)")
+                    .foregroundStyle(.secondary)
+                    .containerRelativeFrame(.horizontal, count: 1, spacing: 0)
+                Spacer()
+            }
         } else {
             
             List {
