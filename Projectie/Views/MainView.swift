@@ -12,6 +12,8 @@ import Foundation
 
 struct MainView: View {
     @AppStorage("openingBalance") private var openingBalance = 0.0
+    @AppStorage("hasSetInitialBalance") private var hasSetInitialBalance: Bool = false
+    @AppStorage("sqaureLines") private var squareLines: Bool = false
     
     @Environment(\.modelContext) private var context
     
@@ -23,6 +25,7 @@ struct MainView: View {
     @State private var showResetBalanceSheet: Bool = false
     @State private var showManageTransactionSheet: Bool = false
     @State private var showBottomToggle: Bool = true
+    @State private var showAddInitialBalanceSheet: Bool = false
     
     @State private var selectedChartStyle: ChartViewStyle = .line
     @State private var selectedTimeFrame: TimeFrame = .month
@@ -65,8 +68,6 @@ struct MainView: View {
     
     @State private var isFirstLoadForTransactionList: Bool = true
     
-    @State private var graphLinearStyle: Bool = true
-    
 
     
     
@@ -93,6 +94,9 @@ struct MainView: View {
                 updateCurrentStartDate()
                 recalculateChartDataPoints()
                 populateTransactionLists()
+                if (!hasSetInitialBalance) {
+                    showAddInitialBalanceSheet = true
+                }
             }
             .onChange(of: selectedTimeFrame) { _, newValue in
                 updateCurrentStartDate()
@@ -106,45 +110,6 @@ struct MainView: View {
             .onChange(of: allBalanceResets) { _, newValue in
                 recalculateChartDataPoints()
                 populateTransactionLists()
-            }
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Menu {
-                        Button(action: { activeSheet = .addTransaction }) {
-                            Label("Add transaction", systemImage: "creditcard")
-                        }
-                        Button(action: { activeSheet = .addTransaction }) {
-                            Label("Add interest", systemImage: "dollarsign.circle.fill")
-                        }
-                        Button(action: { activeSheet = .addGoal }) {
-                            Label("Add goal", systemImage: "trophy")
-                        }
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                    }
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    Menu {
-                        Button(action: { activeSheet = .resetBalance }) {
-                            Label("Correct Balance", systemImage: "dollarsign.arrow.trianglehead.counterclockwise.rotate.90")
-                        }
-                        Picker("Graph Style", selection: $selectedChartStyle) {
-                            Label("Line", systemImage: "chart.xyaxis.line")
-                                .tag(ChartViewStyle.line)
-                            Label("Bar", systemImage: "chart.bar.xaxis")
-                                .tag(ChartViewStyle.bar)
-                        }
-                        Button(action: {
-                            graphLinearStyle.toggle()
-                        }) {
-                            Label("Line Interpolation Style", systemImage: "arrow.trianglehead.2.clockwise")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .tint(.primary)
-                    }
-                }
-
             }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
@@ -161,6 +126,55 @@ struct MainView: View {
                     AddGoalSheet()
                         .presentationDragIndicator(.visible)
                 }
+            }
+            .fullScreenCover(isPresented: $showAddInitialBalanceSheet) {
+                InitialBalanceSheet()
+            }
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button(action: { activeSheet = .addTransaction }) {
+                            Label("Add transaction", systemImage: "creditcard")
+                        }
+                        Button(action: { activeSheet = .addTransaction }) {
+                            Label("Add interest", systemImage: "dollarsign.circle.fill")
+                        }
+                        Button(action: { activeSheet = .addGoal }) {
+                            Label("Add goal", systemImage: "trophy")
+                        }
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(Color(hue: 34/360, saturation: 0.99, brightness: 0.95))
+                    }
+                }
+                ToolbarItem(placement: .topBarLeading) {
+                    Menu {
+                        Button(action: { activeSheet = .resetBalance }) {
+                            Label("Correct Balance", systemImage: "dollarsign.arrow.trianglehead.counterclockwise.rotate.90")
+                        }
+                        Picker("Graph Style", selection: $selectedChartStyle) {
+                            Label("Line", systemImage: "chart.xyaxis.line")
+                                .tag(ChartViewStyle.line)
+                            Label("Bar", systemImage: "chart.bar.xaxis")
+                                .tag(ChartViewStyle.bar)
+                        }
+                        Button(action: {
+                            squareLines.toggle()
+                        }) {
+                            Label("Line Interpolation Style", systemImage: "arrow.trianglehead.2.clockwise")
+                        }
+                        Button(action: {
+                            hasSetInitialBalance = false
+                            showAddInitialBalanceSheet = true
+                        }) {
+                            Label("Reset inital balance flag", systemImage: "slider.horizontal.2.arrow.trianglehead.counterclockwise")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .tint(.primary)
+                    }
+                }
+
             }
         }
     }
@@ -278,8 +292,8 @@ struct MainView: View {
                     x: .value("Date", dataPoint.date),
                     y: .value("Balance", dataPoint.balance)
                 )
-                .foregroundStyle(.blue)
-                .interpolationMethod(graphLinearStyle ? .linear : .stepEnd)
+                .foregroundStyle(Color(hue: 34/360, saturation: 0.99, brightness: 0.95))
+                .interpolationMethod(squareLines ? .stepEnd : .linear)
             }
         }
         .chartYAxis {
