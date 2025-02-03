@@ -40,7 +40,7 @@ struct MainView: View {
     
     // MARK: - Chart & Time Frame States
     @State private var selectedChartStyle: ChartViewStyle = .line
-    @State private var selectedTimeFrame: TimeFrame = .week
+    @State private var selectedTimeFrame: TimeFrame = .year
     @State private var filteredChartData: [(date: Date, balance: Double)] = []
     @State private var currentStartDate: Date = Date()
     @State private var timeFrameOffset: Int = 0
@@ -254,37 +254,53 @@ struct MainView: View {
         
         let minBalance = allBalances.min() ?? 0
         let maxBalance = allBalances.max() ?? 0
-        
         let chartMin = minBalance - (minBalance / 90)
         let chartMax = maxBalance + (maxBalance / 90)
-        
-        print("Min balance: \(minBalance) Chart min: \(chartMin) Max balance: \(maxBalance) Chart max: \(chartMax)")
         
         let today = Date()
         let startDate = currentStartDate
         let endDate = endDateForCurrentTimeFrame
         let showTodayLine = (today >= startDate && today <= endDate)
         
-        var xAxisDates: [Date] = stride(from: startDate, to: endDate, by: 86400).map { $0 }
+        var spanningSeconds: Double = 0
+        switch selectedTimeFrame {
+        case .week:
+            spanningSeconds = 86400
+        case .month:
+            spanningSeconds = 86400 * 7
+        case .year:
+            spanningSeconds = 86400 * 91
+        }
         
-        if (showTodayLine) {
+        var xAxisDates: [Date] = stride(from: startDate, to: endDate, by: spanningSeconds).map { $0 }
+        
+        if (showTodayLine && !isInteracting) {
             xAxisDates.append(today)
         }
         
+        xAxisDates.sort { $0 < $1 }
+        
         var filteredXAxisDates: [Date] = []
+        var itteration: Int = 0
 
         for date in xAxisDates {
-            // Always add the first element
-            if filteredXAxisDates.isEmpty {
+            
+            if (filteredXAxisDates.isEmpty) {
                 filteredXAxisDates.append(date)
-            } else if let lastDate = filteredXAxisDates.last {
-                // Only append if the difference is 86400 seconds or more
-                if date.timeIntervalSince(lastDate) >= 86400 {
-                    filteredXAxisDates.append(date)
-                } else if date == today {
+                continue
+            }
+            
+            let timeSinceLastDate: TimeInterval = date.timeIntervalSince(filteredXAxisDates.last!)
+            
+            if (timeSinceLastDate < spanningSeconds) {
+                if (date == today) {
                     filteredXAxisDates.append(date)
                 }
+            } else {
+                filteredXAxisDates.append(date)
             }
+
+            itteration += 1
         }
         
         return Chart {
@@ -346,20 +362,37 @@ struct MainView: View {
         .chartXAxis {
             AxisMarks(values: filteredXAxisDates) { value in
                 if let date = value.as(Date.self) {
-                    AxisGridLine()
-                    AxisTick()
-                    AxisValueLabel {
+                    
+                    if (date != today) {
+                        AxisGridLine()
+                        AxisTick()
+                    }
+
+                    
+                    AxisValueLabel(horizontalSpacing: date == today ? -12 : 2) {
                         
                         if (date == today) {
-                            Text("Today")
+                            Text(selectedTimeFrame == .week ? "Now" :"Today")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         } else {
-                            Text(ordinalDayString(from: date))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            if (selectedTimeFrame == .year) {
+                                Text(date, format: .dateTime.month())
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text(ordinalDayString(from: date))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
-                        
+                    }
+                }
+            }
+            AxisMarks(values: xAxisDates) { value in
+                if let date = value.as(Date.self) {
+                    if (date != today) {
+                        AxisGridLine()
                     }
                 }
             }
