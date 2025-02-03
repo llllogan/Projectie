@@ -96,7 +96,7 @@ struct MainView: View {
                 updateCurrentStartDate()
                 recalculateChartDataPoints()
                 populateTransactionLists()
-                if (!hasSetInitialBalance) {
+                if (!hasSetInitialBalance && !ProcessInfo.processInfo.isRunningInXcodePreview) {
                     showAddInitialBalanceSheet = true
                 }
             }
@@ -296,6 +296,23 @@ struct MainView: View {
                 )
                 .foregroundStyle(Color(hue: 34/360, saturation: 0.99, brightness: 0.95))
                 .interpolationMethod(squareLines ? .stepEnd : .linear)
+                
+                AreaMark(
+                    x: .value("Date", dataPoint.date),
+                    yStart: .value("Baseline", chartMin),
+                    yEnd: .value("Balance", dataPoint.balance)
+                )
+                .interpolationMethod(squareLines ? .stepEnd : .linear)
+                .foregroundStyle(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color(hue: 34/360, saturation: 0.99, brightness: 0.95).opacity(0.5),
+                            Color(hue: 34/360, saturation: 0.99, brightness: 0.95).opacity(0.1)
+                        ]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
             }
         }
         .chartYAxis {
@@ -931,6 +948,12 @@ enum RangeOffset: Int {
 enum OccurrenceType {
     case transaction(Transaction)
     case reset(BalanceReset)
+}
+
+extension ProcessInfo {
+    var isRunningInXcodePreview: Bool {
+        return environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+    }
 }
 
 
