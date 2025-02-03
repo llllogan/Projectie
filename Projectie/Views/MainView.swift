@@ -11,67 +11,69 @@ import SwiftData
 import Foundation
 
 struct MainView: View {
+    
+    // MARK: - App Storage (Persistent User Settings)
     @AppStorage("openingBalance") private var openingBalance = 0.0
     @AppStorage("hasSetInitialBalance") private var hasSetInitialBalance: Bool = false
     @AppStorage("sqaureLines") private var squareLines: Bool = false
     
+    // MARK: - Environment
     @Environment(\.modelContext) private var context
     
-    @Query(sort: \Transaction.date, order: .forward) private var transactions: [Transaction]
-    @Query(sort: \BalanceReset.date, order: .reverse) private var allBalanceResets: [BalanceReset]
-    @Query(sort: \Goal.createdDate, order: .forward) private var goals: [Goal]
+    // MARK: - Swift Data Queries
+    @Query(sort: \Transaction.date, order: .forward)
+    private var transactions: [Transaction]
     
+    @Query(sort: \BalanceReset.date, order: .reverse)
+    private var allBalanceResets: [BalanceReset]
+    
+    @Query(sort: \Goal.createdDate, order: .forward)
+    private var goals: [Goal]
+    
+    // MARK: - Sheet & Modal Presentation States
     @State private var showingAddTransactionSheet = false
-    @State private var showResetBalanceSheet: Bool = false
-    @State private var showManageTransactionSheet: Bool = false
-    @State private var showBottomToggle: Bool = true
-    @State private var showAddInitialBalanceSheet: Bool = false
+    @State private var showResetBalanceSheet = false
+    @State private var showManageTransactionSheet = false
+    @State private var showBottomToggle = true
+    @State private var showAddInitialBalanceSheet = false
+    @State private var activeSheet: ActiveSheet?
     
+    // MARK: - Chart & Time Frame States
     @State private var selectedChartStyle: ChartViewStyle = .line
     @State private var selectedTimeFrame: TimeFrame = .month
+    @State private var filteredChartData: [(date: Date, balance: Double)] = []
+    @State private var currentStartDate: Date = Date()
+    @State private var timeFrameOffset: Int = 0
+    @State private var directionToMoveInTime: Int = 0
+    
+    // MARK: - Transaction Selection & Navigation
     @State private var selectedBottomView: BottomViewChoice = .transactions
     @State private var selectedBalance: Double? = nil
     @State private var selectedDate: Date? = nil
     @State private var selectedTransaction: Transaction?
-    
-    @State private var isInteracting: Bool = false
-    
-    @State private var currentStartDate: Date = Date()
-    
-    @State private var dragLocation: CGPoint = .zero
-
-    @State private var horizontalOffset: CGFloat = 0
-    
-    @State private var activeSheet: ActiveSheet?
-    
-    @State private var filteredChartData: [(date: Date, balance: Double)] = []
-    
     @State private var centeredTransactionViewId: Int?
+    @State private var ignoreChangeInCenteredTransactionViewId: Bool = false
     
+    // MARK: - Gesture & Interaction States
+    @State private var isInteracting: Bool = false
+    @State private var dragLocation: CGPoint = .zero
+    @State private var horizontalOffset: CGFloat = 0
+    @State private var swipeStartIndex: Int = 0
+    @State private var swipeEndIndex: Int = 0
+    @State private var overwriteSwipeIndexStart: Bool = true
     
+    // MARK: - Transaction Lists by Date Groups
     @State private var transactionListMinus2: [(key: Date, value: [TransactionOccurrence])]?
     @State private var transactionListMinus1: [(key: Date, value: [TransactionOccurrence])]?
     @State private var transactionListToday: [(key: Date, value: [TransactionOccurrence])]?
     @State private var transactionListPlus1: [(key: Date, value: [TransactionOccurrence])]?
     @State private var transactionListPlus2: [(key: Date, value: [TransactionOccurrence])]?
     
-    
+    // MARK: - Miscellaneous
     @State private var today: Date = Date()
-    @State private var timeFrameOffset: Int = 0
-    @State private var directionToMoveInTime: Int = 0
-    
-    @State private var swipeStartIndex: Int = 0
-    @State private var swipeEndIndex: Int = 0
-    @State private var overwriteSwipeIndexStart: Bool = true
-    
-    @State private var ignoreChangeInCenteredTransactionViewId: Bool = false
-    
     @State private var isFirstLoadForTransactionList: Bool = true
     
 
-    
-    
-    
     
     // MARK: - Main View
     
@@ -888,45 +890,6 @@ struct MainView: View {
 
 
 // MARK: - Supporting Types
-
-struct TransactionOccurrence: Identifiable {
-    
-    let type: OccurrenceType
-    let recurringTransactionDate: Date?
-    
-    init(type: OccurrenceType, recurringTransactionDate: Date? = nil) {
-        self.type = type
-        self.recurringTransactionDate = recurringTransactionDate
-    }
-    
-    var transaction: Transaction? {
-        switch type {
-        case .transaction(let transaction):
-            return transaction
-        case .reset(_):
-            return nil
-        }
-    }
-    
-    var date: Date {
-        switch type {
-        case .transaction(let transaction):
-            return recurringTransactionDate ?? transaction.date
-        case .reset(let balanceReset):
-            return balanceReset.date
-        }
-    }
-    
-    var id: String {
-        switch type {
-        case .transaction(let transaction):
-            return "\(transaction.id)-\(date.timeIntervalSince1970)"
-        case .reset(let balanceReset):
-            return "\(balanceReset.id)-\(date.timeIntervalSince1970)"
-        }
-
-    }
-}
 
 enum BottomViewChoice: String, CaseIterable {
     case transactions
