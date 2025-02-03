@@ -40,7 +40,7 @@ struct MainView: View {
     
     // MARK: - Chart & Time Frame States
     @State private var selectedChartStyle: ChartViewStyle = .line
-    @State private var selectedTimeFrame: TimeFrame = .year
+    @State private var selectedTimeFrame: TimeFrame = .month
     @State private var filteredChartData: [(date: Date, balance: Double)] = []
     @State private var currentStartDate: Date = Date()
     @State private var timeFrameOffset: Int = 0
