@@ -95,6 +95,9 @@ struct MainView: View {
                 
             }
             .onAppear {
+                withAnimation {
+                    timeManager.calculateDates()
+                }
                 recalculateChartDataPoints()
                 populateTransactionLists()
                 if (!hasSetInitialBalance && !ProcessInfo.processInfo.isRunningInXcodePreview) {
@@ -205,8 +208,11 @@ struct MainView: View {
             if !isInteracting {
                 HStack(alignment: .bottom) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("$\(currentBalance, specifier: "%.2f")")
-                            .font(.system(size: 30, weight: .bold, design: .rounded))
+                        withAnimation {
+                            Text("$\(currentBalance, specifier: "%.2f")")
+                                .font(.system(size: 30, weight: .bold, design: .rounded))
+                                .contentTransition(.numericText(value: currentBalance))
+                        }
                         Text("\(Date.now, style: .date)")
                             .fontWeight(.semibold)
                             .font(.subheadline)
