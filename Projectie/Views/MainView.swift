@@ -507,7 +507,7 @@ struct MainView: View {
             
             
             HStack(spacing: 6) {
-                Text("Date Range")
+                Text("Range")
                     .foregroundStyle(.secondary)
                 Menu {
                     Picker("", selection: $selectedTimeFrame) {
@@ -517,14 +517,24 @@ struct MainView: View {
                         }
                     }
                 } label: {
-                    Button(action: { }) {
-                        Text(selectedTimeFrame.rawValue.capitalized)
-                            .lineLimit(1)
-                    }
+                    Button(selectedTimeFrame.rawValue.capitalized) {}
                     .buttonStyle(.bordered)
                     .tint(.primary)
                 }
             }
+            
+            Menu {
+                
+            } label: {
+                Button(action: {}) {
+                    Image(systemName: "calendar")
+                        .font(.title3)
+                }
+                .buttonStyle(.bordered)
+                .tint(.primary)
+            }
+            
+            
         }
         .padding(.horizontal)
     }
