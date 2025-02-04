@@ -6,49 +6,42 @@
 //
 
 import Foundation
-import Combine  // Only needed if you plan to use ObservableObject
+import Combine
 
-enum TimePeriod {
+enum TimePeriod: String, CaseIterable {
     case week, fortnight, month, year, custom
 }
 
-class TimeManager: ObservableObject {  // Making it ObservableObject helps if you want UI updates.
+class TimeManager: ObservableObject {
     
-    // MARK: - Singleton
     static let shared = TimeManager()
     private init() {
         calculateDates()
     }
     
-    // MARK: - Properties
-    @Published var timePeriod: TimePeriod = .week {
+    @Published var timePeriod: TimePeriod = .month {
         didSet {
             if timePeriod != .custom {
-                // Reset the offset when the type changes.
                 periodOffset = 0
                 calculateDates()
             }
         }
     }
     
-    /// The starting date of the current period.
     @Published private(set) var startDate: Date = Date()
-    /// The ending date of the current period.
     @Published private(set) var endDate: Date = Date()
     
     /// For non-custom periods, we keep track of an offset so that shifting the period updates the dates accordingly.
     private var periodOffset: Int = 0
     
-    /// A Calendar configured to start weeks on Monday.
+    
     private let calendar: Calendar = {
         var cal = Calendar(identifier: .gregorian)
         cal.firstWeekday = 2  // Monday is represented by 2.
         return cal
     }()
     
-    // MARK: - Helper Method for Date Calculation
-    /// Returns a tuple containing the start and end dates for a given offset.
-    /// - Parameter offset: For non-custom periods, the offset in units of the period. For example, for `.week` an offset of 1 means one week ahead.
+
     private func dates(for offset: Int) -> (start: Date, end: Date) {
         switch timePeriod {
         case .week:
@@ -106,38 +99,31 @@ class TimeManager: ObservableObject {  // Making it ObservableObject helps if yo
         }
     }
     
-    // MARK: - Current Period Calculation
-    /// Recalculate the start and end dates for the current period (using periodOffset).
+
     func calculateDates() {
         let currentDates = dates(for: periodOffset)
         startDate = currentDates.start
         endDate = currentDates.end
     }
     
-    // MARK: - Computed Properties for Adjacent Periods
-    /// The previous period (one period behind the current).
+
     var previousPeriod1: (start: Date, end: Date) {
         return dates(for: periodOffset - 1)
     }
-    
-    /// The period before the previous one (two periods behind the current).
+
     var previousPeriod2: (start: Date, end: Date) {
         return dates(for: periodOffset - 2)
     }
-    
-    /// The next period (one period ahead of the current).
+
     var nextPeriod1: (start: Date, end: Date) {
         return dates(for: periodOffset + 1)
     }
-    
-    /// The period after the next (two periods ahead of the current).
+
     var nextPeriod2: (start: Date, end: Date) {
         return dates(for: periodOffset + 2)
     }
     
-    // MARK: - Shifting the Period
-    /// Shifts the current period by a given value.
-    /// - Parameter value: A positive value moves the period forward, a negative value moves it backward.
+
     func shiftPeriod(by value: Int) {
         if timePeriod == .custom {
             let interval = endDate.timeIntervalSince(startDate)
@@ -149,7 +135,7 @@ class TimeManager: ObservableObject {  // Making it ObservableObject helps if yo
         }
     }
     
-    /// Optionally, reset the period offset back to 0 (i.e. the "current" period).
+
     func resetToCurrentPeriod() {
         periodOffset = 0
         calculateDates()

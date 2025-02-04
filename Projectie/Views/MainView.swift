@@ -30,6 +30,9 @@ struct MainView: View {
     @Query(sort: \Goal.createdDate, order: .forward)
     private var goals: [Goal]
     
+    // MARK: - Observed Objects
+    @ObservedObject private var timeManager = TimeManager.shared
+    
     // MARK: - Sheet & Modal Presentation States
     @State private var showingAddTransactionSheet = false
     @State private var showResetBalanceSheet = false
@@ -40,9 +43,7 @@ struct MainView: View {
     
     // MARK: - Chart & Time Frame States
     @State private var selectedChartStyle: ChartViewStyle = .line
-    @State private var selectedTimeFrame: TimeFrame = .month
     @State private var filteredChartData: [(date: Date, balance: Double)] = []
-    @State private var currentStartDate: Date = Date()
     @State private var timeFrameOffset: Int = 0
     @State private var directionToMoveInTime: Int = 0
     
@@ -93,15 +94,13 @@ struct MainView: View {
                 
             }
             .onAppear {
-                updateCurrentStartDate()
                 recalculateChartDataPoints()
                 populateTransactionLists()
                 if (!hasSetInitialBalance && !ProcessInfo.processInfo.isRunningInXcodePreview) {
                     showAddInitialBalanceSheet = true
                 }
             }
-            .onChange(of: selectedTimeFrame) { _, newValue in
-                updateCurrentStartDate()
+            .onChange(of: timeManager.timePeriod) { _, newValue in
                 recalculateChartDataPoints()
                 populateTransactionLists()
             }
@@ -258,21 +257,23 @@ struct MainView: View {
         let chartMax = maxBalance + (maxBalance / 90)
         
         let today = Date()
-        let startDate = currentStartDate
-        let endDate = endDateForCurrentTimeFrame
+        let startDate = timeManager.startDate
+        let endDate = timeManager.endDate
         let showTodayLine = (today >= startDate && today <= endDate)
         
         var spanningSeconds: Double = 0
-        switch selectedTimeFrame {
+        switch timeManager.timePeriod {
         case .week:
             spanningSeconds = 86400
         case .month:
             spanningSeconds = 86400 * 7
         case .year:
             spanningSeconds = 86400 * 91
+        default:
+            spanningSeconds = 86400
         }
         
-        var xAxisDates: [Date] = stride(from: startDate, to: endDate, by: spanningSeconds).map { $0 }
+        var xAxisDates: [Date] = stride(from: timeManager.startDate, to: timeManager.endDate, by: spanningSeconds).map { $0 }
         
         if (showTodayLine && !isInteracting) {
             xAxisDates.append(today)
@@ -372,11 +373,11 @@ struct MainView: View {
                     AxisValueLabel(horizontalSpacing: date == today ? -12 : 2) {
                         
                         if (date == today) {
-                            Text(selectedTimeFrame == .week ? "Now" :"Today")
+                            Text(timeManager.timePeriod == .week ? "Now" :"Today")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         } else {
-                            if (selectedTimeFrame == .year) {
+                            if (timeManager.timePeriod == .year) {
                                 Text(date, format: .dateTime.month())
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
@@ -510,21 +511,22 @@ struct MainView: View {
                 Text("Range")
                     .foregroundStyle(.secondary)
                 Menu {
-                    Picker("", selection: $selectedTimeFrame) {
-                        ForEach(TimeFrame.allCases, id: \.self) { frame in
+                    Picker("", selection: $timeManager.timePeriod) {
+                        ForEach(TimePeriod.allCases, id: \.self) { frame in
                             Text(frame.rawValue.capitalized).tag(frame)
                                 .lineLimit(1)
                         }
                     }
                 } label: {
-                    Button(selectedTimeFrame.rawValue.capitalized) {}
+                    Button("\(timeManager.timePeriod.rawValue.capitalized)") {}
                     .buttonStyle(.bordered)
                     .tint(.primary)
                 }
             }
             
             Menu {
-                
+                Text("Show Today")
+                Text("Pick Date Range")
             } label: {
                 Button(action: {}) {
                     Image(systemName: "calendar")
@@ -560,40 +562,35 @@ struct MainView: View {
 
         ScrollView(.horizontal) {
             HStack {
-                TransactionListView(groupedOccurrences: transactionListMinus2 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: selectedTimeFrame)
+                TransactionListView(groupedOccurrences: transactionListMinus2 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: timeManager.timePeriod)
                     .id(-2)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
-//                            .blur(radius: phase.isIdentity ? 0 : 20)
                     }
-                TransactionListView(groupedOccurrences: transactionListMinus1 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: selectedTimeFrame)
+                TransactionListView(groupedOccurrences: transactionListMinus1 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: timeManager.timePeriod)
                     .id(-1)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
-//                            .blur(radius: phase.isIdentity ? 0 : 20)
                     }
-                TransactionListView(groupedOccurrences: transactionListToday ?? [], activeSheet: $activeSheet, transactionGroupPeriod: selectedTimeFrame)
+                TransactionListView(groupedOccurrences: transactionListToday ?? [], activeSheet: $activeSheet, transactionGroupPeriod: timeManager.timePeriod)
                     .id(0)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
-//                            .blur(radius: phase.isIdentity ? 0 : 20)
                     }
-                TransactionListView(groupedOccurrences: transactionListPlus1 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: selectedTimeFrame)
+                TransactionListView(groupedOccurrences: transactionListPlus1 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: timeManager.timePeriod)
                     .id(1)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
-//                            .blur(radius: phase.isIdentity ? 0 : 20)
                     }
-                TransactionListView(groupedOccurrences: transactionListPlus2 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: selectedTimeFrame)
+                TransactionListView(groupedOccurrences: transactionListPlus2 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: timeManager.timePeriod)
                     .id(2)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
-//                            .blur(radius: phase.isIdentity ? 0 : 20)
                     }
 
             }
@@ -610,8 +607,9 @@ struct MainView: View {
                 centeredTransactionViewId = 0
                 overwriteSwipeIndexStart = true
                 directionToMoveInTime = swipeEndIndex - swipeStartIndex
-                changeDate(by: directionToMoveInTime)
+                timeManager.shiftPeriod(by: directionToMoveInTime)
                 populateTransactionLists()
+                recalculateChartDataPoints()
                 directionToMoveInTime = 0
                 
                 if (isFirstLoadForTransactionList) {
@@ -656,24 +654,32 @@ struct MainView: View {
     // MARK: - Computed Properties
     
     private var endOfNoun: String {
-        switch selectedTimeFrame {
+        switch timeManager.timePeriod {
         case .week:
-            return "week \(currentStartDate.formatted(.dateTime.week()))"
+            return "week \(timeManager.startDate.formatted(.dateTime.week()))"
+        case .fortnight:
+            return "weeks \(timeManager.startDate.formatted(.dateTime.week())) & \(timeManager.endDate.formatted(.dateTime.week()))"
         case .month:
-            return currentStartDate.formatted(.dateTime.month(.wide))
+            return timeManager.startDate.formatted(.dateTime.month(.wide))
         case .year:
-            return currentStartDate.formatted(.dateTime.year())
+            return timeManager.startDate.formatted(.dateTime.year())
+        case .custom:
+            return timeManager.startDate.formatted(.dateTime.year())
         }
     }
     
     private var endOfNounShort: String {
-        switch selectedTimeFrame {
+        switch timeManager.timePeriod {
         case .week:
-            return "week \(currentStartDate.formatted(.dateTime.week()))"
+            return "week \(timeManager.startDate.formatted(.dateTime.week()))"
+        case .fortnight:
+            return "weeks \(timeManager.startDate.formatted(.dateTime.week())) and \(timeManager.endDate.formatted(.dateTime.week()))"
         case .month:
-            return currentStartDate.formatted(.dateTime.month(.abbreviated))
+            return timeManager.startDate.formatted(.dateTime.month(.abbreviated))
         case .year:
-            return currentStartDate.formatted(.dateTime.year())
+            return timeManager.startDate.formatted(.dateTime.year())
+        case .custom:
+            return timeManager.startDate.formatted(.dateTime.year())
         }
     }
     
@@ -704,7 +710,7 @@ struct MainView: View {
     
     private var visibleOccurrencesForPeriod: [TransactionOccurrence] {
         allOccurrences.filter {
-            $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame
+            $0.date >= timeManager.startDate && $0.date <= timeManager.endDate
         }
     }
     
@@ -729,18 +735,6 @@ struct MainView: View {
     private var endOfRangeBalance: Double {
         guard let lastDataPoint = filteredChartData.last else { return 0.0 }
         return lastDataPoint.balance
-    }
-    
-    
-    private var endDateForCurrentTimeFrame: Date {
-        switch selectedTimeFrame {
-        case .week:
-            return Calendar.current.date(byAdding: .weekOfYear, value: 1, to: currentStartDate) ?? currentStartDate
-        case .month:
-            return Calendar.current.date(byAdding: .month, value: 1, to: currentStartDate) ?? currentStartDate
-        case .year:
-            return Calendar.current.date(byAdding: .year, value: 1, to: currentStartDate) ?? currentStartDate
-        }
     }
     
     
@@ -782,66 +776,20 @@ struct MainView: View {
     
     func populateTransactionLists() {
         
-        transactionListMinus2 = groupedOccurrences(rangeOffset: .minus2)
-        transactionListMinus1 = groupedOccurrences(rangeOffset: .minus1)
-        transactionListToday = groupedOccurrences(rangeOffset: .none)
-        transactionListPlus1 = groupedOccurrences(rangeOffset: .plus1)
-        transactionListPlus2 = groupedOccurrences(rangeOffset: .plus2)
-        
+        transactionListMinus2 = groupedOccurrences(startDate: timeManager.previousPeriod2.start, endDate: timeManager.previousPeriod2.end)
+        transactionListMinus1 = groupedOccurrences(startDate: timeManager.previousPeriod1.start, endDate: timeManager.previousPeriod1.end)
+        transactionListToday = groupedOccurrences(startDate: timeManager.startDate, endDate: timeManager.endDate)
+        transactionListPlus1 = groupedOccurrences(startDate: timeManager.nextPeriod1.start, endDate: timeManager.nextPeriod1.end)
+        transactionListPlus2 = groupedOccurrences(startDate: timeManager.nextPeriod2.start, endDate: timeManager.nextPeriod2.end)
     }
     
     
-    func groupedOccurrences(rangeOffset: RangeOffset) -> [(key: Date, value: [TransactionOccurrence])] {
+    func groupedOccurrences(startDate: Date, endDate: Date) -> [(key: Date, value: [TransactionOccurrence])] {
         let calendar = Calendar.current
-        
-        // 1. Convert the enum into an integer offset
-        let offsetValue = rangeOffset.rawValue
-
-        // 2. Determine the “base” start date — e.g., currentStartDate
-        //    and your “base” end date — e.g., endDateForCurrentTimeFrame.
-        //    (The code below references variables from your existing code, like selectedTimeFrame.)
-        
-        // Existing “currentStartDate” for the 'none' offset
-        var offsetStartDate = currentStartDate
-        // Existing “endDateForCurrentTimeFrame” for the 'none' offset
-        var offsetEndDate   = endDateForCurrentTimeFrame
-
-        // 3. Shift the start/end date based on your selectedTimeFrame + offsetValue
-        switch selectedTimeFrame {
-        case .week:
-            // Move the start date by N weeks
-            if let newStart = calendar.date(byAdding: .weekOfYear, value: offsetValue, to: currentStartDate) {
-                offsetStartDate = newStart
-            }
-            
-            // Then recalculate the end date from that new start date
-            // For example: 1 week from offsetStartDate
-            if let newEnd = calendar.date(byAdding: .weekOfYear, value: 1, to: offsetStartDate) {
-                offsetEndDate = newEnd
-            }
-
-        case .month:
-            if let newStart = calendar.date(byAdding: .month, value: offsetValue, to: currentStartDate) {
-                offsetStartDate = newStart
-            }
-            // 1 month from offsetStartDate
-            if let newEnd = calendar.date(byAdding: .month, value: 1, to: offsetStartDate) {
-                offsetEndDate = newEnd
-            }
-
-        case .year:
-            if let newStart = calendar.date(byAdding: .year, value: offsetValue, to: currentStartDate) {
-                offsetStartDate = newStart
-            }
-            // 1 year from offsetStartDate
-            if let newEnd = calendar.date(byAdding: .year, value: 1, to: offsetStartDate) {
-                offsetEndDate = newEnd
-            }
-        }
 
         // 4. Filter occurrences that lie within this shifted range
         let visibleOccurrences = allOccurrences.filter {
-            $0.date >= offsetStartDate && $0.date <= offsetEndDate
+            $0.date >= startDate && $0.date <= endDate
         }
 
         // 5. Group by start of day
@@ -863,7 +811,7 @@ struct MainView: View {
         let sortedTransactions = allOccurrences.sorted { $0.date < $1.date }
         let sortedResets = allBalanceResets.sorted { $0.date < $1.date }
 
-        let latestResetBeforeStart = sortedResets.last(where: { $0.date <= currentStartDate })
+        let latestResetBeforeStart = sortedResets.last(where: { $0.date <= timeManager.startDate })
 
         var runningBalance: Double
         var lastResetDate: Date
@@ -876,13 +824,13 @@ struct MainView: View {
             lastResetDate = Date.distantPast
         }
 
-        let transactionsBeforeStart = sortedTransactions.filter { $0.date > lastResetDate && $0.date < currentStartDate }
+        let transactionsBeforeStart = sortedTransactions.filter { $0.date > lastResetDate && $0.date < timeManager.startDate }
         for txn in transactionsBeforeStart {
             runningBalance += txn.transaction?.amount ?? 0
         }
 
-        let resetsWithinTimeFrame = sortedResets.filter { $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame }
-        let transactionsWithinTimeFrame = sortedTransactions.filter { $0.date >= currentStartDate && $0.date <= endDateForCurrentTimeFrame }
+        let resetsWithinTimeFrame = sortedResets.filter { $0.date >= timeManager.startDate && $0.date <= timeManager.endDate }
+        let transactionsWithinTimeFrame = sortedTransactions.filter { $0.date >= timeManager.startDate && $0.date <= timeManager.endDate }
         
         let transactionsByDay = Dictionary(
             grouping: transactionsWithinTimeFrame
@@ -893,8 +841,8 @@ struct MainView: View {
         ) { calendar.startOfDay(for: $0.date) }
 
         var dataPoints: [(date: Date, balance: Double)] = []
-        var currentDate = currentStartDate
-        let endDate = endDateForCurrentTimeFrame
+        var currentDate = timeManager.startDate
+        let endDate = timeManager.endDate
 
         while currentDate <= endDate {
             // Apply any resets on this day
@@ -970,41 +918,23 @@ struct MainView: View {
             .reduce(0) { $0 + $1.transaction!.amount }
     }
     
-    private func changeDate(by value: Int) {
-        switch selectedTimeFrame {
-        case .week:
-            if let newDate = Calendar.current.date(byAdding: .weekOfYear, value: value, to: currentStartDate) {
-                currentStartDate = newDate
-            }
-        case .month:
-            if let newDate = Calendar.current.date(byAdding: .month, value: value, to: currentStartDate) {
-                currentStartDate = newDate
-            }
-        case .year:
-            if let newDate = Calendar.current.date(byAdding: .year, value: value, to: currentStartDate) {
-                currentStartDate = newDate
-            }
-        }
-        recalculateChartDataPoints()
-    }
-    
-    private func updateCurrentStartDate() {
-        let calendar = Calendar.current
-        switch selectedTimeFrame {
-        case .week:
-            if let weekStart = calendar.dateInterval(of: .weekOfYear, for: Date())?.start {
-                currentStartDate = weekStart
-            }
-        case .month:
-            if let monthStart = calendar.dateInterval(of: .month, for: Date())?.start {
-                currentStartDate = monthStart
-            }
-        case .year:
-            if let yearStart = calendar.dateInterval(of: .year, for: Date())?.start {
-                currentStartDate = yearStart
-            }
-        }
-    }
+//    private func changeDate(by value: Int) {
+//        switch selectedTimeFrame {
+//        case .week:
+//            if let newDate = Calendar.current.date(byAdding: .weekOfYear, value: value, to: currentStartDate) {
+//                timeManager.startDate = newDate
+//            }
+//        case .month:
+//            if let newDate = Calendar.current.date(byAdding: .month, value: value, to: currentStartDate) {
+//                timeManager.startDate = newDate
+//            }
+//        case .year:
+//            if let newDate = Calendar.current.date(byAdding: .year, value: value, to: currentStartDate) {
+//                timeManager.startDate = newDate
+//            }
+//        }
+//        recalculateChartDataPoints()
+//    }
 }
 
 

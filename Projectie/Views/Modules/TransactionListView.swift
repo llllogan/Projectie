@@ -14,7 +14,7 @@ struct TransactionListView: View {
     
     @Binding var activeSheet: ActiveSheet?
     
-    var transactionGroupPeriod: TimeFrame
+    var transactionGroupPeriod: TimePeriod
     
     var body: some View {
         

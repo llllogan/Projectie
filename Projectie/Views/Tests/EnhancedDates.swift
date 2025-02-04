@@ -13,7 +13,6 @@ struct EnhancedDates: View {
     @ObservedObject private var timeManager = TimeManager.shared
         
     init() {
-        // You can set the time period here.
         timeManager.timePeriod = .fortnight
     }
     
