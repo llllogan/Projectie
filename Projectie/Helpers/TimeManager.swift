@@ -28,8 +28,10 @@ class TimeManager: ObservableObject {
         }
     }
     
-    @Published private(set) var startDate: Date = Date()
-    @Published private(set) var endDate: Date = Date()
+//    @Published private(set) var startDate: Date = Date()
+//    @Published private(set) var endDate: Date = Date()
+    @Published var startDate: Date = Date()
+    @Published var endDate: Date = Date()
     
     /// For non-custom periods, we keep track of an offset so that shifting the period updates the dates accordingly.
     private var periodOffset: Int = 0

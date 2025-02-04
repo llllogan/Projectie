@@ -39,6 +39,7 @@ struct MainView: View {
     @State private var showManageTransactionSheet = false
     @State private var showBottomToggle = true
     @State private var showAddInitialBalanceSheet = false
+    @State private var showCustomDatePicker: Bool = false
     @State private var activeSheet: ActiveSheet?
     
     // MARK: - Chart & Time Frame States
@@ -114,18 +115,28 @@ struct MainView: View {
             }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
-                case .addTransaction:
-                    AddTransactionSheet()
+                    case .addTransaction:
+                        AddTransactionSheet()
+                            .presentationDragIndicator(.visible)
+                    case .resetBalance:
+                        ResetBalanceSheet()
+                            .presentationDragIndicator(.visible)
+                    case .manageTransaction(let transaction, let date):
+                        ManageTransactionSheet(transaction: transaction, instanceDate: date)
+                            .presentationDragIndicator(.visible)
+                    case .addGoal:
+                        AddGoalSheet()
+                            .presentationDragIndicator(.visible)
+                    case .customDateRange:
+                        CustomDateRangeSheet() { start, end in
+                            timeManager.timePeriod = .custom
+                            timeManager.startDate = start
+                            timeManager.endDate = end
+                            recalculateChartDataPoints()
+                            populateTransactionLists()
+                        }
                         .presentationDragIndicator(.visible)
-                case .resetBalance:
-                    ResetBalanceSheet()
-                        .presentationDragIndicator(.visible)
-                case .manageTransaction(let transaction, let date):
-                    ManageTransactionSheet(transaction: transaction, instanceDate: date)
-                        .presentationDragIndicator(.visible)
-                case .addGoal:
-                    AddGoalSheet()
-                        .presentationDragIndicator(.visible)
+                        .presentationDetents([.medium, .large])
                 }
             }
             .fullScreenCover(isPresented: $showAddInitialBalanceSheet) {
@@ -140,6 +151,7 @@ struct MainView: View {
                         Button(action: { activeSheet = .addTransaction }) {
                             Label("Add interest", systemImage: "dollarsign.circle.fill")
                         }
+                        .disabled(true)
                         Button(action: { activeSheet = .addGoal }) {
                             Label("Add goal", systemImage: "trophy")
                         }
@@ -512,9 +524,12 @@ struct MainView: View {
                     .foregroundStyle(.secondary)
                 Menu {
                     Picker("", selection: $timeManager.timePeriod) {
-                        ForEach(TimePeriod.allCases, id: \.self) { frame in
-                            Text(frame.rawValue.capitalized).tag(frame)
-                                .lineLimit(1)
+                        Text("Week").tag(TimePeriod.week)
+                        Text("Fortnight").tag(TimePeriod.fortnight)
+                        Text("Month").tag(TimePeriod.month)
+                        Text("Year").tag(TimePeriod.year)
+                        if (timeManager.timePeriod == .custom) {
+                            Text("Custom").tag(TimePeriod.custom)
                         }
                     }
                 } label: {
@@ -525,8 +540,14 @@ struct MainView: View {
             }
             
             Menu {
-                Text("Show Today")
-                Text("Pick Date Range")
+                Button("Move to Today") {
+                    timeManager.resetToCurrentPeriod()
+                    recalculateChartDataPoints()
+                    populateTransactionLists()
+                }
+                Button("Pick Custom Date Range") {
+                    activeSheet = .customDateRange
+                }
             } label: {
                 Button(action: {}) {
                     Image(systemName: "calendar")
@@ -961,6 +982,7 @@ enum ActiveSheet: Identifiable {
     case resetBalance
     case manageTransaction(Transaction, Date)
     case addGoal
+    case customDateRange
     
     var id: Int {
         UUID().hashValue
