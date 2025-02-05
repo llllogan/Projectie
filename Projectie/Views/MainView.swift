@@ -632,8 +632,7 @@ struct MainView: View {
                         ForEach(goals, id: \.id) { goal in
                             List {
                                 Section {
-                                    GoalView()
-
+                                    GoalView(goal: goal, currentBalance: currentBalance, dateReached: earliestDateWhenGoalIsMet(goal.targetAmount))
                                 }
                             }
                             .containerRelativeFrame(.horizontal, count: 1, spacing: 0)
@@ -646,24 +645,6 @@ struct MainView: View {
                 .defaultScrollAnchor(.center)
             }
         }
-    
-//        List(goals) { goal in
-//            VStack(alignment: .leading) {
-//                Text(goal.title)
-//                    .font(.headline)
-//                
-//                let dateReached = earliestDateWhenGoalIsMet(goal.targetAmount)
-//                if let dateReached = dateReached {
-//                    Text("Reached by: \(dateReached, style: .date)")
-//                        .font(.subheadline)
-//                        .foregroundStyle(.secondary)
-//                } else {
-//                    Text("Goal Not Met")
-//                        .font(.subheadline)
-//                        .foregroundStyle(.secondary)
-//                }
-//            }
-//        }
     }
     
     

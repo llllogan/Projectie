@@ -9,17 +9,72 @@ import SwiftUI
 import Foundation
 import Charts
 
+enum DisplayedRemainingTimeGranularity: String {
+    case days
+    case weeks
+    case months
+    case years
+}
+
 struct GoalView: View {
-    // Sample data – in a real app these would be your model values
-    let title: String = "Vacation Savings"
-    let amount: String = "$5,000"
-    let percentageToGoal: Double = 0.65  // 65%
-    let daysUntil: Int = 45
-    let weeksUntil: Int = 6
-    let monthsUntil: Int = 2
-    let dateReached: Date? = Date()
     
-    @State private var percent: Double = 0.90
+    @State var goal: Goal
+    @State var currentBalance: Double
+    @State var dateReached: Date?
+    
+    @State private var granularity: DisplayedRemainingTimeGranularity = .days
+
+    var remainingAmount: Double {
+        goal.targetAmount - currentBalance < 0 ? 0 : goal.targetAmount - currentBalance
+    }
+
+    var progress: Double {
+        currentBalance / goal.targetAmount
+    }
+    
+    func reachInNounText() -> String {
+        
+        if let dateReached = dateReached {
+            
+            print(dateReached)
+            
+            let remainingTime = dateReached.timeIntervalSince(Date())
+            
+            
+            if (remainingTime <= 0) {
+                return "Done!"
+            } else {
+                
+                switch granularity {
+                case .days:
+                    return "\(Int(remainingTime / 86400)) days"
+                case .weeks:
+                    return "\(Int(remainingTime / 604800)) weeks"
+                case .months:
+                    return "\(Int(remainingTime / 2629743)) months"
+                case .years:
+                    return "\(Int(remainingTime / 31536000)) years"
+                }
+            }
+        }
+        
+        return "-"
+    }
+    
+    func reachByNounText() -> String {
+        
+        if let date = dateReached {
+            
+            if date == Date() {
+                return "Today"
+            }
+            
+            return date.formatted(.dateTime.day().month().year())
+        }
+        
+        return "-"
+    }
+    
     
     var body: some View {
         
@@ -28,11 +83,11 @@ struct GoalView: View {
             HStack {
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
+                    Text(goal.title)
                         .font(.title2)
                         .foregroundColor(.primary)
                         .fontWeight(.semibold)
-                    Text(amount)
+                    Text("$\(goal.targetAmount, specifier: "%.2f")")
                         .font(.system(size: 16, weight: .bold, design: .rounded))
                         .font(.headline)
                         .foregroundColor(.primary)
@@ -41,36 +96,52 @@ struct GoalView: View {
 
                 
                 Spacer()
-                ScalableSectorView(percent: percent)
+                ScalableSectorView(percent: progress)
                     .padding(.vertical, 8)
-
             }
             .frame(maxHeight: 90)
             
             Divider()
             
-            HStack(alignment: .center, spacing: 50) {
+            HStack(alignment: .center) {
                 VStack(alignment: .center) {
-                    Text("Achieve On")
+                    Text("Achieve By")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    Text("\(dateReached!, format: .dateTime.day().month().year())")
+                    Text(reachByNounText())
                         .fontWeight(.semibold)
                 }
+                
+                Spacer()
                 
                 VStack(alignment: .center) {
                     Text("Reach In")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    Text("\(daysUntil) days")
+                    Text(reachInNounText())
                         .fontWeight(.semibold)
+                        .lineLimit(1)
                 }
+                .onTapGesture {
+                    switch granularity {
+                    case .days:
+                        granularity = .weeks
+                    case .weeks:
+                        granularity = .months
+                    case .months:
+                        granularity = .years
+                    case .years:
+                        granularity = .days
+                    }
+                }
+                
+                Spacer()
                 
                 VStack(alignment: .center) {
                     Text("Remaining")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    Text("$450")
+                    Text("\(remainingAmount, specifier: "%.2f")")
                         .fontWeight(.semibold)
                         .fontDesign(.rounded)
                 }
@@ -79,92 +150,6 @@ struct GoalView: View {
         }
         
     }
-    
-
-//    var body: some View {
-//        VStack(spacing: 20) {
-//            
-//            HStack(alignment: .bottom) {
-//                VStack(alignment: .leading, spacing: 4) {
-//                    Text(title)
-//                        .font(.headline)
-//                        .foregroundColor(.primary)
-//                        .fontWeight(.regular)
-//                    Text(amount)
-//                        .font(.system(size: 30, weight: .bold, design: .rounded))
-//                        .foregroundColor(.primary)
-//                }
-//                
-//                Spacer()
-//                
-//                ProgressBar(progress: percentageToGoal)
-//                    .frame(minWidth: 150, maxHeight: 30)
-//                    .padding(.leading, 25)
-//                    .padding(.bottom, 10)
-//            }
-//            
-//            HStack {
-//                VStack(alignment: .leading) {
-//                    Text("You will reach this goal on")
-//                        .font(.subheadline)
-//                        .foregroundStyle(.secondary)
-//                    if let reachedDate = dateReached {
-//                        Text("\(dateFormatter.string(from: reachedDate))")
-//                            .font(.title3)
-//                            .foregroundColor(.primary)
-//                    }
-//                }
-//                
-//                Spacer()
-//            }
-//            
-//            HStack {
-//                VStack(alignment: .leading) {
-//                    Text("Reached In")
-//                        .font(.subheadline)
-//                        .foregroundStyle(.secondary)
-//                    Text("\(daysUntil) days or \(weeksUntil) weeks or \(monthsUntil) months")
-//                        .font(.title3)
-//                        .foregroundColor(.primary)
-//                }
-//                
-//                Spacer()
-//            }
-//            
-//            
-//
-//
-////            HStack {
-////                Button(action: {
-////                    
-////                }) {
-////                    Image(systemName: "trash")
-////                        .padding(.vertical, 10)
-////                }
-////                .buttonStyle(.bordered)
-////                .tint(.red)
-////                
-////                Button(action: {
-////                    
-////                }) {
-////                    Image(systemName: "pencil.circle.fill")
-////                        .padding(.vertical, 10)
-////                }
-////                .buttonStyle(.bordered)
-////                .tint(.secondary)
-////                
-////                Button(action: {
-////                    
-////                }) {
-////                    Text("Convert to Transaction")
-////                        .padding(.vertical, 10)
-////                        .frame(maxWidth: .infinity)
-////                }
-////                .buttonStyle(.bordered)
-////                .tint(.secondary)
-////            }
-//        }
-//    }
 }
 
 struct Sector: Shape {
@@ -226,9 +211,4 @@ struct ScalableSectorView: View {
         // Maintain a square aspect ratio regardless of the parent view.
         .aspectRatio(1, contentMode: .fit)
     }
-}
-
-
-#Preview {
-    GoalView()
 }
