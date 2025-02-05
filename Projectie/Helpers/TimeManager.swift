@@ -12,7 +12,17 @@ enum TimePeriod: String, CaseIterable {
     case week, fortnight, month, year, custom
 }
 
+struct AxisMark: Identifiable {
+    let id = UUID()
+    let date: Date
+    let text: String
+    let showChartMark: Bool
+    let showAxisMark: Bool
+}
+
 class TimeManager: ObservableObject {
+    
+    private let defaultSpan: Double = 86400
     
     static let shared = TimeManager()
     private init() {
@@ -28,10 +38,10 @@ class TimeManager: ObservableObject {
         }
     }
     
-//    @Published private(set) var startDate: Date = Date()
-//    @Published private(set) var endDate: Date = Date()
     @Published var startDate: Date = Date()
     @Published var endDate: Date = Date()
+    
+//    @Published private(set) var xAxisReference: [AxisMark] = []
     
     /// For non-custom periods, we keep track of an offset so that shifting the period updates the dates accordingly.
     private var periodOffset: Int = 0

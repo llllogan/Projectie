@@ -378,44 +378,44 @@ struct MainView: View {
                 values: .automatic(desiredCount: 4)
             )
         }
-        .chartXAxis {
-            AxisMarks(values: filteredXAxisDates) { value in
-                if let date = value.as(Date.self) {
-                    
-                    if (date != today) {
-                        AxisGridLine()
-                        AxisTick()
-                    }
-
-                    
-                    AxisValueLabel(horizontalSpacing: date == today ? -12 : 2) {
-                        
-                        if (date == today) {
-                            Text(timeManager.timePeriod == .week ? "Now" :"Today")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        } else {
-                            if (timeManager.timePeriod == .year) {
-                                Text(date, format: .dateTime.month())
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            } else {
-                                Text(ordinalDayString(from: date))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                }
-            }
-            AxisMarks(values: xAxisDates) { value in
-                if let date = value.as(Date.self) {
-                    if (date != today) {
-                        AxisGridLine()
-                    }
-                }
-            }
-        }
+//        .chartXAxis {
+//            AxisMarks(values: filteredXAxisDates) { value in
+//                if let date = value.as(Date.self) {
+//                    
+//                    if (date != today) {
+//                        AxisGridLine()
+//                        AxisTick()
+//                    }
+//
+//                    
+//                    AxisValueLabel(horizontalSpacing: date == today ? -12 : 2) {
+//                        
+//                        if (date == today) {
+//                            Text(timeManager.timePeriod == .week ? "Now" :"Today")
+//                                .font(.caption)
+//                                .foregroundStyle(.secondary)
+//                        } else {
+//                            if (timeManager.timePeriod == .year) {
+//                                Text(date, format: .dateTime.month())
+//                                    .font(.caption)
+//                                    .foregroundStyle(.secondary)
+//                            } else {
+//                                Text(ordinalDayString(from: date))
+//                                    .font(.caption)
+//                                    .foregroundStyle(.secondary)
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//            AxisMarks(values: xAxisDates) { value in
+//                if let date = value.as(Date.self) {
+//                    if (date != today) {
+//                        AxisGridLine()
+//                    }
+//                }
+//            }
+//        }
         .chartYScale(domain: chartMin...chartMax)
         .frame(height: 180)
         .padding()
