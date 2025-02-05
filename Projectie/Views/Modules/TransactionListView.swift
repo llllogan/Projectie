@@ -14,14 +14,12 @@ struct TransactionListView: View {
     
     @Binding var activeSheet: ActiveSheet?
     
-    var transactionGroupPeriod: TimePeriod
-    
     var body: some View {
         
         if(groupedOccurrences.isEmpty) {
             VStack {
                 Spacer()
-                Text("No transactions for this \(transactionGroupPeriod.rawValue)")
+                Text("No transactions for this \(TimeManager.shared.timePeriod.rawValue)")
                     .foregroundStyle(.secondary)
                     .containerRelativeFrame(.horizontal, count: 1, spacing: 0)
                 Spacer()

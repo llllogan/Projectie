@@ -48,12 +48,14 @@ struct MainView: View {
     @State private var timeFrameOffset: Int = 0
     @State private var directionToMoveInTime: Int = 0
     
-    // MARK: - Transaction Selection & Navigation
-    @State private var selectedBottomView: BottomViewChoice = .transactions
+    // MARK: - Transaction & Goal Selection & Navigation
+    @State private var selectedBottomView: BottomViewChoice = .goals
     @State private var selectedBalance: Double? = nil
     @State private var selectedDate: Date? = nil
     @State private var selectedTransaction: Transaction?
+    @State private var selectedGoal: Goal?
     @State private var centeredTransactionViewId: Int?
+    @State private var centeredGoalViewId: Int?
     @State private var ignoreChangeInCenteredTransactionViewId: Bool = false
     
     // MARK: - Gesture & Interaction States
@@ -542,31 +544,31 @@ struct MainView: View {
 
         ScrollView(.horizontal) {
             HStack {
-                TransactionListView(groupedOccurrences: transactionListMinus2 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: timeManager.timePeriod)
+                TransactionListView(groupedOccurrences: transactionListMinus2 ?? [], activeSheet: $activeSheet)
                     .id(-2)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
                     }
-                TransactionListView(groupedOccurrences: transactionListMinus1 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: timeManager.timePeriod)
+                TransactionListView(groupedOccurrences: transactionListMinus1 ?? [], activeSheet: $activeSheet)
                     .id(-1)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
                     }
-                TransactionListView(groupedOccurrences: transactionListToday ?? [], activeSheet: $activeSheet, transactionGroupPeriod: timeManager.timePeriod)
+                TransactionListView(groupedOccurrences: transactionListToday ?? [], activeSheet: $activeSheet)
                     .id(0)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
                     }
-                TransactionListView(groupedOccurrences: transactionListPlus1 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: timeManager.timePeriod)
+                TransactionListView(groupedOccurrences: transactionListPlus1 ?? [], activeSheet: $activeSheet)
                     .id(1)
                     .scrollTransition { content, phase in
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
                     }
-                TransactionListView(groupedOccurrences: transactionListPlus2 ?? [], activeSheet: $activeSheet, transactionGroupPeriod: timeManager.timePeriod)
+                TransactionListView(groupedOccurrences: transactionListPlus2 ?? [], activeSheet: $activeSheet)
                     .id(2)
                     .scrollTransition { content, phase in
                         content
@@ -607,23 +609,61 @@ struct MainView: View {
     
     // MARK: - Goal List
     private var goalList: some View {
-        List(goals) { goal in
-            VStack(alignment: .leading) {
-                Text(goal.title)
-                    .font(.headline)
-                
-                let dateReached = earliestDateWhenGoalIsMet(goal.targetAmount)
-                if let dateReached = dateReached {
-                    Text("Reached by: \(dateReached, style: .date)")
-                        .font(.subheadline)
+        
+        Section {
+            if goals.isEmpty {
+                VStack(spacing: 30) {
+                    Spacer()
+                    Text("Nothing to see here")
+                        .font(.caption)
                         .foregroundStyle(.secondary)
-                } else {
-                    Text("Goal Not Met")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    Button(action: {
+                        activeSheet = .addGoal
+                    }) {
+                        Label("Add a Goal", systemImage: "plus")
+                    }
+                    .buttonStyle(.bordered)
+                    .foregroundStyle(.secondary)
+                    Spacer()
                 }
+            } else {
+                ScrollView(.horizontal) {
+                    HStack {
+                        ForEach(goals, id: \.id) { goal in
+                            List {
+                                Section {
+                                    GoalView()
+
+                                }
+                            }
+                            .containerRelativeFrame(.horizontal, count: 1, spacing: 0)
+                            .scrollDisabled(true)
+                        }
+                    }
+                    .scrollTargetLayout()
+                }
+                .scrollTargetBehavior(.viewAligned)
+                .defaultScrollAnchor(.center)
             }
         }
+    
+//        List(goals) { goal in
+//            VStack(alignment: .leading) {
+//                Text(goal.title)
+//                    .font(.headline)
+//                
+//                let dateReached = earliestDateWhenGoalIsMet(goal.targetAmount)
+//                if let dateReached = dateReached {
+//                    Text("Reached by: \(dateReached, style: .date)")
+//                        .font(.subheadline)
+//                        .foregroundStyle(.secondary)
+//                } else {
+//                    Text("Goal Not Met")
+//                        .font(.subheadline)
+//                        .foregroundStyle(.secondary)
+//                }
+//            }
+//        }
     }
     
     
