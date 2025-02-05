@@ -237,6 +237,11 @@ struct MainView: View {
                     }
                 }
                 .padding(.horizontal)
+                .onTapGesture {
+                    timeManager.resetToCurrentPeriod()
+                    recalculateChartDataPoints()
+                    populateTransactionLists()
+                }
             } else {
                 if let selectedDate = selectedDate, let selectedBalance = selectedBalance {
                     VStack(alignment: .center, spacing: 4) {
@@ -489,7 +494,7 @@ struct MainView: View {
             
             
             HStack(spacing: 6) {
-                Text("Range")
+                Text("Date Range")
                     .foregroundStyle(.secondary)
                 Menu {
                     Picker("", selection: $timeManager.timePeriod) {
@@ -501,29 +506,14 @@ struct MainView: View {
                             Text("Custom").tag(TimePeriod.custom)
                         }
                     }
+                    Button("Pick Custom Date Range") {
+                        activeSheet = .customDateRange
+                    }
                 } label: {
                     Button("\(timeManager.timePeriod.rawValue.capitalized)") {}
                     .buttonStyle(.bordered)
                     .tint(.primary)
                 }
-            }
-            
-            Menu {
-                Button("Move to Today") {
-                    timeManager.resetToCurrentPeriod()
-                    recalculateChartDataPoints()
-                    populateTransactionLists()
-                }
-                Button("Pick Custom Date Range") {
-                    activeSheet = .customDateRange
-                }
-            } label: {
-                Button(action: {}) {
-                    Image(systemName: "calendar")
-                        .font(.title3)
-                }
-                .buttonStyle(.bordered)
-                .tint(.primary)
             }
             
             
