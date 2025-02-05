@@ -116,6 +116,12 @@ struct MainView: View {
                 recalculateChartDataPoints()
                 populateTransactionLists()
             }
+            .sensoryFeedback(.selection, trigger: selectedDate) { oldValue, newValue in
+                oldValue != newValue
+            }
+            .sensoryFeedback(.impact, trigger: centeredTransactionViewId) { oldValue, newValue in
+                oldValue != newValue && !ignoreChangeInCenteredTransactionViewId
+            }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                     case .addTransaction:
@@ -278,49 +284,6 @@ struct MainView: View {
         let startDate = timeManager.startDate
         let endDate = timeManager.endDate
         let showTodayLine = (today >= startDate && today <= endDate)
-        
-        var spanningSeconds: Double = 0
-        switch timeManager.timePeriod {
-        case .week:
-            spanningSeconds = 86400
-        case .month:
-            spanningSeconds = 86400 * 7
-        case .year:
-            spanningSeconds = 86400 * 91
-        default:
-            spanningSeconds = 86400
-        }
-        
-        var xAxisDates: [Date] = stride(from: timeManager.startDate, to: timeManager.endDate, by: spanningSeconds).map { $0 }
-        
-        if (showTodayLine && !isInteracting) {
-            xAxisDates.append(today)
-        }
-        
-        xAxisDates.sort { $0 < $1 }
-        
-        var filteredXAxisDates: [Date] = []
-        var itteration: Int = 0
-
-        for date in xAxisDates {
-            
-            if (filteredXAxisDates.isEmpty) {
-                filteredXAxisDates.append(date)
-                continue
-            }
-            
-            let timeSinceLastDate: TimeInterval = date.timeIntervalSince(filteredXAxisDates.last!)
-            
-            if (timeSinceLastDate < spanningSeconds) {
-                if (date == today) {
-                    filteredXAxisDates.append(date)
-                }
-            } else {
-                filteredXAxisDates.append(date)
-            }
-
-            itteration += 1
-        }
         
         return Chart {
             if !isInteracting && showTodayLine {
@@ -700,7 +663,7 @@ struct MainView: View {
         case .week:
             return "week \(timeManager.startDate.formatted(.dateTime.week()))"
         case .fortnight:
-            return "weeks \(timeManager.startDate.formatted(.dateTime.week())) and \(timeManager.endDate.formatted(.dateTime.week()))"
+            return "week \(timeManager.endDate.formatted(.dateTime.week()))"
         case .month:
             return timeManager.startDate.formatted(.dateTime.month(.abbreviated))
         case .year:
