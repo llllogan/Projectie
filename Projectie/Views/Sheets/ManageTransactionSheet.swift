@@ -295,10 +295,10 @@ struct ManageTransactionSheet: View {
 
 }
 
-#Preview {
-    
-    let transaction: Transaction = Transaction (
-        title: "Shopping", amount: 24.56, isCredit: false, date: Date(), note: "", categorySystemName: "cart.fill", isRecurring: false)
-
-    ManageTransactionSheet(transaction: transaction)
-}
+//#Preview {
+//    
+//    let transaction: Transaction = Transaction (
+//        title: "Shopping", amount: 24.56, isCredit: false, date: Date(), note: "", categorySystemName: "cart.fill", isRecurring: false)
+//
+//    ManageTransactionSheet(transaction: transaction)
+//}

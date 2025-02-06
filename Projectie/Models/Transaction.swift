@@ -24,6 +24,7 @@ class Transaction: Identifiable {
     var amount: Double
     var isCredit: Bool
     var date: Date
+    var account: Account
     var note: String?
     var categorySystemName: String?
     
@@ -41,6 +42,7 @@ class Transaction: Identifiable {
         amount: Double,
         isCredit: Bool,
         date: Date,
+        account: Account,
         note: String? = nil,
         categorySystemName: String? = nil,
         isRecurring: Bool = false,
@@ -53,6 +55,7 @@ class Transaction: Identifiable {
         self.amount = amount
         self.isCredit = isCredit
         self.date = date
+        self.account = account
         self.note = note
         self.categorySystemName = categorySystemName
         

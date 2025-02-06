@@ -112,29 +112,29 @@ struct TransactionListElement: View {
     }
 }
 
-#Preview {
-    
-    let transactions: [Transaction] = [
-        Transaction(
-            title: "Test",
-            amount: 1000,
-            isCredit: false,
-            date: Date(),
-            note: "Hello",
-            categorySystemName: "house.fill"
-        ),
-        Transaction(
-            title: "Test",
-            amount: 1000,
-            isCredit: true,
-            date: Date(),
-            note: "Hello",
-            categorySystemName: "gift.fill"
-        )
-    ]
-    
-    List(transactions) { transaction in
-        TransactionListElement(transaction: transaction)
-    }
-}
+//#Preview {
+//    
+//    let transactions: [Transaction] = [
+//        Transaction(
+//            title: "Test",
+//            amount: 1000,
+//            isCredit: false,
+//            date: Date(),
+//            note: "Hello",
+//            categorySystemName: "house.fill"
+//        ),
+//        Transaction(
+//            title: "Test",
+//            amount: 1000,
+//            isCredit: true,
+//            date: Date(),
+//            note: "Hello",
+//            categorySystemName: "gift.fill"
+//        )
+//    ]
+//    
+//    List(transactions) { transaction in
+//        TransactionListElement(transaction: transaction)
+//    }
+//}
 
