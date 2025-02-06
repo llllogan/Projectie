@@ -96,6 +96,12 @@ let categories: [CategoryItem] = [
         name: "Entertainment",
         systemName: "ticket.fill",
         color: .indigo.opacity(0.7)),
+    
+    
+    CategoryItem(
+        name: "None",
+        systemName: "circle.dashed",
+        color: .black.opacity(0.7)),
 ]
 
 func findCategoryBySystemName(_ systemName: String) -> CategoryItem {

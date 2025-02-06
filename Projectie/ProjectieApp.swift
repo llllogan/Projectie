@@ -10,11 +10,32 @@ import SwiftData
 
 @main
 struct ProjectieApp: App {
+    
+    var container: ModelContainer = {
+        let schema = Schema([Transaction.self, BalanceReset.self, Goal.self, Account.self])
+        
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        
+        do {
+            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+        } catch {
+            fatalError("Failed to create model container wamp wamp: \(error)")
+        }
+    }()
+    
+    init() {
+        AccountManager.shared.setContext(container.mainContext)
+        TransactionManager.shared.setContext(container.mainContext)
+    }
+    
 
     var body: some Scene {
         WindowGroup {
             MainView()
-                .modelContainer(for: [Transaction.self, BalanceReset.self, Goal.self])
+                .modelContainer(container)
+                .environmentObject(AccountManager.shared)
+                .environmentObject(TransactionManager.shared)
+                .environmentObject(TimeManager.shared)
         }
     }
 }

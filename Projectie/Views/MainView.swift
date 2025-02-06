@@ -31,7 +31,7 @@ struct MainView: View {
     private var goals: [Goal]
     
     // MARK: - Observed Objects
-    @ObservedObject private var timeManager = TimeManager.shared
+    @EnvironmentObject var timeManager: TimeManager
     
     // MARK: - Sheet & Modal Presentation States
     @State private var showingAddTransactionSheet = false

@@ -289,12 +289,32 @@ struct AddTransactionSheet: View {
             dateArray = [transactionDate]
         }
         
+        if transactionTitle.isEmpty {
+            print("Needs title")
+            return
+        }
+        
+        if amount == 0 {
+            print("Needs amount")
+            return
+        }
+        
+        if selectedCategorySystemName == nil {
+            selectedCategorySystemName = "circle.dashed"
+        }
+        
+        if AccountManager.shared.selectedAccount == nil {
+            print("There is no account selected")
+            return
+        }
+        
         
         let newTxn = Transaction(
             title: transactionTitle,
             amount: amount,
             isCredit: isCredit,
             date: transactionDate,
+            account: AccountManager.shared.selectedAccount!,
             note: transactionNote,
             categorySystemName: selectedCategorySystemName,
             isRecurring: isRecurring,
