@@ -36,10 +36,7 @@ struct GoalView: View {
         
         if let dateReached = dateReached {
             
-            print(dateReached)
-            
             let remainingTime = dateReached.timeIntervalSince(Date())
-            
             
             if (remainingTime <= 0) {
                 return "Done!"
@@ -189,12 +186,15 @@ struct ScalableSectorView: View {
             
             ZStack {
                 // Bottom layer: the sector (wedge) that fills the available space.
+                Sector(percent: 100)
+                    .fill(Color.carrotOrrange.opacity(0.2))
+                
                 Sector(percent: percent)
                     .fill(Color.carrotOrrange)
                 
                 // Middle layer: a circle that is 80% the size of the available space.
                 Circle()
-                    .fill(Color.white)
+                    .fill(Color.niceGray)
                     .frame(width: size * 0.7, height: size * 0.7)
                 
                 // Top layer: percentage text, scaled relative to the available size.

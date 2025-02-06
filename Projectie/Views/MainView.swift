@@ -49,7 +49,7 @@ struct MainView: View {
     @State private var directionToMoveInTime: Int = 0
     
     // MARK: - Transaction & Goal Selection & Navigation
-    @State private var selectedBottomView: BottomViewChoice = .goals
+    @State private var selectedBottomView: BottomViewChoice = .transactions
     @State private var selectedBalance: Double? = nil
     @State private var selectedDate: Date? = nil
     @State private var selectedTransaction: Transaction?
@@ -348,44 +348,6 @@ struct MainView: View {
                 values: .automatic(desiredCount: 4)
             )
         }
-//        .chartXAxis {
-//            AxisMarks(values: filteredXAxisDates) { value in
-//                if let date = value.as(Date.self) {
-//                    
-//                    if (date != today) {
-//                        AxisGridLine()
-//                        AxisTick()
-//                    }
-//
-//                    
-//                    AxisValueLabel(horizontalSpacing: date == today ? -12 : 2) {
-//                        
-//                        if (date == today) {
-//                            Text(timeManager.timePeriod == .week ? "Now" :"Today")
-//                                .font(.caption)
-//                                .foregroundStyle(.secondary)
-//                        } else {
-//                            if (timeManager.timePeriod == .year) {
-//                                Text(date, format: .dateTime.month())
-//                                    .font(.caption)
-//                                    .foregroundStyle(.secondary)
-//                            } else {
-//                                Text(ordinalDayString(from: date))
-//                                    .font(.caption)
-//                                    .foregroundStyle(.secondary)
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            AxisMarks(values: xAxisDates) { value in
-//                if let date = value.as(Date.self) {
-//                    if (date != today) {
-//                        AxisGridLine()
-//                    }
-//                }
-//            }
-//        }
         .chartYScale(domain: chartMin...chartMax)
         .frame(height: 180)
         .padding()
@@ -397,7 +359,10 @@ struct MainView: View {
                     .gesture(
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
-                                isInteracting = true
+                                
+                                if (selectedBottomView == .transactions) {
+                                    isInteracting = true
+                                }
                                 
                                 let origin = geoProxy[proxy.plotFrame!].origin
                                 let locationXOnChart = value.location.x - origin.x
@@ -627,22 +592,31 @@ struct MainView: View {
                     Spacer()
                 }
             } else {
-                ScrollView(.horizontal) {
-                    HStack {
+                ScrollView(.vertical) {
+                    VStack {
                         ForEach(goals, id: \.id) { goal in
-                            List {
-                                Section {
-                                    GoalView(goal: goal, currentBalance: currentBalance, dateReached: earliestDateWhenGoalIsMet(goal.targetAmount))
+                            GoalView(goal: goal, currentBalance: currentBalance, dateReached: earliestDateWhenGoalIsMet(goal.targetAmount))
+                                .padding(.horizontal)
+                                .padding(.bottom)
+                                .padding(.top, 5)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color.niceGray)
+                                )
+                                .id(goal.id)
+                                .scrollTransition { content, phase in
+                                    content
+                                        .blur(radius: phase.isIdentity ? 0 : 2)
                                 }
-                            }
-                            .containerRelativeFrame(.horizontal, count: 1, spacing: 0)
-                            .scrollDisabled(true)
                         }
+                        .scrollTargetLayout()
                     }
-                    .scrollTargetLayout()
                 }
+                .padding(.horizontal)
+                .padding(.top)
                 .scrollTargetBehavior(.viewAligned)
-                .defaultScrollAnchor(.center)
+                .defaultScrollAnchor(.top)
+                .background(Color.niceBackground)
             }
         }
     }
