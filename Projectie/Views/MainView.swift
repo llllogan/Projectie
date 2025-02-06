@@ -57,6 +57,8 @@ struct MainView: View {
     @State private var centeredTransactionViewId: Int?
     @State private var centeredGoalViewId: Int?
     @State private var ignoreChangeInCenteredTransactionViewId: Bool = false
+    @State private var goalsToDisplay: [Goal] = []
+    @State private var goalPointMarks: [PointMark] = []
     
     // MARK: - Gesture & Interaction States
     @State private var isInteracting: Bool = false
@@ -118,6 +120,9 @@ struct MainView: View {
                 recalculateChartDataPoints()
                 populateTransactionLists()
             }
+//            .onChange(of: goalsToDisplay) { _, newValue in
+//                handleGoalAddedToDisplayList()
+//            }
             .sensoryFeedback(.selection, trigger: selectedDate) { oldValue, newValue in
                 oldValue != newValue
             }
@@ -315,6 +320,10 @@ struct MainView: View {
                 .symbolSize(40)
                 .foregroundStyle(Color.whiteInDarkBlackInLight)
             }
+            
+//            if selectedBottomView == .goals {
+//                print("Hello")
+//            }
             
             ForEach(filteredChartData, id: \.date) { dataPoint in
                 LineMark(
@@ -595,7 +604,7 @@ struct MainView: View {
                 ScrollView(.vertical) {
                     VStack {
                         ForEach(goals, id: \.id) { goal in
-                            GoalView(goal: goal, currentBalance: currentBalance, dateReached: earliestDateWhenGoalIsMet(goal.targetAmount))
+                            GoalView(goal: goal, currentBalance: currentBalance, dateReached: earliestDateWhenGoalIsMet(goal.targetAmount), goalsToDisplay: $goalsToDisplay)
                                 .padding(.horizontal)
                                 .padding(.bottom)
                                 .padding(.top, 5)
@@ -612,6 +621,7 @@ struct MainView: View {
                         .scrollTargetLayout()
                     }
                 }
+                .scrollIndicators(.hidden)
                 .padding(.horizontal)
                 .padding(.top)
                 .scrollTargetBehavior(.viewAligned)
@@ -718,6 +728,38 @@ struct MainView: View {
     
     
     // MARK: - Helper Function
+    
+    
+//    func handleGoalAddedToDisplayList() {
+//        
+//        var goalPointMarks: [(amount: Double, date: Date)] = []
+//        
+//        if (goalsToDisplay.isEmpty) { return }
+//        
+//        for goal in goalsToDisplay {
+//
+//            if let achievementDate = earliestDateWhenGoalIsMet(goal.targetAmount) {
+//                goalPointMarks.append( (amount: goal.targetAmount, date: achievementDate) )
+//            }
+//        }
+//        
+//        let sortedGoalPointMarks = goalPointMarks.sorted { $0.date < $1.date }
+//        
+//        timeManager.startDate = sortedGoalPointMarks.first!.date.advanced(by: -86400)
+//        timeManager.endDate = sortedGoalPointMarks.last!.date.advanced(by: 86400)
+//        
+//        for mark in goalPointMarks {
+//            
+//            self.goalPointMarks.append(
+//                PointMark(
+//                    x: .value("Date", mark.date),
+//                    y: .value("Amount", mark.amount)
+//                )
+//            )
+//            
+//        }
+//        
+//    }
     
     
     func ordinalDayString(from date: Date) -> String {

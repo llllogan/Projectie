@@ -22,7 +22,11 @@ struct GoalView: View {
     @State var currentBalance: Double
     @State var dateReached: Date?
     
+    @Binding var goalsToDisplay: [Goal]
+    
     @State private var granularity: DisplayedRemainingTimeGranularity = .days
+    
+    @State private var showOnGraph: Bool = false
 
     var remainingAmount: Double {
         goal.targetAmount - currentBalance < 0 ? 0 : goal.targetAmount - currentBalance
@@ -72,6 +76,17 @@ struct GoalView: View {
         return "-"
     }
     
+    func handleAddToGraph() {
+        
+        if showOnGraph {
+            goalsToDisplay.removeAll { $0.id == goal.id }
+        } else {
+            goalsToDisplay.append(goal)
+        }
+        
+        showOnGraph.toggle()
+    }
+    
     
     var body: some View {
         
@@ -79,16 +94,24 @@ struct GoalView: View {
             
             HStack {
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(goal.title)
-                        .font(.title2)
-                        .foregroundColor(.primary)
-                        .fontWeight(.semibold)
-                    Text("$\(goal.targetAmount, specifier: "%.2f")")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                        .fontWeight(.regular)
+                VStack(alignment: .leading, spacing: 7) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(goal.title)
+                            .font(.title2)
+                            .foregroundColor(.primary)
+                            .fontWeight(.semibold)
+                        Text("$\(goal.targetAmount, specifier: "%.2f")")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                            .fontWeight(.regular)
+                    }
+                    Label("Show on graph", systemImage: showOnGraph ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                }
+                .onTapGesture {
+                    handleAddToGraph()
                 }
 
                 
