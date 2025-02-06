@@ -12,8 +12,8 @@ struct TransactionListView: View {
     
     var groupedOccurrences: [(key: Date, value: [TransactionOccurrence])]
     
-    @Binding var activeSheet: ActiveSheet?
-    
+    var onReturn: (_ transaction: Transaction, _ endinstanceDate: Date) -> Void
+
     var body: some View {
         
         if(groupedOccurrences.isEmpty) {
@@ -30,7 +30,7 @@ struct TransactionListView: View {
                 ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
                     Section(header: Text(date, format: .dateTime.weekday(.wide).day().month(.wide))) {
                         transactionListDayOrganiser(occurenceList: occurrences, onTransactionSelected: { transaction in
-                            activeSheet = .manageTransaction(transaction, date)
+                            onReturn(transaction, date)
                         })
                     }
                 }
