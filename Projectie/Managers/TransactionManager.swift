@@ -19,10 +19,11 @@ final class TransactionManager: ObservableObject {
     /// Private initializer to enforce singleton usage.
     private init() { }
     
-    /// Set the model context when available.
-    func setContext(_ context: ModelContext) {
-        self.context = context
-    }
+    @Published private var transactionListMinus2: [(key: Date, value: [TransactionOccurrence])]?
+    @Published private var transactionListMinus1: [(key: Date, value: [TransactionOccurrence])]?
+    @Published private var transactionListToday: [(key: Date, value: [TransactionOccurrence])]?
+    @Published private var transactionListPlus1: [(key: Date, value: [TransactionOccurrence])]?
+    @Published private var transactionListPlus2: [(key: Date, value: [TransactionOccurrence])]?
     
     /// Computed property returning transactions for the selected account.
     var transactions: [Transaction] {
@@ -53,8 +54,32 @@ final class TransactionManager: ObservableObject {
         }
     }
     
+    /// Set the model context when available.
+    func setContext(_ context: ModelContext) {
+        self.context = context
+    }
+    
     /// You can add other computed properties or functions here based on transactions.
     func totalAmount() -> Double {
         transactions.reduce(0) { $0 + $1.amount }
     }
+    
+    func groupedOccurrences(startDate: Date, endDate: Date) -> [(key: Date, value: [TransactionOccurrence])] {
+        let calendar = Calendar.current
+
+        // 4. Filter occurrences that lie within this shifted range
+        let visibleOccurrences = transactions.filter {
+            $0.date >= startDate && $0.date <= endDate
+        }
+
+        // 5. Group by start of day
+        let grouped = Dictionary(grouping: visibleOccurrences) { occ in
+            calendar.startOfDay(for: occ.date)
+        }
+
+        // 6. Return them sorted by day
+        
+    }
+
 }
+
