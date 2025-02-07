@@ -75,8 +75,10 @@ struct InitialBalanceSheet: View {
     private func saveBalance() {
         guard let amount = Double(amount) else { return }
         
-        let newGoal = BalanceReset(date: Date(), balanceAtReset: amount, isStartingBalance: true)
-        context.insert(newGoal)
+        guard let account = AccountManager.shared.selectedAccount else { return }
+        
+        let startingBalance = BalanceReset(date: Date(), balanceAtReset: amount, account: account, isStartingBalance: true)
+        context.insert(startingBalance)
         try? context.save()
         
         hasSetInitialBalance = true

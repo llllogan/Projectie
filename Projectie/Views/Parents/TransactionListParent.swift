@@ -10,14 +10,10 @@ import SwiftUI
 struct TransactionListParent: View {
     
     @EnvironmentObject var timeManager: TimeManager
+    @EnvironmentObject var financialEventManager: FinancialEventManager
+    @EnvironmentObject var chartManager: ChartManager
     
     @State private var showManageTransactionSheet: Bool = false
-    
-    @State private var transactionListMinus2: [(key: Date, value: [TransactionOccurrence])]?
-    @State private var transactionListMinus1: [(key: Date, value: [TransactionOccurrence])]?
-    @State private var transactionListToday: [(key: Date, value: [TransactionOccurrence])]?
-    @State private var transactionListPlus1: [(key: Date, value: [TransactionOccurrence])]?
-    @State private var transactionListPlus2: [(key: Date, value: [TransactionOccurrence])]?
     
     @State private var ignoreChangeInCenteredTransactionViewId: Bool = false
     @State private var centeredTransactionViewId: Int?
@@ -34,7 +30,7 @@ struct TransactionListParent: View {
     var body: some View {
         ScrollView(.horizontal) {
             HStack {
-                TransactionListView(groupedOccurrences: transactionListMinus2 ?? []) { transaction, date in
+                TransactionListView(groupedOccurrences: financialEventManager.eventLintMinus2 ?? []) { transaction, date in
                     handleTapOnTransactionListItem(transaction: transaction, instanceDate: date)
                 }
                     .id(-2)
@@ -42,7 +38,7 @@ struct TransactionListParent: View {
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
                     }
-                TransactionListView(groupedOccurrences: transactionListMinus1 ?? []) { transaction, date in
+                TransactionListView(groupedOccurrences: financialEventManager.eventListMinus1 ?? []) { transaction, date in
                     handleTapOnTransactionListItem(transaction: transaction, instanceDate: date)
                 }
                     .id(-1)
@@ -50,7 +46,7 @@ struct TransactionListParent: View {
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
                     }
-                TransactionListView(groupedOccurrences: transactionListToday ?? []) { transaction, date in
+                TransactionListView(groupedOccurrences: financialEventManager.eventList ?? []) { transaction, date in
                     handleTapOnTransactionListItem(transaction: transaction, instanceDate: date)
                 }
                     .id(0)
@@ -58,7 +54,7 @@ struct TransactionListParent: View {
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
                     }
-                TransactionListView(groupedOccurrences: transactionListPlus1 ?? []) { transaction, date in
+                TransactionListView(groupedOccurrences: financialEventManager.eventListPlus1 ?? []) { transaction, date in
                     handleTapOnTransactionListItem(transaction: transaction, instanceDate: date)
                 }
                     .id(1)
@@ -66,7 +62,7 @@ struct TransactionListParent: View {
                         content
                             .opacity(phase.isIdentity ? 1 : 0.5)
                     }
-                TransactionListView(groupedOccurrences: transactionListPlus2 ?? []) { transaction, date in
+                TransactionListView(groupedOccurrences: financialEventManager.eventListPlus2 ?? []) { transaction, date in
                     handleTapOnTransactionListItem(transaction: transaction, instanceDate: date)
                 }
                     .id(2)
@@ -90,8 +86,8 @@ struct TransactionListParent: View {
                 overwriteSwipeIndexStart = true
                 directionToMoveInTime = swipeEndIndex - swipeStartIndex
                 timeManager.shiftPeriod(by: directionToMoveInTime)
-//                populateTransactionLists()
-//                recalculateChartDataPoints()
+                financialEventManager.updateEventLists()
+                chartManager.recalculateChartDataPoints()
                 directionToMoveInTime = 0
                 
                 if (isFirstLoadForTransactionList) {

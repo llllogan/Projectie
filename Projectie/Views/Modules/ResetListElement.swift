@@ -55,11 +55,13 @@ struct BalanceResetListElement: View {
     let goals: [BalanceReset] = [
         BalanceReset(
             date: Date(),
-            balanceAtReset: 1000
+            balanceAtReset: 1000,
+            account: AccountManager.shared.selectedAccount!
         ),
         BalanceReset(
             date: Date(),
             balanceAtReset: 1000,
+            account: AccountManager.shared.selectedAccount!,
             isStartingBalance: true
         )
 

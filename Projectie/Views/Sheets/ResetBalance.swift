@@ -96,7 +96,12 @@ struct ResetBalanceSheet: View {
             amount *= -1
         }
         
-        let newReset = BalanceReset(date: resetDate, balanceAtReset: amount)
+        if (AccountManager.shared.selectedAccount == nil) {
+            print("No account selected")
+            return
+        }
+        
+        let newReset = BalanceReset(date: resetDate, balanceAtReset: amount, account: AccountManager.shared.selectedAccount!)
         context.insert(newReset)
         try? context.save()
         

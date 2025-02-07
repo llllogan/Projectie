@@ -19,6 +19,8 @@ struct MainView: View {
     
     // MARK: - Environment
     @Environment(\.modelContext) private var context
+    @EnvironmentObject private var chartDataManager: ChartManager
+    @EnvironmentObject var timeManager: TimeManager
     
     // MARK: - Swift Data Queries
     @Query(sort: \Transaction.date, order: .forward)
@@ -29,9 +31,6 @@ struct MainView: View {
     
     @Query(sort: \Goal.createdDate, order: .forward)
     private var goals: [Goal]
-    
-    // MARK: - Observed Objects
-    @EnvironmentObject var timeManager: TimeManager
     
     // MARK: - Sheet & Modal Presentation States
     @State private var showingAddTransactionSheet = false
@@ -68,13 +67,6 @@ struct MainView: View {
     @State private var swipeEndIndex: Int = 0
     @State private var overwriteSwipeIndexStart: Bool = true
     
-    // MARK: - Transaction Lists by Date Groups
-    @State private var transactionListMinus2: [(key: Date, value: [TransactionOccurrence])]?
-    @State private var transactionListMinus1: [(key: Date, value: [TransactionOccurrence])]?
-    @State private var transactionListToday: [(key: Date, value: [TransactionOccurrence])]?
-    @State private var transactionListPlus1: [(key: Date, value: [TransactionOccurrence])]?
-    @State private var transactionListPlus2: [(key: Date, value: [TransactionOccurrence])]?
-    
     // MARK: - Miscellaneous
     @State private var today: Date = Date()
     @State private var isFirstLoadForTransactionList: Bool = true
@@ -99,10 +91,11 @@ struct MainView: View {
                 
             }
             .onAppear {
+                today = Date()
                 withAnimation {
                     timeManager.calculateDates()
                 }
-                recalculateChartDataPoints()
+                chartDataManager.recalculateChartDataPoints()
                 populateTransactionLists()
                 if (!hasSetInitialBalance && !ProcessInfo.processInfo.isRunningInXcodePreview) {
                     showAddInitialBalanceSheet = true
@@ -402,7 +395,7 @@ struct MainView: View {
     
     // MARK: - Chart (bar)
     struct chartBar: View {
-        var occurrences: [TransactionOccurrence]
+        var occurrences: [FinancialEventOccurence]
 
         var body: some View {
             let totalCredits = occurrences
@@ -506,76 +499,8 @@ struct MainView: View {
             if (selectedBottomView == .goals) {
                 goalList
             } else {
-                transactionList
+                TransactionListParent()
             }
-        }
-        
-    }
-    
-    
-    // MARK: - Transaction List
-    private var transactionList: some View {
-
-        ScrollView(.horizontal) {
-            HStack {
-                TransactionListView(groupedOccurrences: transactionListMinus2 ?? [], activeSheet: $activeSheet)
-                    .id(-2)
-                    .scrollTransition { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0.5)
-                    }
-                TransactionListView(groupedOccurrences: transactionListMinus1 ?? [], activeSheet: $activeSheet)
-                    .id(-1)
-                    .scrollTransition { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0.5)
-                    }
-                TransactionListView(groupedOccurrences: transactionListToday ?? [], activeSheet: $activeSheet)
-                    .id(0)
-                    .scrollTransition { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0.5)
-                    }
-                TransactionListView(groupedOccurrences: transactionListPlus1 ?? [], activeSheet: $activeSheet)
-                    .id(1)
-                    .scrollTransition { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0.5)
-                    }
-                TransactionListView(groupedOccurrences: transactionListPlus2 ?? [], activeSheet: $activeSheet)
-                    .id(2)
-                    .scrollTransition { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0.5)
-                    }
-
-            }
-            .scrollTargetLayout()
-        }
-        .scrollTargetBehavior(.viewAligned)
-        .defaultScrollAnchor(.center)
-        .scrollPosition(id: $centeredTransactionViewId, anchor: .center)
-        .scrollIndicators(.never)
-        .onScrollPhaseChange { _, newPhase in
-            print("Scroll phase: \(newPhase)")
-            if (newPhase == .idle) {
-                ignoreChangeInCenteredTransactionViewId = true
-                centeredTransactionViewId = 0
-                overwriteSwipeIndexStart = true
-                directionToMoveInTime = swipeEndIndex - swipeStartIndex
-                timeManager.shiftPeriod(by: directionToMoveInTime)
-                populateTransactionLists()
-                recalculateChartDataPoints()
-                directionToMoveInTime = 0
-                
-                if (isFirstLoadForTransactionList) {
-                    ignoreChangeInCenteredTransactionViewId = false
-                    isFirstLoadForTransactionList = false
-                }
-            }
-        }
-        .onChange(of: centeredTransactionViewId ?? 0) { oldValue, newValue in
-            handleChangeOfScrollView(oldValue: oldValue, newValue: newValue)
         }
         
     }
@@ -674,32 +599,6 @@ struct MainView: View {
     }
     
     
-    private var allOccurrences: [TransactionOccurrence] {
-        let transactionOccurrences = transactions.flatMap { txn in
-            if txn.isRecurring {
-                return txn.recurrenceDates.compactMap { date in
-                    TransactionOccurrence(type: .transaction(txn), recurringTransactionDate: date)
-                }
-            } else {
-                return [TransactionOccurrence(type: .transaction(txn))]
-            }
-        }
-        
-        let otherTypeOccurrences = allBalanceResets.flatMap { rst in
-            return [TransactionOccurrence(type: .reset(rst))]
-        }
-        
-        return transactionOccurrences + otherTypeOccurrences
-    }
-    
-    
-    private var visibleOccurrencesForPeriod: [TransactionOccurrence] {
-        allOccurrences.filter {
-            $0.date >= timeManager.startDate && $0.date <= timeManager.endDate
-        }
-    }
-    
-    
     private var currentBalance: Double {
         guard let reset = mostRecentReset else {
             // If no reset exists, fall back to using openingBalance
@@ -789,36 +688,6 @@ struct MainView: View {
         }
         swipeEndIndex = newValue
     }
-    
-    
-    func populateTransactionLists() {
-        
-        transactionListMinus2 = groupedOccurrences(startDate: timeManager.previousPeriod2.start, endDate: timeManager.previousPeriod2.end)
-        transactionListMinus1 = groupedOccurrences(startDate: timeManager.previousPeriod1.start, endDate: timeManager.previousPeriod1.end)
-        transactionListToday = groupedOccurrences(startDate: timeManager.startDate, endDate: timeManager.endDate)
-        transactionListPlus1 = groupedOccurrences(startDate: timeManager.nextPeriod1.start, endDate: timeManager.nextPeriod1.end)
-        transactionListPlus2 = groupedOccurrences(startDate: timeManager.nextPeriod2.start, endDate: timeManager.nextPeriod2.end)
-    }
-    
-    
-    func groupedOccurrences(startDate: Date, endDate: Date) -> [(key: Date, value: [TransactionOccurrence])] {
-        let calendar = Calendar.current
-
-        // 4. Filter occurrences that lie within this shifted range
-        let visibleOccurrences = allOccurrences.filter {
-            $0.date >= startDate && $0.date <= endDate
-        }
-
-        // 5. Group by start of day
-        let grouped = Dictionary(grouping: visibleOccurrences) { occ in
-            calendar.startOfDay(for: occ.date)
-        }
-
-        // 6. Return them sorted by day
-        return grouped
-            .sorted { $0.key < $1.key }
-    }
-    
     
     
     private func recalculateChartDataPoints() {
@@ -993,11 +862,6 @@ enum RangeOffset: Int {
     case plus1  =  1
     case plus2  =  2
     case plus3  =  3
-}
-
-enum OccurrenceType {
-    case transaction(Transaction)
-    case reset(BalanceReset)
 }
 
 extension ProcessInfo {

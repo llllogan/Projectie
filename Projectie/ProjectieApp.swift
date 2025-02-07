@@ -35,7 +35,9 @@ struct ProjectieApp: App {
                 .modelContainer(container)
                 .environmentObject(AccountManager.shared)
                 .environmentObject(TransactionManager.shared)
+                .environmentObject(FinancialEventManager.shared)
                 .environmentObject(TimeManager.shared)
+                .environmentObject(ChartManager.shared)
         }
     }
 }

@@ -10,7 +10,7 @@ import Foundation
 
 struct TransactionListView: View {
     
-    var groupedOccurrences: [(key: Date, value: [TransactionOccurrence])]
+    var groupedOccurrences: [(key: Date, value: [FinancialEventOccurence])]
     
     var onReturn: (_ transaction: Transaction, _ endinstanceDate: Date) -> Void
 
@@ -43,7 +43,7 @@ struct TransactionListView: View {
 
 struct transactionListDayOrganiser: View {
     
-    var occurenceList: [TransactionOccurrence]
+    var occurenceList: [FinancialEventOccurence]
     
     var onTransactionSelected: (Transaction) -> Void = { _ in }
     

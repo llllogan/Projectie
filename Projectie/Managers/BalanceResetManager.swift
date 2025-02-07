@@ -1,17 +1,17 @@
 //
-//  TransactionManager.swift
+//  BalanceResetManager.swift
 //  Projectie
 //
-//  Created by Logan Janssen | Codify on 6/2/2025.
+//  Created by Logan Janssen | Codify on 7/2/2025.
 //
 
 import Foundation
 import SwiftData
 import Combine
 
-final class TransactionManager: ObservableObject {
+final class BalanceResetManager: ObservableObject {
     /// Global shared instance.
-    static let shared = TransactionManager()
+    static let shared = BalanceResetManager()
     
     /// Holds the SwiftData model context.
     private var context: ModelContext?
@@ -20,7 +20,7 @@ final class TransactionManager: ObservableObject {
     private init() { }
     
     /// Computed property returning transactions for the selected account.
-    var transactions: [Transaction] {
+    var resets: [BalanceReset] {
         guard let context = context else {
             print("ModelContext has not been set for TransactionManager.")
             return []
@@ -35,11 +35,11 @@ final class TransactionManager: ObservableObject {
         let accountID: UUID = selectedAccount.id
         
         // Build a predicate that filters transactions for the selected account.
-        let predicate = #Predicate<Transaction> { transaction in
-            transaction.account.id == accountID
+        let predicate = #Predicate<BalanceReset> { reset in
+            reset.account.id == accountID
         }
         
-        let fetchDescriptor = FetchDescriptor<Transaction>(predicate: predicate)
+        let fetchDescriptor = FetchDescriptor<BalanceReset>(predicate: predicate)
         do {
             return try context.fetch(fetchDescriptor)
         } catch {
@@ -52,10 +52,5 @@ final class TransactionManager: ObservableObject {
     func setContext(_ context: ModelContext) {
         self.context = context
     }
-    
-    /// You can add other computed properties or functions here based on transactions.
-    func totalAmount() -> Double {
-        transactions.reduce(0) { $0 + $1.amount }
-    }
-}
 
+}

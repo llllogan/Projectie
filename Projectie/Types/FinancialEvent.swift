@@ -7,12 +7,12 @@
 
 import Foundation
 
-struct TransactionOccurrence: Identifiable {
+struct FinancialEventOccurence: Identifiable {
     
-    let type: OccurrenceType
+    let type: EventType
     let recurringTransactionDate: Date?
     
-    init(type: OccurrenceType, recurringTransactionDate: Date? = nil) {
+    init(type: EventType, recurringTransactionDate: Date? = nil) {
         self.type = type
         self.recurringTransactionDate = recurringTransactionDate
     }
@@ -21,7 +21,7 @@ struct TransactionOccurrence: Identifiable {
         switch type {
         case .transaction(let transaction):
             return transaction
-        case .reset(_):
+        default:
             return nil
         }
     }
@@ -44,4 +44,9 @@ struct TransactionOccurrence: Identifiable {
         }
 
     }
+}
+
+enum EventType {
+    case transaction(Transaction)
+    case reset(BalanceReset)
 }
