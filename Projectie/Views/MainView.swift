@@ -13,64 +13,56 @@ import Foundation
 struct MainView: View {
     
     // MARK: - App Storage (Persistent User Settings)
-    @AppStorage("openingBalance") private var openingBalance = 0.0
+//    @AppStorage("openingBalance") private var openingBalance = 0.0
     @AppStorage("hasSetInitialBalance") private var hasSetInitialBalance: Bool = false
     @AppStorage("sqaureLines") private var squareLines: Bool = false
     
     // MARK: - Environment
     @Environment(\.modelContext) private var context
     @EnvironmentObject private var chartDataManager: ChartManager
-    @EnvironmentObject var timeManager: TimeManager
-    @EnvironmentObject var financialEventManager: FinancialEventManager
-    
-    // MARK: - Swift Data Queries
-    @Query(sort: \Transaction.date, order: .forward)
-    private var transactions: [Transaction]
-    
-    @Query(sort: \BalanceReset.date, order: .reverse)
-    private var allBalanceResets: [BalanceReset]
-    
-    @Query(sort: \Goal.createdDate, order: .forward)
-    private var goals: [Goal]
+    @EnvironmentObject private var timeManager: TimeManager
+    @EnvironmentObject private var financialEventManager: FinancialEventManager
+    @EnvironmentObject private var controlManager: ControlManager
+    @EnvironmentObject private var transactionManager: TransactionManager
     
     // MARK: - Sheet & Modal Presentation States
-    @State private var showingAddTransactionSheet = false
-    @State private var showResetBalanceSheet = false
-    @State private var showManageTransactionSheet = false
-    @State private var showBottomToggle = true
+//    @State private var showingAddTransactionSheet = false
+//    @State private var showResetBalanceSheet = false
+//    @State private var showManageTransactionSheet = false
+//    @State private var showBottomToggle = true
     @State private var showAddInitialBalanceSheet = false
-    @State private var showCustomDatePicker: Bool = false
+//    @State private var showCustomDatePicker: Bool = false
     @State private var activeSheet: ActiveSheet?
     
     // MARK: - Chart & Time Frame States
-    @State private var selectedChartStyle: ChartViewStyle = .line
-    @State private var filteredChartData: [(date: Date, balance: Double)] = []
-    @State private var timeFrameOffset: Int = 0
-    @State private var directionToMoveInTime: Int = 0
+//    @State private var selectedChartStyle: ChartViewStyle = .line
+//    @State private var filteredChartData: [(date: Date, balance: Double)] = []
+//    @State private var timeFrameOffset: Int = 0
+//    @State private var directionToMoveInTime: Int = 0
     
     // MARK: - Transaction & Goal Selection & Navigation
-    @State var selectedBottomView: BottomViewChoice = .transactions
-    @State private var selectedBalance: Double? = nil
-    @State private var selectedDate: Date? = nil
-    @State private var selectedTransaction: Transaction?
-    @State private var selectedGoal: Goal?
-    @State private var centeredTransactionViewId: Int?
-    @State private var centeredGoalViewId: Int?
-    @State private var ignoreChangeInCenteredTransactionViewId: Bool = false
-    @State private var goalsToDisplay: [Goal] = []
-    @State private var goalPointMarks: [PointMark] = []
+//    @State var selectedBottomView: BottomViewChoice = .transactions
+//    @State private var selectedBalance: Double? = nil
+//    @State private var selectedDate: Date? = nil
+//    @State private var selectedTransaction: Transaction?
+//    @State private var selectedGoal: Goal?
+//    @State private var centeredTransactionViewId: Int?
+//    @State private var centeredGoalViewId: Int?
+//    @State private var ignoreChangeInCenteredTransactionViewId: Bool = false
+//    @State private var goalsToDisplay: [Goal] = []
+//    @State private var goalPointMarks: [PointMark] = []
     
     // MARK: - Gesture & Interaction States
-    @State private var isInteracting: Bool = false
-    @State private var dragLocation: CGPoint = .zero
-    @State private var horizontalOffset: CGFloat = 0
-    @State private var swipeStartIndex: Int = 0
-    @State private var swipeEndIndex: Int = 0
-    @State private var overwriteSwipeIndexStart: Bool = true
+//    @State private var isInteracting: Bool = false
+//    @State private var dragLocation: CGPoint = .zero
+//    @State private var horizontalOffset: CGFloat = 0
+//    @State private var swipeStartIndex: Int = 0
+//    @State private var swipeEndIndex: Int = 0
+//    @State private var overwriteSwipeIndexStart: Bool = true
     
     // MARK: - Miscellaneous
-    @State private var today: Date = Date()
-    @State private var isFirstLoadForTransactionList: Bool = true
+//    @State private var today: Date = Date()
+//    @State private var isFirstLoadForTransactionList: Bool = true
     
 
     
@@ -83,16 +75,27 @@ struct MainView: View {
                 
                 DynamicTitleParent()
                 
-                chart
-                    .frame(height: 200)
                 
-                chartControlls
+                if (controlManager.selectedChartView == .line) {
+                    LineGraphParent()
+                        .frame(height: 200)
+                } else {
+                    BarGraphParent()
+                        .frame(height: 200)
+                }
                 
-                bottomList
+                
+                CentreControlParent()
+                
+                
+                if (controlManager.selectedBottomView == .goals) {
+                    GoalListParent()
+                } else {
+                    TransactionListParent()
+                }
                 
             }
             .onAppear {
-                today = Date()
                 withAnimation {
                     timeManager.calculateDates()
                 }
@@ -106,22 +109,22 @@ struct MainView: View {
                 chartDataManager.recalculateChartDataPoints()
                 financialEventManager.updateEventLists()
             }
-            .onChange(of: transactions) { _, newValue in
-                chartDataManager.recalculateChartDataPoints()
-                financialEventManager.updateEventLists()
-            }
-            .onChange(of: allBalanceResets) { _, newValue in
-                chartDataManager.recalculateChartDataPoints()
-                financialEventManager.updateEventLists()
-            }
+//            .onChange(of: transactions) { _, newValue in
+//                chartDataManager.recalculateChartDataPoints()
+//                financialEventManager.updateEventLists()
+//            }
+//            .onChange(of: allBalanceResets) { _, newValue in
+//                chartDataManager.recalculateChartDataPoints()
+//                financialEventManager.updateEventLists()
+//            }
 //            .onChange(of: goalsToDisplay) { _, newValue in
 //                handleGoalAddedToDisplayList()
 //            }
-            .sensoryFeedback(.selection, trigger: selectedDate) { oldValue, newValue in
+            .sensoryFeedback(.selection, trigger: chartDataManager.selectedDate) { oldValue, newValue in
                 oldValue != newValue
             }
-            .sensoryFeedback(.impact, trigger: centeredTransactionViewId) { oldValue, newValue in
-                oldValue != newValue && !ignoreChangeInCenteredTransactionViewId
+            .sensoryFeedback(.impact, trigger: transactionManager.centeredTransactionViewId) { oldValue, newValue in
+                oldValue != newValue && !transactionManager.ignoreChangeInCenteredTransactionViewId
             }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
@@ -131,22 +134,9 @@ struct MainView: View {
                     case .resetBalance:
                         ResetBalanceSheet()
                             .presentationDragIndicator(.visible)
-                    case .manageTransaction(let transaction, let date):
-                        ManageTransactionSheet(transaction: transaction, instanceDate: date)
-                            .presentationDragIndicator(.visible)
                     case .addGoal:
                         AddGoalSheet()
                             .presentationDragIndicator(.visible)
-                    case .customDateRange:
-                        CustomDateRangeSheet() { start, end in
-                            timeManager.timePeriod = .custom
-                            timeManager.startDate = start
-                            timeManager.endDate = end
-                            recalculateChartDataPoints()
-                            financialEventManager.updateEventLists()
-                        }
-                        .presentationDragIndicator(.visible)
-                        .presentationDetents([.medium, .large])
                 }
             }
             .fullScreenCover(isPresented: $showAddInitialBalanceSheet) {
@@ -175,12 +165,12 @@ struct MainView: View {
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
-                        Picker("Graph Style", selection: $selectedChartStyle) {
-                            Label("Line", systemImage: "chart.xyaxis.line")
-                                .tag(ChartViewStyle.line)
-                            Label("Bar", systemImage: "chart.bar.xaxis")
-                                .tag(ChartViewStyle.bar)
-                        }
+//                        Picker("Graph Style", selection: $controlManager.ChartViewChoice) {
+//                            Label("Line", systemImage: "chart.xyaxis.line")
+//                                .tag(ChartViewChoice.line)
+//                            Label("Bar", systemImage: "chart.bar.xaxis")
+//                                .tag(ChartViewChoice.bar)
+//                        }
                         Button(action: {
                             squareLines.toggle()
                         }) {
@@ -197,349 +187,11 @@ struct MainView: View {
                             .tint(.primary)
                     }
                 }
+            }
+        }
+    }
+    
 
-            }
-        }
-    }
-    
-    
-    
-    // MARK: - Child Views
-    
-    
-    // MARK: - Chart Parent
-    private var chart: some View {
-        // TODO: make this look cool with animations
-        
-        return Section {
-            if (selectedChartStyle == .line) {
-                chartLine
-            } else {
-                chartBar(occurrences: visibleOccurrencesForPeriod)
-            }
-        }
-    }
-    
-    
-    
-    // MARK: - Chart (line)
-    private var chartLine: some View {
-        let allBalances = filteredChartData.map { $0.balance }
-        
-        let minBalance = allBalances.min() ?? 0
-        let maxBalance = allBalances.max() ?? 0
-        let chartMin = minBalance - (minBalance / 90)
-        let chartMax = maxBalance + (maxBalance / 90)
-        
-        let today = Date()
-        let startDate = timeManager.startDate
-        let endDate = timeManager.endDate
-        let showTodayLine = (today >= startDate && today <= endDate)
-        
-        return Chart {
-            if !isInteracting && showTodayLine {
-                RuleMark(x: .value("Today", today))
-                    .foregroundStyle(.gray)
-                    .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 5]))
-            }
-            
-            if isInteracting, let selectedDate = selectedDate, let selectedBalance = selectedBalance {
-                // White vertical line
-                RuleMark(x: .value("Selected X", selectedDate))
-                    .foregroundStyle(Color.whiteInDarkBlackInLight)
-                    .lineStyle(StrokeStyle(lineWidth: 2))
-                
-                // White circle at the intersection
-                PointMark(
-                    x: .value("Selected X", selectedDate),
-                    y: .value("Selected Y", selectedBalance)
-                )
-                .symbol(.circle)
-                // Adjust symbolSize to taste
-                .symbolSize(40)
-                .foregroundStyle(Color.whiteInDarkBlackInLight)
-            }
-            
-//            if selectedBottomView == .goals {
-//                print("Hello")
-//            }
-            
-            ForEach(filteredChartData, id: \.date) { dataPoint in
-                LineMark(
-                    x: .value("Date", dataPoint.date),
-                    y: .value("Balance", dataPoint.balance)
-                )
-                .foregroundStyle(Color(hue: 34/360, saturation: 0.99, brightness: 0.95))
-                .interpolationMethod(squareLines ? .stepEnd : .linear)
-                
-                AreaMark(
-                    x: .value("Date", dataPoint.date),
-                    yStart: .value("Baseline", chartMin),
-                    yEnd: .value("Balance", dataPoint.balance)
-                )
-                .interpolationMethod(squareLines ? .stepEnd : .linear)
-                .foregroundStyle(
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            Color(hue: 34/360, saturation: 0.99, brightness: 0.95).opacity(0.5),
-                            Color(hue: 34/360, saturation: 0.99, brightness: 0.95).opacity(0.1)
-                        ]),
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-            }
-        }
-        .chartYAxis {
-            AxisMarks(
-                position: .leading,
-                values: .automatic(desiredCount: 4)
-            )
-        }
-        .chartYScale(domain: chartMin...chartMax)
-        .frame(height: 180)
-        .padding()
-        .chartOverlay(content: { proxy in
-            GeometryReader { geoProxy in
-                Rectangle()
-                    .fill(Color.clear)
-                    .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { value in
-                                
-                                if (selectedBottomView == .transactions) {
-                                    isInteracting = true
-                                }
-                                
-                                let origin = geoProxy[proxy.plotFrame!].origin
-                                let locationXOnChart = value.location.x - origin.x
-                                
-                                let screenWidth = geoProxy.size.width
-                                let distanceToLeft = value.location.x
-                                
-                                self.horizontalOffset = distanceToLeft - (screenWidth / 2)
-                                
-                                if let date: Date = proxy.value(atX: locationXOnChart) {
-                                    // Find the closest data point in filteredChartData
-                                    if let closest = filteredChartData.min(by: {
-                                        abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
-                                    }) {
-                                        self.selectedDate = closest.date
-                                        self.selectedBalance = closest.balance
-                                    }
-                                }
-                            }
-                            .onEnded { _ in
-                                isInteracting = false
-                            }
-                    )
-            }
-        })
-    }
-    
-    
-    // MARK: - Chart (bar)
-    struct chartBar: View {
-        var occurrences: [FinancialEventOccurence]
-
-        var body: some View {
-            let totalCredits = occurrences
-                .map { $0.transaction?.amount ?? 0 }
-                .filter { $0 > 0 }
-                .reduce(0, +)
-            
-            let totalDebits = occurrences
-                .map { $0.transaction?.amount ?? 0 }
-                .filter { $0 < 0 }
-                .reduce(0, +)
-
-            Chart {
-                BarMark(
-                    x: .value("Type", "Credits"),
-                    y: .value("Amount", totalCredits)
-                )
-                .foregroundStyle(.green)
-                
-                BarMark(
-                    x: .value("Type", "Debits"),
-                    y: .value("Amount", abs(totalDebits))
-                )
-                .foregroundStyle(.red)
-            }
-            .frame(height: 180)
-            .chartYAxis {
-                AxisMarks(position: .leading)
-            }
-            .padding()
-        }
-    }
-    
-    
-    // MARK: - Chart Controlls
-    private var chartControlls: some View {
-        
-        HStack {
-            
-            Menu {
-                Picker("", selection: $selectedBottomView) {
-                    ForEach(BottomViewChoice.allCases, id: \.self) { choice in
-                        Text(choice.rawValue.capitalized).tag(choice)
-                            .lineLimit(1)
-                    }
-                }
-            } label: {
-                Button(action: { }) {
-                    HStack(alignment: .center, spacing: 4) {
-                        Text(selectedBottomView.rawValue.capitalized)
-                            .lineLimit(1)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        Image(systemName: "chevron.down")
-                            .font(.body)
-                            .fontWeight(.bold)
-                    }
-                }
-                .buttonStyle(.plain)
-                .tint(.primary)
-            }
-
-            Spacer()
-
-            
-            
-            HStack(spacing: 6) {
-                Text("Date Range")
-                    .foregroundStyle(.secondary)
-                Menu {
-                    Picker("", selection: $timeManager.timePeriod) {
-                        Text("Week").tag(TimePeriod.week)
-                        Text("Fortnight").tag(TimePeriod.fortnight)
-                        Text("Month").tag(TimePeriod.month)
-                        Text("Year").tag(TimePeriod.year)
-                        if (timeManager.timePeriod == .custom) {
-                            Text("Custom").tag(TimePeriod.custom)
-                        }
-                    }
-                    Button("Pick Custom Date Range") {
-                        activeSheet = .customDateRange
-                    }
-                } label: {
-                    Button("\(timeManager.timePeriod.rawValue.capitalized)") {}
-                    .buttonStyle(.bordered)
-                    .tint(.primary)
-                }
-            }
-            
-            
-        }
-        .padding(.horizontal)
-    }
-    
-    
-    
-    // MARK: - Bottom List Parent
-    private var bottomList: some View {
-        
-        return Section {
-            if (selectedBottomView == .goals) {
-                goalList
-            } else {
-                TransactionListParent()
-            }
-        }
-        
-    }
-
-    
-    // MARK: - Goal List
-    private var goalList: some View {
-        
-        Section {
-            if goals.isEmpty {
-                VStack(spacing: 30) {
-                    Spacer()
-                    Text("Nothing to see here")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Button(action: {
-                        activeSheet = .addGoal
-                    }) {
-                        Label("Add a Goal", systemImage: "plus")
-                    }
-                    .buttonStyle(.bordered)
-                    .foregroundStyle(.secondary)
-                    Spacer()
-                }
-            } else {
-                ScrollView(.vertical) {
-                    VStack {
-                        ForEach(goals, id: \.id) { goal in
-                            GoalView(goal: goal, currentBalance: currentBalance, dateReached: earliestDateWhenGoalIsMet(goal.targetAmount), goalsToDisplay: $goalsToDisplay)
-                                .padding(.horizontal)
-                                .padding(.bottom)
-                                .padding(.top, 5)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(Color.niceGray)
-                                )
-                                .id(goal.id)
-                                .scrollTransition { content, phase in
-                                    content
-                                        .blur(radius: phase.isIdentity ? 0 : 2)
-                                }
-                        }
-                        .scrollTargetLayout()
-                    }
-                }
-                .scrollIndicators(.hidden)
-                .padding(.horizontal)
-                .padding(.top)
-                .scrollTargetBehavior(.viewAligned)
-                .defaultScrollAnchor(.top)
-                .background(Color.niceBackground)
-            }
-        }
-    }
-    
-    
-    
-    
-    
-    
-    // MARK: - Computed Properties
-
-    
-    
-    private var mostRecentReset: BalanceReset? {
-        allBalanceResets.first
-    }
-    
-    
-    private var currentBalance: Double {
-        guard let reset = mostRecentReset else {
-            // If no reset exists, fall back to using openingBalance
-            return openingBalance + sumOfAllTransactionsUpTo(Date())
-        }
-        
-        let baseline = reset.balanceAtReset
-        let resetDate = reset.date
-        
-        let sumAfterReset = allOccurrences
-            .filter { $0.date > resetDate && $0.date <= Date() }
-            .reduce(0) { $0 + ($1.transaction?.amount ?? 0) }
-        
-        return baseline + sumAfterReset
-    }
-    
-    
-    private var endOfRangeBalance: Double {
-        guard let lastDataPoint = filteredChartData.last else { return 0.0 }
-        return lastDataPoint.balance
-    }
-    
-    
-    
     
     
     
@@ -578,188 +230,16 @@ struct MainView: View {
 //    }
     
     
-    func ordinalDayString(from date: Date) -> String {
-        // Extract the day component from the date
-        let day = Calendar.current.component(.day, from: date)
-        
-        // Create and configure the NumberFormatter for ordinal numbers
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .ordinal
-        
-        // Return the formatted string (or fallback to the plain day number)
-        return formatter.string(from: NSNumber(value: day)) ?? "\(day)"
-    }
-    
-    func handleChangeOfScrollView(oldValue: Int, newValue: Int) {
-        
-        if (ignoreChangeInCenteredTransactionViewId) {
-            ignoreChangeInCenteredTransactionViewId = false
-            return
-        }
-        
-        print("Going from \(oldValue) to \(newValue). Moving \(newValue > oldValue ? "Forwards" : "Backwards")")
-        
-        if (overwriteSwipeIndexStart) {
-            swipeStartIndex = oldValue
-            overwriteSwipeIndexStart = false
-        }
-        swipeEndIndex = newValue
-    }
-    
-    
-    private func recalculateChartDataPoints() {
-        
-        let calendar = Calendar.current
 
-        let sortedTransactions = allOccurrences.sorted { $0.date < $1.date }
-        let sortedResets = allBalanceResets.sorted { $0.date < $1.date }
-
-        let latestResetBeforeStart = sortedResets.last(where: { $0.date <= timeManager.startDate })
-
-        var runningBalance: Double
-        var lastResetDate: Date
-
-        if let reset = latestResetBeforeStart {
-            runningBalance = reset.balanceAtReset
-            lastResetDate = reset.date
-        } else {
-            runningBalance = openingBalance
-            lastResetDate = Date.distantPast
-        }
-
-        let transactionsBeforeStart = sortedTransactions.filter { $0.date > lastResetDate && $0.date < timeManager.startDate }
-        for txn in transactionsBeforeStart {
-            runningBalance += txn.transaction?.amount ?? 0
-        }
-
-        let resetsWithinTimeFrame = sortedResets.filter { $0.date >= timeManager.startDate && $0.date <= timeManager.endDate }
-        let transactionsWithinTimeFrame = sortedTransactions.filter { $0.date >= timeManager.startDate && $0.date <= timeManager.endDate }
-        
-        let transactionsByDay = Dictionary(
-            grouping: transactionsWithinTimeFrame
-        ) { calendar.startOfDay(for: $0.date) }
-
-        let resetsByDay = Dictionary(
-            grouping: resetsWithinTimeFrame
-        ) { calendar.startOfDay(for: $0.date) }
-
-        var dataPoints: [(date: Date, balance: Double)] = []
-        var currentDate = timeManager.startDate
-        let endDate = timeManager.endDate
-
-        while currentDate <= endDate {
-            // Apply any resets on this day
-            if let todaysResets = resetsByDay[currentDate] {
-                for reset in todaysResets.sorted(by: { $0.date < $1.date }) {
-                    runningBalance = reset.balanceAtReset
-                }
-            }
-
-            if let todaysTransactions = transactionsByDay[currentDate] {
-                for txn in todaysTransactions {
-                    runningBalance += txn.transaction?.amount ?? 0
-                }
-            }
-
-            dataPoints.append((date: currentDate, balance: runningBalance))
-
-            // Move to the next day
-            if let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) {
-                currentDate = nextDate
-            } else {
-                break
-            }
-        }
-        
-        filteredChartData = dataPoints
-    }
-
-    
-    private func earliestDateWhenGoalIsMet(_ targetAmount: Double) -> Date? {
-        let sortedOccurrences = allOccurrences.sorted(by: { $0.date < $1.date })
-        
-        let latestResetBeforeNow = allBalanceResets.first(where: { $0.date <= Date() })
-        
-        var runningBalance: Double
-        var lastResetDate: Date
-        
-        if let reset = latestResetBeforeNow {
-            runningBalance = reset.balanceAtReset
-            lastResetDate = reset.date
-        } else {
-            runningBalance = openingBalance
-            lastResetDate = .distantPast
-        }
-        
-        let preNowOccurrences = sortedOccurrences.filter { $0.date > lastResetDate && $0.date <= Date() }
-        for occ in preNowOccurrences {
-            runningBalance += occ.transaction?.amount ?? 0
-        }
-        
-        if runningBalance >= targetAmount {
-            return Date()
-        }
-        
-        let futureOccurrences = sortedOccurrences.filter { $0.date > Date() }
-        
-        for occ in futureOccurrences {
-            runningBalance += occ.transaction?.amount ?? 0
-            
-            if runningBalance >= targetAmount {
-                return occ.date
-            }
-        }
-        
-        return nil
-    }
-    
-    
-    private func sumOfAllTransactionsUpTo(_ date: Date) -> Double {
-        allOccurrences
-        
-            .filter { $0.date <= date }
-            .reduce(0) { $0 + $1.transaction!.amount }
-    }
-    
-//    private func changeDate(by value: Int) {
-//        switch selectedTimeFrame {
-//        case .week:
-//            if let newDate = Calendar.current.date(byAdding: .weekOfYear, value: value, to: currentStartDate) {
-//                timeManager.startDate = newDate
-//            }
-//        case .month:
-//            if let newDate = Calendar.current.date(byAdding: .month, value: value, to: currentStartDate) {
-//                timeManager.startDate = newDate
-//            }
-//        case .year:
-//            if let newDate = Calendar.current.date(byAdding: .year, value: value, to: currentStartDate) {
-//                timeManager.startDate = newDate
-//            }
-//        }
-//        recalculateChartDataPoints()
-//    }
 }
 
 
 // MARK: - Supporting Types
 
-enum TimeFrame: String, CaseIterable {
-    case week
-    case month
-    case year
-}
-
-enum ChartViewStyle: String, CaseIterable {
-    case line
-    case bar
-}
-
 enum ActiveSheet: Identifiable {
     case addTransaction
     case resetBalance
-    case manageTransaction(Transaction, Date)
     case addGoal
-    case customDateRange
     
     var id: Int {
         UUID().hashValue

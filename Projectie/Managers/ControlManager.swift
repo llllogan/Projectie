@@ -16,11 +16,16 @@ final class ControlManager: ObservableObject {
     private init() { }
     
     @Published var selectedBottomView: BottomViewChoice = .transactions
+    @Published var selectedChartView: ChartViewChoice = .line
 }
-
 
 
 enum BottomViewChoice: String, CaseIterable {
     case transactions
     case goals
+}
+
+enum ChartViewChoice: String, CaseIterable {
+    case line
+    case bar
 }

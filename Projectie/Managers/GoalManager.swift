@@ -1,32 +1,29 @@
 //
-//  TransactionManager.swift
+//  GoalManager.swift
 //  Projectie
 //
-//  Created by Logan Janssen | Codify on 6/2/2025.
+//  Created by Logan Janssen | Codify on 7/2/2025.
 //
 
 import Foundation
 import SwiftData
 import Combine
 
-final class TransactionManager: ObservableObject {
+final class GoalManager:ObservableObject {
     
-    static let shared = TransactionManager()
+    static let shared = GoalManager()
     
     private var context: ModelContext?
     
     private init() { }
     
-    @Published var centeredTransactionViewId: Int? = nil
-    @Published var ignoreChangeInCenteredTransactionViewId: Bool = false
-    
-    
-    var transactions: [Transaction] {
+    var goals: [Goal] {
         guard let context = context else {
-            print("ModelContext has not been set for TransactionManager.")
+            print("ModelContext has not been set for GoalManager.")
             return []
         }
         
+        // Ensure we have a selected account.
         guard let selectedAccount = AccountManager.shared.selectedAccount else {
             print("No account selected.")
             return []
@@ -34,22 +31,23 @@ final class TransactionManager: ObservableObject {
         
         let accountID: UUID = selectedAccount.id
         
-        let predicate = #Predicate<Transaction> { transaction in
-            transaction.account.id == accountID
+        // Build a predicate that filters transactions for the selected account.
+        let predicate = #Predicate<Goal> { goal in
+            goal.account.id == accountID
         }
         
-        let fetchDescriptor = FetchDescriptor<Transaction>(predicate: predicate)
+        let fetchDescriptor = FetchDescriptor<Goal>(predicate: predicate)
         do {
             return try context.fetch(fetchDescriptor)
         } catch {
-            print("Error fetching transactions: \(error)")
+            print("Error fetching goals: \(error)")
             return []
         }
     }
     
-    
     func setContext(_ context: ModelContext) {
         self.context = context
     }
+    
+    
 }
-

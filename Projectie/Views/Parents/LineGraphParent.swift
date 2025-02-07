@@ -15,8 +15,11 @@ struct LineGraphParent: View {
     @EnvironmentObject private var chartManager: ChartManager
     @EnvironmentObject private var financialEventManager: FinancialEventManager
     @EnvironmentObject private var timeManager: TimeManager
+    @EnvironmentObject private var controlManager: ControlManager
     
     @AppStorage("sqaureLines") private var squareLines: Bool = false
+    
+    @State private var horizontalOffset: CGFloat = 0
     
     
     
@@ -107,7 +110,7 @@ struct LineGraphParent: View {
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
                                 
-                                if (MainView.selectedBottomView == .transactions) {
+                                if (controlManager.selectedBottomView == .transactions) {
                                     chartManager.isInteracting = true
                                 }
                                 
@@ -121,16 +124,16 @@ struct LineGraphParent: View {
                                 
                                 if let date: Date = proxy.value(atX: locationXOnChart) {
                                     // Find the closest data point in filteredChartData
-                                    if let closest = filteredChartData.min(by: {
+                                    if let closest = chartManager.chartDataPointsLine.min(by: {
                                         abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
                                     }) {
-                                        self.selectedDate = closest.date
-                                        self.selectedBalance = closest.balance
+                                        chartManager.selectedDate = closest.date
+                                        chartManager.selectedBalance = closest.balance
                                     }
                                 }
                             }
                             .onEnded { _ in
-                                isInteracting = false
+                                chartManager.isInteracting = false
                             }
                     )
             }

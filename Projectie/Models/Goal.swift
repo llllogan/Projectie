@@ -12,13 +12,15 @@ import Foundation
 final class Goal {
     var title: String
     var targetAmount: Double
+    var account: Account
     
     // Optionally track when this goal was first created
     var createdDate: Date
     
-    init(title: String, targetAmount: Double, createdDate: Date = Date()) {
+    init(title: String, targetAmount: Double, account: Account, createdDate: Date = Date()) {
         self.title = title
         self.targetAmount = targetAmount
+        self.account = account
         self.createdDate = createdDate
     }
 }

@@ -10,9 +10,12 @@ import SwiftUI
 struct AddGoalSheet: View {
     
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var context
+    
     @FocusState private var focusedField: Field?
     
-    @Environment(\.modelContext) private var context
+    @EnvironmentObject private var accountManager: AccountManager
+    
     
     @State private var goalAmount: String = ""
     @State private var goalTitle: String = ""
@@ -80,7 +83,9 @@ struct AddGoalSheet: View {
     private func saveGoal() {
         guard let amount = Double(goalAmount) else { return }
         
-        let newGoal = Goal(title: goalTitle, targetAmount: amount)
+        guard let account = accountManager.selectedAccount else { return }
+        
+        let newGoal = Goal(title: goalTitle, targetAmount: amount, account: account)
         context.insert(newGoal)
         try? context.save()
         dismiss()

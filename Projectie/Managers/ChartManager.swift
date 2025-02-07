@@ -28,6 +28,9 @@ final class ChartManager: ObservableObject {
     @Published var selectedDate: Date? = nil
     @Published var selectedBalance: Double? = nil
     
+    @Published var goalsToDisplayOnChart: [Goal] = []
+    
+    
     
     var endOfRangeBalance: Double {
         guard let lastDataPoint = chartDataPointsLine.last else { return 0.0 }

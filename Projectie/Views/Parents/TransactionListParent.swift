@@ -9,9 +9,10 @@ import SwiftUI
 
 struct TransactionListParent: View {
     
-    @EnvironmentObject var timeManager: TimeManager
-    @EnvironmentObject var financialEventManager: FinancialEventManager
-    @EnvironmentObject var chartManager: ChartManager
+    @EnvironmentObject private var timeManager: TimeManager
+    @EnvironmentObject private var financialEventManager: FinancialEventManager
+    @EnvironmentObject private var chartManager: ChartManager
+    @EnvironmentObject private var transactionManager: TransactionManager
     
     @State private var showManageTransactionSheet: Bool = false
     
@@ -33,55 +34,55 @@ struct TransactionListParent: View {
                 TransactionListView(groupedOccurrences: financialEventManager.eventLintMinus2 ?? []) { transaction, date in
                     handleTapOnTransactionListItem(transaction: transaction, instanceDate: date)
                 }
-                    .id(-2)
-                    .scrollTransition { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0.5)
-                    }
+                .id(-2)
+                .scrollTransition { content, phase in
+                    content
+                        .opacity(phase.isIdentity ? 1 : 0.5)
+                }
                 TransactionListView(groupedOccurrences: financialEventManager.eventListMinus1 ?? []) { transaction, date in
                     handleTapOnTransactionListItem(transaction: transaction, instanceDate: date)
                 }
-                    .id(-1)
-                    .scrollTransition { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0.5)
-                    }
+                .id(-1)
+                .scrollTransition { content, phase in
+                    content
+                        .opacity(phase.isIdentity ? 1 : 0.5)
+                }
                 TransactionListView(groupedOccurrences: financialEventManager.eventList ?? []) { transaction, date in
                     handleTapOnTransactionListItem(transaction: transaction, instanceDate: date)
                 }
-                    .id(0)
-                    .scrollTransition { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0.5)
-                    }
+                .id(0)
+                .scrollTransition { content, phase in
+                    content
+                        .opacity(phase.isIdentity ? 1 : 0.5)
+                }
                 TransactionListView(groupedOccurrences: financialEventManager.eventListPlus1 ?? []) { transaction, date in
                     handleTapOnTransactionListItem(transaction: transaction, instanceDate: date)
                 }
-                    .id(1)
-                    .scrollTransition { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0.5)
-                    }
+                .id(1)
+                .scrollTransition { content, phase in
+                    content
+                        .opacity(phase.isIdentity ? 1 : 0.5)
+                }
                 TransactionListView(groupedOccurrences: financialEventManager.eventListPlus2 ?? []) { transaction, date in
                     handleTapOnTransactionListItem(transaction: transaction, instanceDate: date)
                 }
-                    .id(2)
-                    .scrollTransition { content, phase in
-                        content
-                            .opacity(phase.isIdentity ? 1 : 0.5)
-                    }
-
+                .id(2)
+                .scrollTransition { content, phase in
+                    content
+                        .opacity(phase.isIdentity ? 1 : 0.5)
+                }
+                
             }
             .scrollTargetLayout()
         }
         .scrollTargetBehavior(.viewAligned)
         .defaultScrollAnchor(.center)
-        .scrollPosition(id: $centeredTransactionViewId, anchor: .center)
+        .scrollPosition(id: $transactionManager.centeredTransactionViewId, anchor: .center)
         .scrollIndicators(.never)
         .onScrollPhaseChange { _, newPhase in
             print("Scroll phase: \(newPhase)")
             if (newPhase == .idle) {
-                ignoreChangeInCenteredTransactionViewId = true
+                transactionManager.ignoreChangeInCenteredTransactionViewId = true
                 centeredTransactionViewId = 0
                 overwriteSwipeIndexStart = true
                 directionToMoveInTime = swipeEndIndex - swipeStartIndex

@@ -26,6 +26,7 @@ struct ProjectieApp: App {
     init() {
         AccountManager.shared.setContext(container.mainContext)
         TransactionManager.shared.setContext(container.mainContext)
+        GoalManager.shared.setContext(container.mainContext)
     }
     
 
@@ -41,11 +42,12 @@ struct ProjectieApp: App {
                 /// Managers for Financial Events
                 .environmentObject(FinancialEventManager.shared)
                 .environmentObject(TransactionManager.shared)
-                .environmentObject(ChartManager.shared)
+                .environmentObject(GoalManager.shared)
             
                 /// Other Mics Managers
                 .environmentObject(TimeManager.shared)
                 .environmentObject(ControlManager.shared)
+                .environmentObject(ChartManager.shared)
         }
     }
 }
