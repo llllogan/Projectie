@@ -19,7 +19,18 @@ final class ChartManager: ObservableObject {
     
     private init() { }
     
+    
     @Published private(set) var chartDataPointsLine: [(date: Date, balance: Double)] = []
+    
+    @Published var isInteracting: Bool = false
+    @Published var scrubHorozontalOffset: CGFloat = 0.0
+    
+    
+    var endOfRangeBalance: Double {
+        guard let lastDataPoint = chartDataPointsLine.last else { return 0.0 }
+        return lastDataPoint.balance
+    }
+
     
     
     

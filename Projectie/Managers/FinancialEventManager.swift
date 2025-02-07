@@ -14,6 +14,7 @@ final class FinancialEventManager: ObservableObject {
  
     static let shared = FinancialEventManager()
     private var timeManager: TimeManager = TimeManager.shared
+    private var balanceResetManager: BalanceResetManager = BalanceResetManager.shared
     
     private init() { }
     
@@ -24,6 +25,7 @@ final class FinancialEventManager: ObservableObject {
     @Published private(set) var eventListPlus2: [(key: Date, value: [FinancialEventOccurence])]?
     
     @Published private(set) var allEvents: [FinancialEventOccurence] = []
+    
     
     var visibleEventOccurences: [FinancialEventOccurence] {
         allEvents.filter {
@@ -39,6 +41,50 @@ final class FinancialEventManager: ObservableObject {
         eventListPlus1 = compileGroupedEventList(from: timeManager.nextPeriod1.start, to: timeManager.nextPeriod1.end)
         eventListPlus2 = compileGroupedEventList(from: timeManager.nextPeriod2.start, to: timeManager.nextPeriod2.end)
         
+    }
+    
+    
+    // TODO: Could be improved to a published variable and only updated when there is a change
+    var currentBalance: Double {
+        guard let reset = balanceResetManager.resets.first else {
+            // If no reset exists, fall back to using openingBalance
+            return sumOfAllTransactionsUpTo(Date())
+        }
+        
+        let baseline = reset.balanceAtReset
+        let resetDate = reset.date
+        
+        let sumAfterReset = allEvents
+            .filter { $0.date > resetDate && $0.date <= Date() }
+            .reduce(0) { $0 + ($1.transaction?.amount ?? 0) }
+        
+        return baseline + sumAfterReset
+    }
+    
+    private func sumOfAllTransactionsUpTo(_ date: Date) -> Double {
+        allEvents
+            .filter { $0.date <= date }
+            .reduce(0) { $0 + $1.transaction!.amount }
+    }
+
+    
+    func updateAllEvents() {
+        
+        let transactionOccurrences = TransactionManager.shared.transactions.flatMap { txn in
+            if txn.isRecurring {
+                return txn.recurrenceDates.compactMap { date in
+                    FinancialEventOccurence(type: .transaction(txn), recurringTransactionDate: date)
+                }
+            } else {
+                return [FinancialEventOccurence(type: .transaction(txn))]
+            }
+        }
+        
+        let balanceResetOccurences = BalanceResetManager.shared.resets.flatMap { rst in
+            return [FinancialEventOccurence(type: .reset(rst))]
+        }
+        
+        allEvents = transactionOccurrences + balanceResetOccurences
     }
     
     
@@ -58,28 +104,6 @@ final class FinancialEventManager: ObservableObject {
         // 6. Return them sorted by day
         return grouped
             .sorted { $0.key < $1.key }
-    }
-    
-    
-    
-    
-    func updateAllEvents() {
-        
-        let transactionOccurrences = TransactionManager.shared.transactions.flatMap { txn in
-            if txn.isRecurring {
-                return txn.recurrenceDates.compactMap { date in
-                    FinancialEventOccurence(type: .transaction(txn), recurringTransactionDate: date)
-                }
-            } else {
-                return [FinancialEventOccurence(type: .transaction(txn))]
-            }
-        }
-        
-        let balanceResetOccurences = BalanceResetManager.shared.resets.flatMap { rst in
-            return [FinancialEventOccurence(type: .reset(rst))]
-        }
-        
-        allEvents = transactionOccurrences + balanceResetOccurences
     }
     
     

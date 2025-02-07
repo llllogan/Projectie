@@ -21,6 +21,7 @@ struct MainView: View {
     @Environment(\.modelContext) private var context
     @EnvironmentObject private var chartDataManager: ChartManager
     @EnvironmentObject var timeManager: TimeManager
+    @EnvironmentObject var financialEventManager: FinancialEventManager
     
     // MARK: - Swift Data Queries
     @Query(sort: \Transaction.date, order: .forward)
@@ -96,22 +97,22 @@ struct MainView: View {
                     timeManager.calculateDates()
                 }
                 chartDataManager.recalculateChartDataPoints()
-                populateTransactionLists()
+                financialEventManager.updateEventLists()
                 if (!hasSetInitialBalance && !ProcessInfo.processInfo.isRunningInXcodePreview) {
                     showAddInitialBalanceSheet = true
                 }
             }
             .onChange(of: timeManager.timePeriod) { _, newValue in
-                recalculateChartDataPoints()
-                populateTransactionLists()
+                chartDataManager.recalculateChartDataPoints()
+                financialEventManager.updateEventLists()
             }
             .onChange(of: transactions) { _, newValue in
-                recalculateChartDataPoints()
-                populateTransactionLists()
+                chartDataManager.recalculateChartDataPoints()
+                financialEventManager.updateEventLists()
             }
             .onChange(of: allBalanceResets) { _, newValue in
-                recalculateChartDataPoints()
-                populateTransactionLists()
+                chartDataManager.recalculateChartDataPoints()
+                financialEventManager.updateEventLists()
             }
 //            .onChange(of: goalsToDisplay) { _, newValue in
 //                handleGoalAddedToDisplayList()
@@ -142,7 +143,7 @@ struct MainView: View {
                             timeManager.startDate = start
                             timeManager.endDate = end
                             recalculateChartDataPoints()
-                            populateTransactionLists()
+                            financialEventManager.updateEventLists()
                         }
                         .presentationDragIndicator(.visible)
                         .presentationDetents([.medium, .large])
@@ -562,36 +563,7 @@ struct MainView: View {
     
     
     // MARK: - Computed Properties
-    
-    private var endOfNoun: String {
-        switch timeManager.timePeriod {
-        case .week:
-            return "week \(timeManager.startDate.formatted(.dateTime.week()))"
-        case .fortnight:
-            return "weeks \(timeManager.startDate.formatted(.dateTime.week())) & \(timeManager.endDate.formatted(.dateTime.week()))"
-        case .month:
-            return timeManager.startDate.formatted(.dateTime.month(.wide))
-        case .year:
-            return timeManager.startDate.formatted(.dateTime.year())
-        case .custom:
-            return timeManager.startDate.formatted(.dateTime.year())
-        }
-    }
-    
-    private var endOfNounShort: String {
-        switch timeManager.timePeriod {
-        case .week:
-            return "week \(timeManager.startDate.formatted(.dateTime.week()))"
-        case .fortnight:
-            return "week \(timeManager.endDate.formatted(.dateTime.week()))"
-        case .month:
-            return timeManager.startDate.formatted(.dateTime.month(.abbreviated))
-        case .year:
-            return timeManager.startDate.formatted(.dateTime.year())
-        case .custom:
-            return timeManager.startDate.formatted(.dateTime.year())
-        }
-    }
+
     
     
     private var mostRecentReset: BalanceReset? {
