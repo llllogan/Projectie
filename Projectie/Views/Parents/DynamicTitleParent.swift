@@ -16,9 +16,6 @@ struct DynamicTitleParent: View {
     @EnvironmentObject private var financialEventManager: FinancialEventManager
     @EnvironmentObject private var timeManager: TimeManager
     
-    @State private var selectedBalance: Double? = nil
-    @State private var selectedDate: Date? = nil
-    
     
     var body: some View {
         VStack {
@@ -54,7 +51,7 @@ struct DynamicTitleParent: View {
                     financialEventManager.updateEventLists()
                 }
             } else {
-                if let selectedDate = selectedDate, let selectedBalance = selectedBalance {
+                if let selectedDate = chartManager.selectedDate, let selectedBalance = chartManager.selectedBalance {
                     VStack(alignment: .center, spacing: 4) {
                         Text("\(selectedDate, style: .date)")
                             .fontWeight(.semibold)

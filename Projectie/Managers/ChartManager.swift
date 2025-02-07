@@ -25,6 +25,9 @@ final class ChartManager: ObservableObject {
     @Published var isInteracting: Bool = false
     @Published var scrubHorozontalOffset: CGFloat = 0.0
     
+    @Published var selectedDate: Date? = nil
+    @Published var selectedBalance: Double? = nil
+    
     
     var endOfRangeBalance: Double {
         guard let lastDataPoint = chartDataPointsLine.last else { return 0.0 }

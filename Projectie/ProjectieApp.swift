@@ -32,12 +32,20 @@ struct ProjectieApp: App {
     var body: some Scene {
         WindowGroup {
             MainView()
+                /// Swift Data model container
                 .modelContainer(container)
+            
+                /// Manager for User Accounts
                 .environmentObject(AccountManager.shared)
-                .environmentObject(TransactionManager.shared)
+            
+                /// Managers for Financial Events
                 .environmentObject(FinancialEventManager.shared)
-                .environmentObject(TimeManager.shared)
+                .environmentObject(TransactionManager.shared)
                 .environmentObject(ChartManager.shared)
+            
+                /// Other Mics Managers
+                .environmentObject(TimeManager.shared)
+                .environmentObject(ControlManager.shared)
         }
     }
 }

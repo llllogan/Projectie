@@ -49,7 +49,7 @@ struct MainView: View {
     @State private var directionToMoveInTime: Int = 0
     
     // MARK: - Transaction & Goal Selection & Navigation
-    @State private var selectedBottomView: BottomViewChoice = .transactions
+    @State var selectedBottomView: BottomViewChoice = .transactions
     @State private var selectedBalance: Double? = nil
     @State private var selectedDate: Date? = nil
     @State private var selectedTransaction: Transaction?
@@ -81,7 +81,7 @@ struct MainView: View {
         NavigationView {
             VStack {
                 
-                dynamicTitle
+                DynamicTitleParent()
                 
                 chart
                     .frame(height: 200)
@@ -205,61 +205,6 @@ struct MainView: View {
     
     
     // MARK: - Child Views
-    
-    
-    
-    // MARK: - Dynamic Title
-    private var dynamicTitle: some View {
-        
-        VStack {
-            if !isInteracting {
-                HStack(alignment: .bottom) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        withAnimation {
-                            Text("$\(currentBalance, specifier: "%.2f")")
-                                .font(.system(size: 30, weight: .bold, design: .rounded))
-                                .contentTransition(.numericText(value: currentBalance))
-                        }
-                        Text("\(Date.now, style: .date)")
-                            .fontWeight(.semibold)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    ViewThatFits {
-                        Text("End of \(endOfNoun): $\(endOfRangeBalance, specifier: "%.2f")")
-                            .fontWeight(.semibold)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Text("End of \(endOfNounShort): $\(endOfRangeBalance, specifier: "%.2f")")
-                            .fontWeight(.semibold)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(.horizontal)
-                .onTapGesture {
-                    timeManager.resetToCurrentPeriod()
-                    recalculateChartDataPoints()
-                    populateTransactionLists()
-                }
-            } else {
-                if let selectedDate = selectedDate, let selectedBalance = selectedBalance {
-                    VStack(alignment: .center, spacing: 4) {
-                        Text("\(selectedDate, style: .date)")
-                            .fontWeight(.semibold)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Text("$\(selectedBalance, specifier: "%.2f")")
-                            .font(.system(size: 30, weight: .bold, design: .rounded))
-                    }
-                    .padding(.horizontal)
-                }
-            }
-        }
-        .frame(height: 50)
-        .offset(x: isInteracting ? horizontalOffset : 0)
-    }
     
     
     // MARK: - Chart Parent
@@ -797,11 +742,6 @@ struct MainView: View {
 
 
 // MARK: - Supporting Types
-
-enum BottomViewChoice: String, CaseIterable {
-    case transactions
-    case goals
-}
 
 enum TimeFrame: String, CaseIterable {
     case week
