@@ -19,7 +19,7 @@ struct LineGraphParent: View {
     
     @AppStorage("sqaureLines") private var squareLines: Bool = false
     
-    @State private var horizontalOffset: CGFloat = 0
+//    @State private var horizontalOffset: CGFloat = 0
     
     
     
@@ -120,7 +120,7 @@ struct LineGraphParent: View {
                                 let screenWidth = geoProxy.size.width
                                 let distanceToLeft = value.location.x
                                 
-                                self.horizontalOffset = distanceToLeft - (screenWidth / 2)
+                                chartManager.scrubHorozontalOffset = distanceToLeft - (screenWidth / 2)
                                 
                                 if let date: Date = proxy.value(atX: locationXOnChart) {
                                     // Find the closest data point in filteredChartData

@@ -17,37 +17,20 @@ final class GoalManager:ObservableObject {
     
     private init() { }
     
-    var goals: [Goal] {
-        guard let context = context else {
-            print("ModelContext has not been set for GoalManager.")
-            return []
-        }
+    @Published var goals: [Goal] = []
+    
+    func setGoals(_ goals: [Goal]) {
         
-        // Ensure we have a selected account.
         guard let selectedAccount = AccountManager.shared.selectedAccount else {
             print("No account selected.")
-            return []
+            self.goals = []
+            return
         }
         
         let accountID: UUID = selectedAccount.id
         
-        // Build a predicate that filters transactions for the selected account.
-        let predicate = #Predicate<Goal> { goal in
-            goal.account.id == accountID
-        }
+        let relevantGoals: [Goal] = goals.filter { $0.account.id == accountID }
         
-        let fetchDescriptor = FetchDescriptor<Goal>(predicate: predicate)
-        do {
-            return try context.fetch(fetchDescriptor)
-        } catch {
-            print("Error fetching goals: \(error)")
-            return []
-        }
+        self.goals = relevantGoals
     }
-    
-    func setContext(_ context: ModelContext) {
-        self.context = context
-    }
-    
-    
 }

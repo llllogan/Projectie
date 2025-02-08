@@ -19,11 +19,19 @@ struct MainView: View {
     
     // MARK: - Environment
     @Environment(\.modelContext) private var context
+    
     @EnvironmentObject private var chartDataManager: ChartManager
     @EnvironmentObject private var timeManager: TimeManager
     @EnvironmentObject private var financialEventManager: FinancialEventManager
     @EnvironmentObject private var controlManager: ControlManager
     @EnvironmentObject private var transactionManager: TransactionManager
+    @EnvironmentObject private var balanceResetManager: BalanceResetManager
+    @EnvironmentObject private var goalManager: GoalManager
+    @EnvironmentObject private var accountManager: AccountManager
+    
+    @Query private var transactions: [Transaction]
+    @Query private var balanceResets: [BalanceReset]
+    @Query private var goals: [Goal]
     
     // MARK: - Sheet & Modal Presentation States
 //    @State private var showingAddTransactionSheet = false
@@ -86,6 +94,7 @@ struct MainView: View {
                 
                 
                 CentreControlParent()
+                    .padding(.horizontal)
                 
                 
                 if (controlManager.selectedBottomView == .goals) {
@@ -96,6 +105,13 @@ struct MainView: View {
                 
             }
             .onAppear {
+                
+                accountManager.setContext(context)
+                
+                transactionManager.setTransactions(transactions)
+                balanceResetManager.setResets(balanceResets)
+                goalManager.setGoals(goals)
+                
                 withAnimation {
                     timeManager.calculateDates()
                 }

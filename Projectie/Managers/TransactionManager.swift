@@ -20,36 +20,23 @@ final class TransactionManager: ObservableObject {
     @Published var centeredTransactionViewId: Int? = nil
     @Published var ignoreChangeInCenteredTransactionViewId: Bool = false
     
+    @Published var transactions: [Transaction] = []
     
-    var transactions: [Transaction] {
-        guard let context = context else {
-            print("ModelContext has not been set for TransactionManager.")
-            return []
-        }
+    func setTransactions(_ transactions: [Transaction]) {
         
         guard let selectedAccount = AccountManager.shared.selectedAccount else {
             print("No account selected.")
-            return []
+            self.transactions = []
+            return
         }
         
         let accountID: UUID = selectedAccount.id
         
-        let predicate = #Predicate<Transaction> { transaction in
+        let relevantTransactions: [Transaction] = transactions.filter { transaction in
             transaction.account.id == accountID
         }
         
-        let fetchDescriptor = FetchDescriptor<Transaction>(predicate: predicate)
-        do {
-            return try context.fetch(fetchDescriptor)
-        } catch {
-            print("Error fetching transactions: \(error)")
-            return []
-        }
-    }
-    
-    
-    func setContext(_ context: ModelContext) {
-        self.context = context
+        self.transactions = relevantTransactions
     }
 }
 
