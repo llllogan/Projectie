@@ -48,7 +48,7 @@ struct DynamicTitleParent: View {
                 .onTapGesture {
                     timeManager.resetToCurrentPeriod()
                     chartManager.recalculateChartDataPoints()
-                    financialEventManager.updateEventLists()
+                    financialEventManager.doUpdates()
                 }
             } else {
                 if let selectedDate = chartManager.selectedDate, let selectedBalance = chartManager.selectedBalance {

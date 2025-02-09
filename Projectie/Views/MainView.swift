@@ -13,7 +13,6 @@ import Foundation
 struct MainView: View {
     
     // MARK: - App Storage (Persistent User Settings)
-//    @AppStorage("openingBalance") private var openingBalance = 0.0
     @AppStorage("hasSetInitialBalance") private var hasSetInitialBalance: Bool = false
     @AppStorage("sqaureLines") private var squareLines: Bool = false
     
@@ -29,50 +28,11 @@ struct MainView: View {
     @EnvironmentObject private var goalManager: GoalManager
     @EnvironmentObject private var accountManager: AccountManager
     
-    @Query private var transactions: [Transaction]
+    
     @Query private var balanceResets: [BalanceReset]
     @Query private var goals: [Goal]
-    
-    // MARK: - Sheet & Modal Presentation States
-//    @State private var showingAddTransactionSheet = false
-//    @State private var showResetBalanceSheet = false
-//    @State private var showManageTransactionSheet = false
-//    @State private var showBottomToggle = true
     @State private var showAddInitialBalanceSheet = false
-//    @State private var showCustomDatePicker: Bool = false
     @State private var activeSheet: ActiveSheet?
-    
-    // MARK: - Chart & Time Frame States
-//    @State private var selectedChartStyle: ChartViewStyle = .line
-//    @State private var filteredChartData: [(date: Date, balance: Double)] = []
-//    @State private var timeFrameOffset: Int = 0
-//    @State private var directionToMoveInTime: Int = 0
-    
-    // MARK: - Transaction & Goal Selection & Navigation
-//    @State var selectedBottomView: BottomViewChoice = .transactions
-//    @State private var selectedBalance: Double? = nil
-//    @State private var selectedDate: Date? = nil
-//    @State private var selectedTransaction: Transaction?
-//    @State private var selectedGoal: Goal?
-//    @State private var centeredTransactionViewId: Int?
-//    @State private var centeredGoalViewId: Int?
-//    @State private var ignoreChangeInCenteredTransactionViewId: Bool = false
-//    @State private var goalsToDisplay: [Goal] = []
-//    @State private var goalPointMarks: [PointMark] = []
-    
-    // MARK: - Gesture & Interaction States
-//    @State private var isInteracting: Bool = false
-//    @State private var dragLocation: CGPoint = .zero
-//    @State private var horizontalOffset: CGFloat = 0
-//    @State private var swipeStartIndex: Int = 0
-//    @State private var swipeEndIndex: Int = 0
-//    @State private var overwriteSwipeIndexStart: Bool = true
-    
-    // MARK: - Miscellaneous
-//    @State private var today: Date = Date()
-//    @State private var isFirstLoadForTransactionList: Bool = true
-    
-
     
     // MARK: - Main View
     
@@ -107,35 +67,31 @@ struct MainView: View {
             .onAppear {
                 
                 accountManager.setContext(context)
-                
-                transactionManager.setTransactions(transactions)
                 balanceResetManager.setResets(balanceResets)
                 goalManager.setGoals(goals)
                 
                 withAnimation {
                     timeManager.calculateDates()
                 }
+                financialEventManager.doUpdates()
                 chartDataManager.recalculateChartDataPoints()
-                financialEventManager.updateEventLists()
                 if (!hasSetInitialBalance && !ProcessInfo.processInfo.isRunningInXcodePreview) {
                     showAddInitialBalanceSheet = true
                 }
             }
             .onChange(of: timeManager.timePeriod) { _, newValue in
                 chartDataManager.recalculateChartDataPoints()
-                financialEventManager.updateEventLists()
+                financialEventManager.doUpdates()
             }
-//            .onChange(of: transactions) { _, newValue in
-//                chartDataManager.recalculateChartDataPoints()
-//                financialEventManager.updateEventLists()
-//            }
-//            .onChange(of: allBalanceResets) { _, newValue in
-//                chartDataManager.recalculateChartDataPoints()
-//                financialEventManager.updateEventLists()
-//            }
-//            .onChange(of: goalsToDisplay) { _, newValue in
+            .onChange(of: balanceResets) { _, newValue in
+                balanceResetManager.setResets(newValue)
+                chartDataManager.recalculateChartDataPoints()
+                financialEventManager.doUpdates()
+            }
+            .onChange(of: goals) { _, newValue in
+                goalManager.setGoals(newValue)
 //                handleGoalAddedToDisplayList()
-//            }
+            }
             .sensoryFeedback(.selection, trigger: chartDataManager.selectedDate) { oldValue, newValue in
                 oldValue != newValue
             }
@@ -206,47 +162,6 @@ struct MainView: View {
             }
         }
     }
-    
-
-    
-    
-    
-    // MARK: - Helper Function
-    
-    
-//    func handleGoalAddedToDisplayList() {
-//        
-//        var goalPointMarks: [(amount: Double, date: Date)] = []
-//        
-//        if (goalsToDisplay.isEmpty) { return }
-//        
-//        for goal in goalsToDisplay {
-//
-//            if let achievementDate = earliestDateWhenGoalIsMet(goal.targetAmount) {
-//                goalPointMarks.append( (amount: goal.targetAmount, date: achievementDate) )
-//            }
-//        }
-//        
-//        let sortedGoalPointMarks = goalPointMarks.sorted { $0.date < $1.date }
-//        
-//        timeManager.startDate = sortedGoalPointMarks.first!.date.advanced(by: -86400)
-//        timeManager.endDate = sortedGoalPointMarks.last!.date.advanced(by: 86400)
-//        
-//        for mark in goalPointMarks {
-//            
-//            self.goalPointMarks.append(
-//                PointMark(
-//                    x: .value("Date", mark.date),
-//                    y: .value("Amount", mark.amount)
-//                )
-//            )
-//            
-//        }
-//        
-//    }
-    
-    
-
 }
 
 
@@ -260,16 +175,6 @@ enum ActiveSheet: Identifiable {
     var id: Int {
         UUID().hashValue
     }
-}
-
-enum RangeOffset: Int {
-    case minus3 = -3
-    case minus2 = -2
-    case minus1 = -1
-    case none   =  0
-    case plus1  =  1
-    case plus2  =  2
-    case plus3  =  3
 }
 
 extension ProcessInfo {

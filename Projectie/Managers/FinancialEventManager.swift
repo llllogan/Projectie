@@ -32,16 +32,6 @@ final class FinancialEventManager: ObservableObject {
             $0.date >= timeManager.startDate && $0.date <= timeManager.endDate
         }
     }
-        
-    func updateEventLists() {
-        
-        eventLintMinus2 = compileGroupedEventList(from: timeManager.previousPeriod2.start, to: timeManager.previousPeriod2.end)
-        eventListMinus1 = compileGroupedEventList(from: timeManager.previousPeriod1.start, to: timeManager.previousPeriod1.end)
-        eventList = compileGroupedEventList(from: timeManager.startDate, to: timeManager.endDate)
-        eventListPlus1 = compileGroupedEventList(from: timeManager.nextPeriod1.start, to: timeManager.nextPeriod1.end)
-        eventListPlus2 = compileGroupedEventList(from: timeManager.nextPeriod2.start, to: timeManager.nextPeriod2.end)
-        
-    }
     
     
     // TODO: Could be improved to a published variable and only updated when there is a change
@@ -61,14 +51,25 @@ final class FinancialEventManager: ObservableObject {
         return baseline + sumAfterReset
     }
     
-    private func sumOfAllTransactionsUpTo(_ date: Date) -> Double {
-        allEvents
-            .filter { $0.date <= date }
-            .reduce(0) { $0 + $1.transaction!.amount }
+    
+    func doUpdates() {
+        updateAllEvents()
+        updateEventLists()
+    }
+    
+    
+    private func updateEventLists() {
+        
+        eventLintMinus2 = compileGroupedEventList(from: timeManager.previousPeriod2.start, to: timeManager.previousPeriod2.end)
+        eventListMinus1 = compileGroupedEventList(from: timeManager.previousPeriod1.start, to: timeManager.previousPeriod1.end)
+        eventList = compileGroupedEventList(from: timeManager.startDate, to: timeManager.endDate)
+        eventListPlus1 = compileGroupedEventList(from: timeManager.nextPeriod1.start, to: timeManager.nextPeriod1.end)
+        eventListPlus2 = compileGroupedEventList(from: timeManager.nextPeriod2.start, to: timeManager.nextPeriod2.end)
+        
     }
 
     
-    func updateAllEvents() {
+    private func updateAllEvents() {
         
         let transactionOccurrences = TransactionManager.shared.transactions.flatMap { txn in
             if txn.isRecurring {
@@ -85,6 +86,13 @@ final class FinancialEventManager: ObservableObject {
         }
         
         allEvents = transactionOccurrences + balanceResetOccurences
+    }
+    
+    
+    private func sumOfAllTransactionsUpTo(_ date: Date) -> Double {
+        allEvents
+            .filter { $0.date <= date }
+            .reduce(0) { $0 + $1.transaction!.amount }
     }
     
     

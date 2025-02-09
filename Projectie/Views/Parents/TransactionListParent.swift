@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct TransactionListParent: View {
     
@@ -13,6 +14,9 @@ struct TransactionListParent: View {
     @EnvironmentObject private var financialEventManager: FinancialEventManager
     @EnvironmentObject private var chartManager: ChartManager
     @EnvironmentObject private var transactionManager: TransactionManager
+    
+    @Environment(\.modelContext) private var context
+    @Query private var transactions: [Transaction]
     
     @State private var showManageTransactionSheet: Bool = false
     
@@ -87,7 +91,7 @@ struct TransactionListParent: View {
                 overwriteSwipeIndexStart = true
                 directionToMoveInTime = swipeEndIndex - swipeStartIndex
                 timeManager.shiftPeriod(by: directionToMoveInTime)
-                financialEventManager.updateEventLists()
+                financialEventManager.doUpdates()
                 chartManager.recalculateChartDataPoints()
                 directionToMoveInTime = 0
                 
@@ -103,6 +107,16 @@ struct TransactionListParent: View {
         .sheet(isPresented: $showManageTransactionSheet) {
             ManageTransactionSheet(transaction: selectedTransaction!, instanceDate: selectedTransactionInstanceDate)
                 .presentationDragIndicator(.visible)
+        }
+        .onChange(of: transactions) { _, newValue in
+            transactionManager.setTransactions(newValue)
+            financialEventManager.doUpdates()
+            chartManager.recalculateChartDataPoints()
+        }
+        .onAppear {
+            transactionManager.setTransactions(transactions)
+            financialEventManager.doUpdates()
+            print(transactionManager.transactions.count)
         }
     }
     

@@ -78,8 +78,8 @@ struct CentreControlParent: View {
                 timeManager.timePeriod = .custom
                 timeManager.startDate = start
                 timeManager.endDate = end
+                financialEventManager.doUpdates()
                 chartManager.recalculateChartDataPoints()
-                financialEventManager.updateEventLists()
             }
             .presentationDragIndicator(.visible)
             .presentationDetents([.medium, .large])
