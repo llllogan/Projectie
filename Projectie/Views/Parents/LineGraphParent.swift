@@ -12,14 +12,15 @@ import Foundation
 
 struct LineGraphParent: View {
     
+    @Environment(\.modelContext) private var context
+    @Query private var transactions: [Transaction]
+    
     @EnvironmentObject private var chartManager: ChartManager
     @EnvironmentObject private var financialEventManager: FinancialEventManager
     @EnvironmentObject private var timeManager: TimeManager
     @EnvironmentObject private var controlManager: ControlManager
     
     @AppStorage("sqaureLines") private var squareLines: Bool = false
-    
-//    @State private var horizontalOffset: CGFloat = 0
     
     
     
@@ -138,5 +139,11 @@ struct LineGraphParent: View {
                     )
             }
         })
+        .onAppear {
+            chartManager.recalculateChartDataPoints()
+        }
+        .sensoryFeedback(.selection, trigger: chartManager.selectedDate) { oldValue, newValue in
+            oldValue != newValue
+        }
     }
 }

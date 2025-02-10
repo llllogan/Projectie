@@ -123,23 +123,23 @@ struct GoalView: View {
             
             Divider()
             
-            HStack(alignment: .center) {
+            HStack(alignment: .center, spacing: 10) {
                 VStack(alignment: .center) {
                     Text("Achieve By")
-                        .font(.subheadline)
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundStyle(.secondary)
                     Text(reachByNounText())
-                        .fontWeight(.semibold)
+                        .font(.system(size: 15, weight: .semibold))
                 }
                 
                 Spacer()
                 
                 VStack(alignment: .center) {
                     Text("Reach In")
-                        .font(.subheadline)
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundStyle(.secondary)
                     Text(reachInNounText())
-                        .fontWeight(.semibold)
+                        .font(.system(size: 15, weight: .semibold))
                         .lineLimit(1)
                 }
                 .onTapGesture {
@@ -159,13 +159,14 @@ struct GoalView: View {
                 
                 VStack(alignment: .center) {
                     Text("Remaining")
-                        .font(.subheadline)
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundStyle(.secondary)
                     Text("\(remainingAmount, specifier: "%.2f")")
-                        .fontWeight(.semibold)
+                        .font(.system(size: 15, weight: .semibold))
                         .fontDesign(.rounded)
                 }
             }
+            .padding(.top, 5)
             
         }
         
@@ -213,7 +214,7 @@ struct ScalableSectorView: View {
                     .fill(Color.carrotOrrange.opacity(0.2))
                 
                 Sector(percent: percent)
-                    .fill(Color.carrotOrrange)
+                    .fill(Color.carrotOrrange.opacity(0.8))
                 
                 // Middle layer: a circle that is 80% the size of the available space.
                 Circle()

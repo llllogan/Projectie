@@ -53,11 +53,7 @@ struct CustomDateRangeSheet: View {
         .padding()
         .onChange(of: dates) { oldValue, newValue in
             
-            print(newValue.count)
-            
             var dateArray = Array(newValue)
-            
-            print(dateArray)
             
             if dateArray.count == 3 {
                 showFullButtonTest = false

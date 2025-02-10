@@ -29,8 +29,6 @@ struct MainView: View {
     @EnvironmentObject private var accountManager: AccountManager
     
     
-    @Query private var balanceResets: [BalanceReset]
-    @Query private var goals: [Goal]
     @State private var showAddInitialBalanceSheet = false
     @State private var activeSheet: ActiveSheet?
     
@@ -67,36 +65,16 @@ struct MainView: View {
             .onAppear {
                 
                 accountManager.setContext(context)
-                balanceResetManager.setResets(balanceResets)
-                goalManager.setGoals(goals)
                 
-                withAnimation {
-                    timeManager.calculateDates()
-                }
-                financialEventManager.doUpdates()
-                chartDataManager.recalculateChartDataPoints()
+                timeManager.calculateDates()
+            
                 if (!hasSetInitialBalance && !ProcessInfo.processInfo.isRunningInXcodePreview) {
                     showAddInitialBalanceSheet = true
                 }
             }
             .onChange(of: timeManager.timePeriod) { _, newValue in
-                chartDataManager.recalculateChartDataPoints()
                 financialEventManager.doUpdates()
-            }
-            .onChange(of: balanceResets) { _, newValue in
-                balanceResetManager.setResets(newValue)
                 chartDataManager.recalculateChartDataPoints()
-                financialEventManager.doUpdates()
-            }
-            .onChange(of: goals) { _, newValue in
-                goalManager.setGoals(newValue)
-//                handleGoalAddedToDisplayList()
-            }
-            .sensoryFeedback(.selection, trigger: chartDataManager.selectedDate) { oldValue, newValue in
-                oldValue != newValue
-            }
-            .sensoryFeedback(.impact, trigger: transactionManager.centeredTransactionViewId) { oldValue, newValue in
-                oldValue != newValue && !transactionManager.ignoreChangeInCenteredTransactionViewId
             }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {

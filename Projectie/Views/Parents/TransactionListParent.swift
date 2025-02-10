@@ -14,9 +14,11 @@ struct TransactionListParent: View {
     @EnvironmentObject private var financialEventManager: FinancialEventManager
     @EnvironmentObject private var chartManager: ChartManager
     @EnvironmentObject private var transactionManager: TransactionManager
+    @EnvironmentObject private var balanceResetManager: BalanceResetManager
     
     @Environment(\.modelContext) private var context
     @Query private var transactions: [Transaction]
+    @Query private var balanceResets: [BalanceReset]
     
     @State private var showManageTransactionSheet: Bool = false
     
@@ -79,14 +81,14 @@ struct TransactionListParent: View {
             }
             .scrollTargetLayout()
         }
+        .background(Color.niceBackground)
         .scrollTargetBehavior(.viewAligned)
         .defaultScrollAnchor(.center)
-        .scrollPosition(id: $transactionManager.centeredTransactionViewId, anchor: .center)
+        .scrollPosition(id: $centeredTransactionViewId, anchor: .center)
         .scrollIndicators(.never)
         .onScrollPhaseChange { _, newPhase in
-            print("Scroll phase: \(newPhase)")
             if (newPhase == .idle) {
-                transactionManager.ignoreChangeInCenteredTransactionViewId = true
+                ignoreChangeInCenteredTransactionViewId = true
                 centeredTransactionViewId = 0
                 overwriteSwipeIndexStart = true
                 directionToMoveInTime = swipeEndIndex - swipeStartIndex
@@ -101,27 +103,41 @@ struct TransactionListParent: View {
                 }
             }
         }
-        .onChange(of: centeredTransactionViewId ?? 0) { oldValue, newValue in
-            handleChangeOfScrollView(oldValue: oldValue, newValue: newValue)
-        }
-        .sheet(isPresented: $showManageTransactionSheet) {
-            ManageTransactionSheet(transaction: selectedTransaction!, instanceDate: selectedTransactionInstanceDate)
-                .presentationDragIndicator(.visible)
-        }
+//        .sheet(isPresented: $showManageTransactionSheet) {
+//            ManageTransactionSheet(transaction: selectedTransaction, instanceDate: selectedTransactionInstanceDate)
+//                .presentationDragIndicator(.visible)
+//        }
         .onChange(of: transactions) { _, newValue in
             transactionManager.setTransactions(newValue)
             financialEventManager.doUpdates()
             chartManager.recalculateChartDataPoints()
         }
+        .onChange(of: balanceResets) { _, newValue in
+            balanceResetManager.setResets(newValue)
+            financialEventManager.doUpdates()
+            chartManager.recalculateChartDataPoints()
+        }
+        .onChange(of: centeredTransactionViewId ?? 0) { oldValue, newValue in
+            handleChangeOfScrollView(oldValue: oldValue, newValue: newValue)
+        }
         .onAppear {
             transactionManager.setTransactions(transactions)
+            balanceResetManager.setResets(balanceResets)
             financialEventManager.doUpdates()
-            print(transactionManager.transactions.count)
+        }
+        .sensoryFeedback(.impact, trigger: centeredTransactionViewId) { oldValue, newValue in
+            oldValue != newValue && !ignoreChangeInCenteredTransactionViewId
         }
     }
     
     
-    func handleTapOnTransactionListItem(transaction: Transaction, instanceDate: Date) {
+    func handleTapOnTransactionListItem(transaction: Transaction?, instanceDate: Date?) {
+        
+        guard let transaction = transaction, let instanceDate = instanceDate else {
+            print("Either transaction or instanceDate is nil. Exiting function.")
+            return
+        }
+        
         selectedTransaction = transaction
         selectedTransactionInstanceDate = instanceDate
         
@@ -136,8 +152,6 @@ struct TransactionListParent: View {
             ignoreChangeInCenteredTransactionViewId = false
             return
         }
-        
-        print("Going from \(oldValue) to \(newValue). Moving \(newValue > oldValue ? "Forwards" : "Backwards")")
         
         if (overwriteSwipeIndexStart) {
             swipeStartIndex = oldValue

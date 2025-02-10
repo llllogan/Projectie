@@ -17,9 +17,6 @@ final class TransactionManager: ObservableObject {
     
     private init() { }
     
-    @Published var centeredTransactionViewId: Int? = nil
-    @Published var ignoreChangeInCenteredTransactionViewId: Bool = false
-    
     @Published var transactions: [Transaction] = []
     
     func setTransactions(_ transactions: [Transaction]) {

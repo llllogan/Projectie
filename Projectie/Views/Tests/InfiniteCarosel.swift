@@ -98,7 +98,6 @@ struct CustomPagingView: View {
                 .offset(x: -29)
             }
             .onScrollPhaseChange { _, newPhase in
-                print("Scroll phase: \(newPhase)")
                 if (newPhase == .idle) {
                     mainID = 0
                     overwriteSwipeIndexStart = true
@@ -130,8 +129,6 @@ struct CustomPagingView: View {
         if (newValue == 0) {
             return
         }
-        
-        print("Going from \(oldValue) to \(newValue). Moving \(newValue > oldValue ? "Forwards" : "Backwards")")
         
         today = calendar.date(byAdding: .day, value: newValue - oldValue, to: today)!
         

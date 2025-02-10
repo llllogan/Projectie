@@ -36,7 +36,6 @@ struct CategoryPicker: View {
             LazyVGrid(columns: columns, spacing: 20) {
                 ForEach(categories) { category in
                     Button {
-                        print("Selected systemName: \(category.systemName)")
                         onSystemNameSelected(category.systemName)
                         hapticButtonPress()
                         presentationMode.wrappedValue.dismiss()

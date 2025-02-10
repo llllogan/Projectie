@@ -12,6 +12,9 @@ import Foundation
 
 struct GoalListParent: View {
     
+    @Environment(\.modelContext) private var context
+    @Query private var goals: [Goal]
+    
     @EnvironmentObject private var goalManager: GoalManager
     @EnvironmentObject private var financialEventManager: FinancialEventManager
     @EnvironmentObject private var chartManager: ChartManager
@@ -37,6 +40,13 @@ struct GoalListParent: View {
                 .foregroundStyle(.secondary)
                 
                 Spacer()
+            }
+            .onAppear {
+                goalManager.setGoals(goals)
+            }
+            .onChange(of: goals) { _, newValue in
+                goalManager.setGoals(newValue)
+//                handleGoalAddedToDisplayList()
             }
         } else {
             ScrollView(.vertical) {
@@ -73,6 +83,13 @@ struct GoalListParent: View {
             .sheet(isPresented: $showAddGoalSheet) {
                 AddGoalSheet()
                     .presentationDragIndicator(.visible)
+            }
+            .onAppear {
+                goalManager.setGoals(goals)
+            }
+            .onChange(of: goals) { _, newValue in
+                goalManager.setGoals(newValue)
+//                handleGoalAddedToDisplayList()
             }
         }
     }
