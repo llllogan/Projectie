@@ -12,6 +12,8 @@ struct TransactionListElement: View {
     @State var transaction: Transaction
     var overrideDate: Date? = nil
     
+    @State private var showManageTransactionSheet = false
+    
     var lineThickness: CGFloat = 4
     var lineCornerRadius: CGFloat = 2
     
@@ -65,7 +67,17 @@ struct TransactionListElement: View {
 
             }
         }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            showManageTransactionSheet = true
+        }
+        .sheet(isPresented: $showManageTransactionSheet) {
+            ManageTransactionSheet(transaction: transaction, instanceDate: displayDate)
+                .presentationDragIndicator(.visible)
+        }
     }
+    
+    
     
     func removeFillModifier(from systemName: String) -> String {
         let fillSuffix = ".fill"

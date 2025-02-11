@@ -11,8 +11,6 @@ import Foundation
 struct TransactionListView: View {
     
     var groupedOccurrences: [(key: Date, value: [FinancialEventOccurence])]
-    
-    var onReturn: (_ transaction: Transaction, _ endinstanceDate: Date) -> Void
 
     var body: some View {
         
@@ -29,9 +27,7 @@ struct TransactionListView: View {
             List {
                 ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
                     Section(header: Text(date, format: .dateTime.weekday(.wide).day().month(.wide))) {
-                        transactionListDayOrganiser(occurenceList: occurrences) { transaction in
-                            onReturn(transaction, date)
-                        }
+                        transactionListDayOrganiser(occurenceList: occurrences)
                     }
                 }
             }
@@ -45,8 +41,6 @@ struct transactionListDayOrganiser: View {
     
     var occurenceList: [FinancialEventOccurence]
     
-    var onTransactionSelected: (_ transaction: Transaction) -> Void
-    
     var body: some View {
         
         ForEach(occurenceList) { occ in
@@ -57,10 +51,6 @@ struct transactionListDayOrganiser: View {
                     transaction: txn,
                     overrideDate: occ.date
                 )
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    onTransactionSelected(txn)
-                }
             case .reset(let rst):
                 BalanceResetListElement(reset: rst)
             }

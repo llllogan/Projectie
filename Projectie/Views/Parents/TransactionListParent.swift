@@ -20,8 +20,6 @@ struct TransactionListParent: View {
     @Query private var transactions: [Transaction]
     @Query private var balanceResets: [BalanceReset]
     
-    @State private var showManageTransactionSheet: Bool = false
-    
     @State private var ignoreChangeInCenteredTransactionViewId: Bool = false
     @State private var centeredTransactionViewId: Int?
     @State private var overwriteSwipeIndexStart: Bool = true
@@ -31,47 +29,34 @@ struct TransactionListParent: View {
     
     @State private var isFirstLoadForTransactionList: Bool = true
     
-    @State private var selectedTransaction: Transaction?
-    @State private var selectedTransactionInstanceDate: Date?
-    
     var body: some View {
         ScrollView(.horizontal) {
             HStack {
-                TransactionListView(groupedOccurrences: financialEventManager.eventLintMinus2 ?? []) { transaction, date in
-                    handleTapOnTransactionListItem(transaction: transaction, instanceDate: date)
-                }
+                TransactionListView(groupedOccurrences: financialEventManager.eventLintMinus2 ?? [])
                 .id(-2)
                 .scrollTransition { content, phase in
                     content
                         .opacity(phase.isIdentity ? 1 : 0.5)
                 }
-                TransactionListView(groupedOccurrences: financialEventManager.eventListMinus1 ?? []) { transaction, date in
-                    handleTapOnTransactionListItem(transaction: transaction, instanceDate: date)
-                }
+                TransactionListView(groupedOccurrences: financialEventManager.eventListMinus1 ?? [])
                 .id(-1)
                 .scrollTransition { content, phase in
                     content
                         .opacity(phase.isIdentity ? 1 : 0.5)
                 }
-                TransactionListView(groupedOccurrences: financialEventManager.eventList ?? []) { transaction, date in
-                    handleTapOnTransactionListItem(transaction: transaction, instanceDate: date)
-                }
+                TransactionListView(groupedOccurrences: financialEventManager.eventList ?? [])
                 .id(0)
                 .scrollTransition { content, phase in
                     content
                         .opacity(phase.isIdentity ? 1 : 0.5)
                 }
-                TransactionListView(groupedOccurrences: financialEventManager.eventListPlus1 ?? []) { transaction, date in
-                    handleTapOnTransactionListItem(transaction: transaction, instanceDate: date)
-                }
+                TransactionListView(groupedOccurrences: financialEventManager.eventListPlus1 ?? [])
                 .id(1)
                 .scrollTransition { content, phase in
                     content
                         .opacity(phase.isIdentity ? 1 : 0.5)
                 }
-                TransactionListView(groupedOccurrences: financialEventManager.eventListPlus2 ?? []) { transaction, date in
-                    handleTapOnTransactionListItem(transaction: transaction, instanceDate: date)
-                }
+                TransactionListView(groupedOccurrences: financialEventManager.eventListPlus2 ?? [])
                 .id(2)
                 .scrollTransition { content, phase in
                     content
@@ -103,10 +88,6 @@ struct TransactionListParent: View {
                 }
             }
         }
-//        .sheet(isPresented: $showManageTransactionSheet) {
-//            ManageTransactionSheet(transaction: selectedTransaction, instanceDate: selectedTransactionInstanceDate)
-//                .presentationDragIndicator(.visible)
-//        }
         .onChange(of: transactions) { _, newValue in
             transactionManager.setTransactions(newValue)
             financialEventManager.doUpdates()
@@ -128,20 +109,6 @@ struct TransactionListParent: View {
         .sensoryFeedback(.impact, trigger: centeredTransactionViewId) { oldValue, newValue in
             oldValue != newValue && !ignoreChangeInCenteredTransactionViewId
         }
-    }
-    
-    
-    func handleTapOnTransactionListItem(transaction: Transaction?, instanceDate: Date?) {
-        
-        guard let transaction = transaction, let instanceDate = instanceDate else {
-            print("Either transaction or instanceDate is nil. Exiting function.")
-            return
-        }
-        
-        selectedTransaction = transaction
-        selectedTransactionInstanceDate = instanceDate
-        
-        showManageTransactionSheet = true
     }
     
     
