@@ -25,10 +25,12 @@ struct ManageTransactionSheet: View {
 
     var body: some View {
         
+        let categoryImageName = transaction.categorySystemName ?? "circle.fill"
+        
         NavigationView {
-            VStack(alignment: .center) {
+            VStack {
                 
-                Image(systemName: transaction.categorySystemName!)
+                Image(systemName: categoryImageName)
                     .foregroundStyle(transaction.getCategory()?.color ?? .secondary)
                     .font(.largeTitle)
                 
@@ -82,7 +84,7 @@ struct ManageTransactionSheet: View {
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal)
 
-                
+                Spacer()
                 
                 VStack(spacing: 10) {
                     Button(action: {
@@ -221,4 +223,18 @@ struct ManageTransactionSheet: View {
         case notes
     }
 
+}
+
+
+#Preview {
+    ManageTransactionSheet(
+        transaction: Transaction(
+            title: "Test",
+            amount: 9.0,
+            isCredit: true,
+            date: Date(),
+            account: Account(name: "Test", type: .saving)
+        ),
+        instanceDate: Date()
+    )
 }
