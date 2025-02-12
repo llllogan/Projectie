@@ -30,14 +30,15 @@ final class ChartManager: ObservableObject {
     
     @Published var goalsToDisplayOnChart: [Goal] = []
     
+    @Published var percentageChange: Double = 0.0
+    @Published var percentageChangePositive: Bool = true
+    
     
     
     var endOfRangeBalance: Double {
         guard let lastDataPoint = chartDataPointsLine.last else { return 0.0 }
         return lastDataPoint.balance
     }
-
-    
     
     
     func recalculateChartDataPoints() {
@@ -106,5 +107,7 @@ final class ChartManager: ObservableObject {
         
         chartDataPointsLine = dataPoints
     }
+    
+    
     
 }

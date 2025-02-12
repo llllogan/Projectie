@@ -15,9 +15,11 @@ struct DynamicTitleParent: View {
     @EnvironmentObject private var chartManager: ChartManager
     @EnvironmentObject private var financialEventManager: FinancialEventManager
     @EnvironmentObject private var timeManager: TimeManager
+    @EnvironmentObject private var controlManager: ControlManager
     
     
     var body: some View {
+        
         VStack {
             if !chartManager.isInteracting {
                 HStack(alignment: .bottom) {
@@ -33,16 +35,48 @@ struct DynamicTitleParent: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    ViewThatFits {
-                        Text("End of \(endOfNoun): $\(chartManager.endOfRangeBalance, specifier: "%.2f")")
-                            .fontWeight(.semibold)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Text("End of \(endOfNounShort): $\(chartManager.endOfRangeBalance, specifier: "%.2f")")
-                            .fontWeight(.semibold)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                    
+                    if (controlManager.selectedChartView == .line) {
+                        ViewThatFits {
+                            Text("End of \(endOfNoun): $\(chartManager.endOfRangeBalance, specifier: "%.2f")")
+                                .fontWeight(.semibold)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Text("End of \(endOfNounShort): $\(chartManager.endOfRangeBalance, specifier: "%.2f")")
+                                .fontWeight(.semibold)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        ViewThatFits {
+                            Label {
+                                Text("\(chartManager.percentageChange, specifier: "%.2f")% this Feb")
+                                    .fontWeight(.semibold)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            } icon: {
+                                Image(systemName: chartManager.percentageChangePositive ? "arrow.up.right.circle" : "arrow.down.right.circle")
+                                    .fontWeight(.semibold)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Label {
+                                Text("\(chartManager.percentageChange, specifier: "%.2f")% this Feb")
+                                    .fontWeight(.semibold)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            } icon: {
+                                Image(systemName: chartManager.percentageChangePositive ? "arrow.up.right.circle" : "arrow.down.right.circle")
+                                    .fontWeight(.semibold)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .onAppear {
+                            getPercentageChange()
+                        }
                     }
+                    
                 }
                 .padding(.horizontal)
                 .onTapGesture {
@@ -66,6 +100,9 @@ struct DynamicTitleParent: View {
         }
         .frame(height: 50)
         .offset(x: chartManager.isInteracting ? chartManager.scrubHorozontalOffset : 0)
+        .onChange(of: timeManager.startDate) {
+            getPercentageChange()
+        }
     }
     
     
@@ -98,5 +135,31 @@ struct DynamicTitleParent: View {
             return timeManager.startDate.formatted(.dateTime.year())
         }
     }
+    
+    
+    private func getPercentageChange() {
+        let occurrences = financialEventManager.visibleEventOccurences
+        
+        let totalCredits = occurrences
+            .map { $0.transaction?.amount ?? 0 }
+            .filter { $0 > 0 }
+            .reduce(0, +)
+        
+        let totalDebits = occurrences
+            .map { $0.transaction?.amount ?? 0 }
+            .filter { $0 < 0 }
+            .reduce(0, +)
+        
+        // For our chart, we use the positive value for debits.
+        let absoluteDebits = abs(totalDebits)
+        
+        // Determine the maximum value of the Y axis.
+        let maxValue = max(totalCredits, absoluteDebits)
+        let minValue = min(totalCredits, absoluteDebits)
+        
+        chartManager.percentageChange = ((maxValue - minValue) / maxValue) * 100
+        chartManager.percentageChangePositive = totalCredits > totalDebits ? true : false
+    }
 
+    
 }

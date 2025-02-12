@@ -115,12 +115,12 @@ struct MainView: View {
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
-//                        Picker("Graph Style", selection: $controlManager.ChartViewChoice) {
-//                            Label("Line", systemImage: "chart.xyaxis.line")
-//                                .tag(ChartViewChoice.line)
-//                            Label("Bar", systemImage: "chart.bar.xaxis")
-//                                .tag(ChartViewChoice.bar)
-//                        }
+                        Picker("Graph Style", selection: $controlManager.selectedChartView) {
+                            Label("Line", systemImage: "chart.xyaxis.line")
+                                .tag(ChartViewChoice.line)
+                            Label("Bar", systemImage: "chart.bar.xaxis")
+                                .tag(ChartViewChoice.bar)
+                        }
                         Button(action: {
                             squareLines.toggle()
                         }) {
