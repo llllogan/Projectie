@@ -16,6 +16,8 @@ struct ManageTransactionSheet: View {
     @State private var showDeleteOptions = false
     @State private var showEditTransactionAlert = false
     
+    @State private var testFieldString: String = ""
+    
     @FocusState private var focusedField: Field?
     
     @State var transaction: Transaction
@@ -39,7 +41,7 @@ struct ManageTransactionSheet: View {
                     .font(.largeTitle)
                     .padding(.top)
                 
-                Text("\(transaction.isCredit ? "-" : "")$\(transaction.unsignedAmount, format: .number.precision(.fractionLength(2)))")
+                Text("\(transaction.isCredit ? "" : "-")$\(transaction.unsignedAmount, format: .number.precision(.fractionLength(2)))")
                     .font(.system(size: 45, weight: .bold, design: .rounded))
                     .padding(.bottom, 8)
                     
@@ -83,6 +85,14 @@ struct ManageTransactionSheet: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal)
+                .padding(.bottom, 40)
+                
+                TextField("Description", text: $testFieldString)
+                    .padding(10)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(8)
+                    .padding(.horizontal)
+                    
 
                 Spacer()
                 
@@ -113,7 +123,7 @@ struct ManageTransactionSheet: View {
                 }
                 
             }
-            .padding(.top, 20)
+            .padding(.top, 60)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
