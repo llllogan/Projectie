@@ -27,7 +27,7 @@ struct ManageTransactionSheet: View {
 
     var body: some View {
         
-        let categoryImageName = transaction.categorySystemName ?? "circle.fill"
+        let categoryImageName = transaction.categorySystemName
         
         NavigationView {
             VStack {
@@ -243,7 +243,8 @@ struct ManageTransactionSheet: View {
             amount: 9.0,
             isCredit: true,
             date: Date(),
-            account: Account(name: "Test", type: .saving)
+            account: Account(name: "Test", type: .saving),
+            categorySystemName: "circle.dashed"
         ),
         instanceDate: Date()
     )

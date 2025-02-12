@@ -26,7 +26,7 @@ class Transaction: Identifiable {
     var date: Date
     var account: Account
     var note: String?
-    var categorySystemName: String?
+    var categorySystemName: String
     
     var isRecurring: Bool
         
@@ -44,7 +44,7 @@ class Transaction: Identifiable {
         date: Date,
         account: Account,
         note: String? = nil,
-        categorySystemName: String? = nil,
+        categorySystemName: String,
         isRecurring: Bool = false,
         recurrenceFrequency: RecurrenceFrequency? = nil,
         recurrenceInterval: Int = 1,

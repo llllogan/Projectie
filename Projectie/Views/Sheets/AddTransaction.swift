@@ -37,6 +37,8 @@ struct AddTransactionSheet: View {
     @State private var showCategoryPicker = false
     @FocusState private var focusedField: Field?
     
+    @State private var showErrorAlert = false
+    
     enum Field {
         case amount
         case title
@@ -193,6 +195,13 @@ struct AddTransactionSheet: View {
                     }
                 }
                 .navigationTitle("Add Transaction")
+                .alert("Field cannot be empty", isPresented: $showErrorAlert) {
+                    Button("OK", role: .cancel) {
+                        showErrorAlert = false
+                    }
+                } message: {
+                    Text("Please fill in all required fields.")
+                }
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel") {
@@ -291,11 +300,13 @@ struct AddTransactionSheet: View {
         
         if transactionTitle.isEmpty {
             print("Needs title")
+            showErrorAlert = true
             return
         }
         
         if amount == 0 {
             print("Needs amount")
+            showErrorAlert = true
             return
         }
         
@@ -305,6 +316,7 @@ struct AddTransactionSheet: View {
         
         if AccountManager.shared.selectedAccount == nil {
             print("There is no account selected")
+            showErrorAlert = true
             return
         }
         
@@ -316,7 +328,7 @@ struct AddTransactionSheet: View {
             date: transactionDate,
             account: AccountManager.shared.selectedAccount!,
             note: transactionNote,
-            categorySystemName: selectedCategorySystemName,
+            categorySystemName: selectedCategorySystemName!,
             isRecurring: isRecurring,
             recurrenceFrequency: isRecurring ? recurrenceFrequency : nil,
             recurrenceInterval: recurrenceInterval,

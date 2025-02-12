@@ -35,7 +35,7 @@ struct TransactionListElement: View {
                     .font(.headline)
                 
                 HStack(spacing: 3) {
-                    Image(systemName: removeFillModifier(from: transaction.categorySystemName!))
+                    Image(systemName: removeFillModifier(from: transaction.categorySystemName))
                         .font(.caption)
                         .fontWeight(.light)
                         .foregroundStyle(.secondary)
