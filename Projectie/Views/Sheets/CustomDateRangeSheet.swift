@@ -16,6 +16,8 @@ struct CustomDateRangeSheet: View {
                     
     @State private var dates: Set<DateComponents> = []
     
+    @State private var showErrorAlert = false
+    
     @Environment(\.dismiss) private var dismiss
     
     var onReturn: (_ start: Date, _ end: Date) -> Void
@@ -28,7 +30,13 @@ struct CustomDateRangeSheet: View {
                 .padding(.top)
             
             Button(action: {
-                onReturn(startDate!, endDate!)
+                
+                guard let start = startDate, let end = endDate else {
+                    showErrorAlert = true
+                    return
+                }
+                
+                onReturn(start, end)
                 dismiss()
             }) {
                 if showFullButtonTest {
@@ -49,6 +57,13 @@ struct CustomDateRangeSheet: View {
                         .cornerRadius(8)
                 }
             }
+        }
+        .alert("Selection Issue", isPresented: $showErrorAlert) {
+            Button("OK", role: .cancel) {
+                showErrorAlert = false
+            }
+        } message: {
+            Text("Please select a start and end date.")
         }
         .padding()
         .onChange(of: dates) { oldValue, newValue in
