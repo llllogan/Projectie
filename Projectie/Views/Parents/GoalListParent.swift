@@ -68,15 +68,15 @@ struct GoalListParent: View {
                             .id(goal.id)
                             .scrollTransition { content, phase in
                                 content
-                                    .blur(radius: phase.isIdentity ? 0 : 2)
+                                    .blur(radius: phase.isIdentity ? 0 : 0.5)
                             }
                     }
                     .scrollTargetLayout()
                 }
             }
+            .contentMargins(.vertical, 20)
             .scrollIndicators(.hidden)
             .padding(.horizontal)
-            .padding(.top)
             .scrollTargetBehavior(.viewAligned)
             .defaultScrollAnchor(.top)
             .background(Color.niceBackground)

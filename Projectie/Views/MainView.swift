@@ -126,12 +126,6 @@ struct MainView: View {
                         }) {
                             Label("Line Interpolation Style", systemImage: "arrow.trianglehead.2.clockwise")
                         }
-                        Button(action: {
-                            hasSetInitialBalance = false
-                            showAddInitialBalanceSheet = true
-                        }) {
-                            Label("Reset inital balance flag", systemImage: "slider.horizontal.2.arrow.trianglehead.counterclockwise")
-                        }
                     } label: {
                         Image(systemName: "ellipsis.circle")
                             .tint(.primary)
