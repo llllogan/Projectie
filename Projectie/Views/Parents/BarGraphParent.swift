@@ -15,6 +15,7 @@ struct BarGraphParent: View {
     @EnvironmentObject private var chartManager: ChartManager
     @EnvironmentObject private var financialEventManager: FinancialEventManager
     @EnvironmentObject private var timeManager: TimeManager
+    @EnvironmentObject private var themeManager: ThemeManager
     
     @AppStorage("sqaureLines") private var squareLines: Bool = false
     
@@ -73,7 +74,7 @@ struct BarGraphParent: View {
                 yStart: .value("Amount", 0),
                 yEnd: .value("Amount", totalCredits)
             )
-            .foregroundStyle(Color.carrotOrrangePale)
+            .foregroundStyle(themeManager.accentLighter)
             
             BarMark(
                 x: .value("Type", "Debits"),
@@ -86,7 +87,7 @@ struct BarGraphParent: View {
                 yStart: .value("Amount", 0),
                 yEnd: .value("Amount", abs(totalDebits))
             )
-            .foregroundStyle(Color.carrotOrrangeDark)
+            .foregroundStyle(themeManager.accentDarker)
         }
         .frame(height: 180)
         .chartYAxis {
@@ -119,4 +120,6 @@ struct BarGraphParent: View {
         .padding()
     }
 }
+
+
 

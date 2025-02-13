@@ -19,6 +19,7 @@ struct LineGraphParent: View {
     @EnvironmentObject private var financialEventManager: FinancialEventManager
     @EnvironmentObject private var timeManager: TimeManager
     @EnvironmentObject private var controlManager: ControlManager
+    @EnvironmentObject private var themeManager: ThemeManager
     
     @AppStorage("sqaureLines") private var squareLines: Bool = false
     
@@ -58,21 +59,34 @@ struct LineGraphParent: View {
                     y: .value("Selected Y", selectedBalance)
                 )
                 .symbol(.circle)
-                // Adjust symbolSize to taste
                 .symbolSize(40)
                 .foregroundStyle(Color.whiteInDarkBlackInLight)
             }
             
-//            if selectedBottomView == .goals {
-//                print("Hello")
-//            }
+            if ControlManager.shared.selectedBottomView == .goals {
+                ForEach(
+                    chartManager.goalsToShow.compactMap { goal -> (goal: Goal, goalDate: Date)? in
+                        guard let goalDate = goal.earliestDateWhenGoalIsMet() else { return nil }
+                        return (goal, goalDate)
+                    },
+                    id: \.goalDate
+                ) { item in
+                    PointMark(
+                        x: .value("Date", item.goalDate),
+                        y: .value("Balance", item.goal.targetAmount)
+                    )
+                    .symbol(.circle)
+                    .symbolSize(40)
+                    .foregroundStyle(Color.whiteInDarkBlackInLight)
+                }
+            }
             
             ForEach(chartManager.chartDataPointsLine, id: \.date) { dataPoint in
                 LineMark(
                     x: .value("Date", dataPoint.date),
                     y: .value("Balance", dataPoint.balance)
                 )
-                .foregroundStyle(Color(hue: 34/360, saturation: 0.99, brightness: 0.95))
+                .foregroundStyle(Color(themeManager.accentColor))
                 .interpolationMethod(squareLines ? .stepEnd : .linear)
                 
                 AreaMark(
@@ -84,8 +98,8 @@ struct LineGraphParent: View {
                 .foregroundStyle(
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            Color(hue: 34/360, saturation: 0.99, brightness: 0.95).opacity(0.5),
-                            Color(hue: 34/360, saturation: 0.99, brightness: 0.95).opacity(0.1)
+                            Color(themeManager.accentColor).opacity(0.5),
+                            Color(themeManager.accentColor).opacity(0.1)
                         ]),
                         startPoint: .top,
                         endPoint: .bottom

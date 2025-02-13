@@ -28,11 +28,53 @@ final class ChartManager: ObservableObject {
     @Published var selectedDate: Date? = nil
     @Published var selectedBalance: Double? = nil
     
-    @Published var goalsToDisplayOnChart: [Goal] = []
+    @Published private(set) var goalsToShow: [Goal] = []
     
     @Published var dollarChange: Double = 0.0
     @Published var dollarChangePositive: Bool = true
     
+    
+    func addGoalToChart(_ goal: Goal) {
+        goalsToShow.append(goal)
+        calculateNewChartDateRange()
+    }
+    
+    func removeGoalFromChart(_ goal: Goal) {
+        goalsToShow.removeAll { $0.id == goal.id }
+        calculateNewChartDateRange()
+    }
+    
+    private func calculateNewChartDateRange() {
+        let today = Date()
+        let calendar = Calendar.current
+        // Default start date is yesterday
+        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today) else { return }
+        
+        // Gather the earliest dates when each goal is met.
+        let goalDates = goalsToShow.compactMap { $0.earliestDateWhenGoalIsMet() }
+        
+        timeManager.timePeriod = .custom
+        
+        if let maxGoalDate = goalDates.max() {
+            // If the farthest goal date is in the past, use that as the start date
+            // and today as the end date.
+            if maxGoalDate < today {
+                timeManager.startDate = maxGoalDate
+                timeManager.endDate = today
+            } else {
+                // Otherwise, use yesterday as the start and the farthest goal date as the end.
+                timeManager.startDate = yesterday
+                timeManager.endDate = maxGoalDate
+            }
+        } else {
+            // No goals to show – default to yesterday through today.
+            timeManager.startDate = yesterday
+            timeManager.endDate = today
+        }
+        
+        financialEventManager.doUpdates()
+        recalculateChartDataPoints()
+    }
     
     
     var endOfRangeBalance: Double {

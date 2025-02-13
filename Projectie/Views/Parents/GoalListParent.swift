@@ -46,18 +46,15 @@ struct GoalListParent: View {
             }
             .onChange(of: goals) { _, newValue in
                 goalManager.setGoals(newValue)
-//                handleGoalAddedToDisplayList()
+            }
+            .sheet(isPresented: $showAddGoalSheet) {
+                AddGoalSheet()
             }
         } else {
             ScrollView(.vertical) {
                 VStack {
                     ForEach(goalManager.goals, id: \.id) { goal in
-                        GoalView(
-                            goal: goal,
-                            currentBalance: financialEventManager.currentBalance,
-                            dateReached: earliestDateWhenGoalIsMet(goal.targetAmount),
-                            goalsToDisplay: $chartManager.goalsToDisplayOnChart
-                        )
+                        GoalView(goal: goal, currentBalance: financialEventManager.currentBalance)
                             .padding(.horizontal)
                             .padding(.bottom)
                             .padding(.top, 5)
@@ -92,44 +89,5 @@ struct GoalListParent: View {
 //                handleGoalAddedToDisplayList()
             }
         }
-    }
-    
-    
-    private func earliestDateWhenGoalIsMet(_ targetAmount: Double) -> Date? {
-        let sortedOccurrences = financialEventManager.allEvents.sorted(by: { $0.date < $1.date })
-        
-        let latestResetBeforeNow = balanceResetManager.resets.first(where: { $0.date <= Date() })
-        
-        var runningBalance: Double
-        var lastResetDate: Date
-        
-        if let reset = latestResetBeforeNow {
-            runningBalance = reset.balanceAtReset
-            lastResetDate = reset.date
-        } else {
-            runningBalance = 0
-            lastResetDate = .distantPast
-        }
-        
-        let preNowOccurrences = sortedOccurrences.filter { $0.date > lastResetDate && $0.date <= Date() }
-        for occ in preNowOccurrences {
-            runningBalance += occ.transaction?.amount ?? 0
-        }
-        
-        if runningBalance >= targetAmount {
-            return Date()
-        }
-        
-        let futureOccurrences = sortedOccurrences.filter { $0.date > Date() }
-        
-        for occ in futureOccurrences {
-            runningBalance += occ.transaction?.amount ?? 0
-            
-            if runningBalance >= targetAmount {
-                return occ.date
-            }
-        }
-        
-        return nil
     }
 }

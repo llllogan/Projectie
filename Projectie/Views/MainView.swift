@@ -27,6 +27,7 @@ struct MainView: View {
     @EnvironmentObject private var balanceResetManager: BalanceResetManager
     @EnvironmentObject private var goalManager: GoalManager
     @EnvironmentObject private var accountManager: AccountManager
+    @EnvironmentObject private var themeManager: ThemeManager
     
     
     @State private var showAddInitialBalanceSheet = false
@@ -76,6 +77,11 @@ struct MainView: View {
                 financialEventManager.doUpdates()
                 chartDataManager.recalculateChartDataPoints()
             }
+            .onChange(of: themeManager.selectedTheme) { _, newTheme in
+                if newTheme == .carrotCustom && !themeManager.hasSetCustomColour {
+                    activeSheet = .pickColour
+                }
+            }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                     case .addTransaction:
@@ -86,6 +92,9 @@ struct MainView: View {
                             .presentationDragIndicator(.visible)
                     case .addGoal:
                         AddGoalSheet()
+                            .presentationDragIndicator(.visible)
+                    case .pickColour:
+                        FullscreenColorPickerView()
                             .presentationDragIndicator(.visible)
                 }
             }
@@ -110,7 +119,7 @@ struct MainView: View {
                         }
                     } label: {
                         Image(systemName: "plus.circle.fill")
-                            .foregroundColor(Color(hue: 34/360, saturation: 0.99, brightness: 0.95))
+                            .foregroundColor(themeManager.accentColor)
                     }
                 }
                 ToolbarItem(placement: .topBarLeading) {
@@ -125,6 +134,25 @@ struct MainView: View {
                             squareLines.toggle()
                         }) {
                             Label("Line Interpolation Style", systemImage: "arrow.trianglehead.2.clockwise")
+                        }
+                        Divider()
+                        Menu {
+                            Picker("Colour Scheme", selection: $themeManager.selectedTheme) {
+                                Text("Dutch")
+                                    .tag(AccentTheme.carrotOrrange)
+                                Text("Proto-European")
+                                    .tag(AccentTheme.carrotPurple)
+                                Text("GMO")
+                                    .tag(AccentTheme.carrotCustom)
+                            }
+                            Button(action: {
+                                activeSheet = .pickColour
+                            }) {
+                                Label("Pick Custom Colour", systemImage: "swatchpalette")
+                            }
+                        } label: {
+                            Text("Colour Scheme")
+                                .tint(.primary)
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -143,6 +171,7 @@ enum ActiveSheet: Identifiable {
     case addTransaction
     case resetBalance
     case addGoal
+    case pickColour
     
     var id: Int {
         UUID().hashValue

@@ -20,13 +20,13 @@ struct GoalView: View {
     
     @State var goal: Goal
     @State var currentBalance: Double
-    @State var dateReached: Date?
-    
-    @Binding var goalsToDisplay: [Goal]
+    @State private var dateReached: Date?
     
     @State private var granularity: DisplayedRemainingTimeGranularity = .days
     
     @State private var showOnGraph: Bool = false
+    
+    @EnvironmentObject private var chartManager: ChartManager
 
     var remainingAmount: Double {
         goal.targetAmount - currentBalance < 0 ? 0 : goal.targetAmount - currentBalance
@@ -79,9 +79,9 @@ struct GoalView: View {
     func handleAddToGraph() {
         
         if showOnGraph {
-            goalsToDisplay.removeAll { $0.id == goal.id }
+            chartManager.removeGoalFromChart(goal)
         } else {
-            goalsToDisplay.append(goal)
+            chartManager.addGoalToChart(goal)
         }
         
         showOnGraph.toggle()
@@ -94,24 +94,16 @@ struct GoalView: View {
             
             HStack {
                 
-                VStack(alignment: .leading, spacing: 7) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(goal.title)
-                            .font(.title2)
-                            .foregroundColor(.primary)
-                            .fontWeight(.semibold)
-                        Text("$\(goal.targetAmount, specifier: "%.2f")")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                            .fontWeight(.regular)
-                    }
-                    Label("Show on graph", systemImage: showOnGraph ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-                }
-                .onTapGesture {
-                    handleAddToGraph()
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(goal.title)
+                        .font(.title2)
+                        .foregroundColor(.primary)
+                        .fontWeight(.semibold)
+                    Text("$\(goal.targetAmount, specifier: "%.2f")")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                        .fontWeight(.regular)
                 }
 
                 
@@ -119,7 +111,7 @@ struct GoalView: View {
                 ScalableSectorView(percent: progress)
                     .padding(.vertical, 8)
             }
-            .frame(maxHeight: 90)
+            .frame(maxHeight: 70)
             
             Divider()
             
@@ -168,6 +160,9 @@ struct GoalView: View {
             }
             .padding(.top, 5)
             
+        }
+        .onAppear {
+            dateReached = goal.earliestDateWhenGoalIsMet()
         }
         
     }

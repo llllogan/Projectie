@@ -45,6 +45,7 @@ struct ProjectieApp: App {
                 .environmentObject(TimeManager.shared)
                 .environmentObject(ControlManager.shared)
                 .environmentObject(ChartManager.shared)
+                .environmentObject(ThemeManager.shared)
         }
     }
 }
