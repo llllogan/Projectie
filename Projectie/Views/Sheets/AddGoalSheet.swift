@@ -32,23 +32,27 @@ struct AddGoalSheet: View {
                     .font(.title)
                     .fontWeight(.bold)
                 
-                Form {
-                    
-                    Section {
-                        TextField("Title", text: $goalTitle)
-                            .font(.system(size: 20, weight: .medium))
-                            .focused($focusedField, equals: .title)
-                    }
-                    
-                    Section(header: Text("Amount")) {
-                        TextField("0.00", text: $goalAmount)
-                            .keyboardType(.decimalPad)
-                            .font(.system(size: 40, weight: .medium, design: .rounded))
-                            .multilineTextAlignment(.leading)
-                            .focused($focusedField, equals: .amount)
-                    }
-                }
-                .scrollDisabled(true)
+                TextField("Title", text: $goalTitle)
+                    .font(.system(size: 20, weight: .medium))
+                    .focused($focusedField, equals: .title)
+                    .padding(10)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(8)
+                    .padding(.horizontal)
+                    .padding(.vertical, 15)
+                
+                TextField("0.00", text: $goalAmount)
+                    .keyboardType(.decimalPad)
+                    .font(.system(size: 40, weight: .medium, design: .rounded))
+                    .multilineTextAlignment(.leading)
+                    .focused($focusedField, equals: .amount)
+                    .padding(10)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(8)
+                    .padding(.horizontal)
+                
+                Spacer()
+                
                 
                 Button(action: {
                     saveGoal()
