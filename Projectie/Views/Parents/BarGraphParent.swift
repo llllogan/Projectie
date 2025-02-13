@@ -44,7 +44,6 @@ struct BarGraphParent: View {
         var defaultStep = maxValue / 5.0
         
         if let optimalStep = computeOptimalDivisor(maxValue: maxValue, s: minValue) {
-            print("Found optimal step: \(optimalStep)")
             defaultStep = maxValue / optimalStep
         }
         

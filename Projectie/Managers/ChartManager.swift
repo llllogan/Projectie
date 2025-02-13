@@ -30,8 +30,8 @@ final class ChartManager: ObservableObject {
     
     @Published var goalsToDisplayOnChart: [Goal] = []
     
-    @Published var percentageChange: Double = 0.0
-    @Published var percentageChangePositive: Bool = true
+    @Published var dollarChange: Double = 0.0
+    @Published var dollarChangePositive: Bool = true
     
     
     

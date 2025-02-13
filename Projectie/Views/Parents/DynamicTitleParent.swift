@@ -48,29 +48,15 @@ struct DynamicTitleParent: View {
                                 .foregroundStyle(.secondary)
                         }
                     } else {
-                        ViewThatFits {
-                            Label {
-                                Text("\(chartManager.percentageChange, specifier: "%.2f")% this Feb")
-                                    .fontWeight(.semibold)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            } icon: {
-                                Image(systemName: chartManager.percentageChangePositive ? "arrow.up.right.circle" : "arrow.down.right.circle")
-                                    .fontWeight(.semibold)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Label {
-                                Text("\(chartManager.percentageChange, specifier: "%.2f")% this Feb")
-                                    .fontWeight(.semibold)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            } icon: {
-                                Image(systemName: chartManager.percentageChangePositive ? "arrow.up.right.circle" : "arrow.down.right.circle")
-                                    .fontWeight(.semibold)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
+                        HStack(alignment: .center, spacing: 2) {
+                            Image(systemName: chartManager.dollarChangePositive ? "arrow.up.right.circle" : "arrow.down.right.circle")
+                                .fontWeight(.semibold)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Text("$\(chartManager.dollarChange, specifier: "%.2f") \(thisNoun)")
+                                .fontWeight(.semibold)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
                         }
                         .onAppear {
                             getPercentageChange()
@@ -136,6 +122,25 @@ struct DynamicTitleParent: View {
         }
     }
     
+    private var thisNoun: String {
+        switch timeManager.timePeriod {
+        case .week:
+            return "in week #\(timeManager.startDate.formatted(.dateTime.week()))"
+        case .fortnight:
+            return "in week #\(timeManager.endDate.formatted(.dateTime.week()))"
+        case .month:
+            if Calendar.current.isDate(timeManager.startDate, equalTo: Date(), toGranularity: .year) {
+                return "this \(timeManager.startDate.formatted(.dateTime.month(.abbreviated)))"
+            } else {
+                return "in \(timeManager.startDate.formatted(.dateTime.month(.abbreviated)))"
+            }
+        case .year:
+            return "in \(timeManager.startDate.formatted(.dateTime.year()))"
+        case .custom:
+            return "in \(timeManager.startDate.formatted(.dateTime.year()))"
+        }
+    }
+    
     
     private func getPercentageChange() {
         let occurrences = financialEventManager.visibleEventOccurences
@@ -157,8 +162,8 @@ struct DynamicTitleParent: View {
         let maxValue = max(totalCredits, absoluteDebits)
         let minValue = min(totalCredits, absoluteDebits)
         
-        chartManager.percentageChange = ((maxValue - minValue) / maxValue) * 100
-        chartManager.percentageChangePositive = totalCredits > totalDebits ? true : false
+        chartManager.dollarChange = maxValue - minValue
+        chartManager.dollarChangePositive = abs(totalCredits) > abs(totalDebits) ? true : false
     }
 
     
