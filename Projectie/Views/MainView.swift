@@ -187,4 +187,18 @@ extension ProcessInfo {
 
 #Preview {
     MainView()
+        /// Manager for User Accounts
+        .environmentObject(AccountManager.shared)
+
+        /// Managers for Financial Events
+        .environmentObject(FinancialEventManager.shared)
+        .environmentObject(TransactionManager.shared)
+        .environmentObject(GoalManager.shared)
+        .environmentObject(BalanceResetManager.shared)
+
+        /// Other Mics Managers
+        .environmentObject(TimeManager.shared)
+        .environmentObject(ControlManager.shared)
+        .environmentObject(ChartManager.shared)
+        .environmentObject(ThemeManager.shared)
 }

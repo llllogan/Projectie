@@ -31,22 +31,20 @@ struct InitialBalanceSheet: View {
                     .font(.title)
                     .fontWeight(.bold)
                 
-                Text("Before you get started, enter the current balance of your savings accoint.\nWe will use this as your starting balance to get you going.")
+                Text("Before you get started, enter the current balance of your savings account.\nThis will be your starting balance as of today.")
                     .padding()
                     .multilineTextAlignment(.center)
                 
-                Form {
-                    
-                    Section {
-                        TextField("0.00", text: $amount)
-                            .keyboardType(.decimalPad)
-                            .font(.system(size: 40, weight: .medium, design: .rounded))
-                            .multilineTextAlignment(.leading)
-                            .focused($focusedField, equals: .amount)
-                    }
-                }
-                .scrollDisabled(true)
-                .frame(height: 150)
+                TextField("0.00", text: $amount)
+                    .keyboardType(.decimalPad)
+                    .font(.system(size: 40, weight: .medium, design: .rounded))
+                    .multilineTextAlignment(.leading)
+                    .focused($focusedField, equals: .amount)
+                    .padding(10)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(8)
+                    .padding(.horizontal)
+                    .padding(.top, 20)
                 
                 Spacer()
                 
