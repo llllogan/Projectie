@@ -25,6 +25,7 @@ struct GoalView: View {
     @State private var granularity: DisplayedRemainingTimeGranularity = .days
     
     @State private var showOnGraph: Bool = false
+    @State private var showManageGoalSheet: Bool = false
     
     @EnvironmentObject private var chartManager: ChartManager
 
@@ -74,17 +75,6 @@ struct GoalView: View {
         }
         
         return "-"
-    }
-    
-    func handleAddToGraph() {
-        
-        if showOnGraph {
-            chartManager.removeGoalFromChart(goal)
-        } else {
-            chartManager.addGoalToChart(goal)
-        }
-        
-        showOnGraph.toggle()
     }
     
     
@@ -153,7 +143,7 @@ struct GoalView: View {
                     Text("Remaining")
                         .font(.system(size: 13, weight: .regular))
                         .foregroundStyle(.secondary)
-                    Text("\(remainingAmount, specifier: "%.2f")")
+                    Text("$\(remainingAmount, specifier: "%.2f")")
                         .font(.system(size: 15, weight: .semibold))
                         .fontDesign(.rounded)
                 }
@@ -161,8 +151,15 @@ struct GoalView: View {
             .padding(.top, 5)
             
         }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            showManageGoalSheet = true
+        }
         .onAppear {
             dateReached = goal.earliestDateWhenGoalIsMet()
+        }
+        .sheet(isPresented: $showManageGoalSheet) {
+            ManageGoalSheet(goal: goal)
         }
         
     }
@@ -196,6 +193,9 @@ struct Sector: Shape {
 }
 
 struct ScalableSectorView: View {
+    
+    @EnvironmentObject private var themeManager: ThemeManager
+    
     var percent: Double
 
     var body: some View {
@@ -206,10 +206,10 @@ struct ScalableSectorView: View {
             ZStack {
                 // Bottom layer: the sector (wedge) that fills the available space.
                 Sector(percent: 100)
-                    .fill(Color.carrotOrrange.opacity(0.2))
+                    .fill(themeManager.accentColor.opacity(0.2))
                 
                 Sector(percent: percent)
-                    .fill(Color.carrotOrrange.opacity(0.8))
+                    .fill(themeManager.accentColor.opacity(0.8))
                 
                 // Middle layer: a circle that is 80% the size of the available space.
                 Circle()

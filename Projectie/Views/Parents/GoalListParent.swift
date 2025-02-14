@@ -82,11 +82,20 @@ struct GoalListParent: View {
                     .presentationDragIndicator(.visible)
             }
             .onAppear {
-                goalManager.setGoals(goals)
+                let sortedGoals = goals.sorted {
+                    let date0 = $0.earliestDateWhenGoalIsMet() ?? Date.distantFuture
+                    let date1 = $1.earliestDateWhenGoalIsMet() ?? Date.distantFuture
+                    return date0 < date1
+                }
+                goalManager.setGoals(sortedGoals)
             }
             .onChange(of: goals) { _, newValue in
-                goalManager.setGoals(newValue)
-//                handleGoalAddedToDisplayList()
+                let sortedGoals = newValue.sorted {
+                    let date0 = $0.earliestDateWhenGoalIsMet() ?? Date.distantFuture
+                    let date1 = $1.earliestDateWhenGoalIsMet() ?? Date.distantFuture
+                    return date0 < date1
+                }
+                goalManager.setGoals(sortedGoals)
             }
         }
     }
