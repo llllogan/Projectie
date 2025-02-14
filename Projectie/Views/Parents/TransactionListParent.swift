@@ -15,6 +15,7 @@ struct TransactionListParent: View {
     @EnvironmentObject private var chartManager: ChartManager
     @EnvironmentObject private var transactionManager: TransactionManager
     @EnvironmentObject private var balanceResetManager: BalanceResetManager
+    @EnvironmentObject private var controlManager: ControlManager
     
     @Environment(\.modelContext) private var context
     @Query private var transactions: [Transaction]
@@ -26,6 +27,9 @@ struct TransactionListParent: View {
     @State private var directionToMoveInTime: Int = 0
     @State private var swipeStartIndex: Int = 0
     @State private var swipeEndIndex: Int = 0
+    
+    
+    @State private var allowedToAutoScrollOnLoad: Bool = true
     
     @State private var isFirstLoadForTransactionList: Bool = true
     
@@ -44,7 +48,7 @@ struct TransactionListParent: View {
                     content
                         .opacity(phase.isIdentity ? 1 : 0.5)
                 }
-                TransactionListView(groupedOccurrences: financialEventManager.eventList ?? [])
+                TransactionListView(groupedOccurrences: financialEventManager.eventList ?? [], allowedToAutoScroll: allowedToAutoScrollOnLoad)
                 .id(0)
                 .scrollTransition { content, phase in
                     content
@@ -72,7 +76,9 @@ struct TransactionListParent: View {
         .scrollPosition(id: $centeredTransactionViewId, anchor: .center)
         .scrollIndicators(.never)
         .onScrollPhaseChange { _, newPhase in
+            
             if (newPhase == .idle) {
+                
                 ignoreChangeInCenteredTransactionViewId = true
                 centeredTransactionViewId = 0
                 overwriteSwipeIndexStart = true
