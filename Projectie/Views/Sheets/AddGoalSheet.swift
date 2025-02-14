@@ -15,6 +15,7 @@ struct AddGoalSheet: View {
     @FocusState private var focusedField: Field?
     
     @EnvironmentObject private var accountManager: AccountManager
+    @EnvironmentObject private var controlManager: ControlManager
     
     
     @State private var goalAmount: String = ""
@@ -92,6 +93,9 @@ struct AddGoalSheet: View {
         let newGoal = Goal(title: goalTitle, targetAmount: amount, account: account)
         context.insert(newGoal)
         try? context.save()
+        
+        controlManager.selectedBottomView = .goals
+        
         dismiss()
     }
     
