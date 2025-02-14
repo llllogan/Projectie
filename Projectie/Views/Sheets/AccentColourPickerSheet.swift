@@ -11,7 +11,7 @@ import UIKit
 struct FullscreenColorPickerView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.dismiss) private var dismiss
-    @State private var selectedColor: Color = .carrotOrrange  // initial default
+    @State private var selectedColor: Color = ThemeManager.shared.accentColor
     
     var body: some View {
         FullscreenColorPickerSheet(selectedColor: $selectedColor)
