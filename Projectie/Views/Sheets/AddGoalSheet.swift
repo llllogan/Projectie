@@ -24,14 +24,24 @@ struct AddGoalSheet: View {
     var body: some View {
         
         NavigationStack {
-            VStack(alignment: .center) {
+            VStack(alignment: .leading) {
                 
-                Image(systemName: "trophy.fill")
-                    .font(.largeTitle)
-                    .foregroundStyle(.yellow)
-                Text("Add a Goal")
-                    .font(.title)
-                    .fontWeight(.bold)
+//                Image(systemName: "trophy.fill")
+//                    .font(.largeTitle)
+//                    .foregroundStyle(.yellow)
+//                Text("Add a Goal")
+//                    .font(.title)
+//                    .fontWeight(.bold)
+                
+                HStack {
+                    Text("Add Goal")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                    Image(systemName: "trophy.fill")
+                        .font(.title)
+                        .foregroundStyle(.yellow)
+                }
+                .padding(.horizontal)
                 
                 TextField("Title", text: $goalTitle)
                     .font(.system(size: 20, weight: .medium))
@@ -65,6 +75,7 @@ struct AddGoalSheet: View {
                 .padding(.horizontal)
                 .buttonStyle(.bordered)
                 .tint(.yellow)
+                .padding(.bottom)
             }
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
@@ -77,9 +88,11 @@ struct AddGoalSheet: View {
                     Button(action: {
                         dismiss()
                     }) {
-                        Text("Cancel")
+                        Image(systemName: "xmark")
+                            .foregroundStyle(Color.whiteInDarkBlackInLight)
                     }
-                    .buttonStyle(.plain)
+                    .buttonBorderShape(.circle)
+                    .buttonStyle(.bordered)
                 }
             }
         }

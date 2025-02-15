@@ -18,9 +18,15 @@ struct ResetBalanceSheet: View {
     @State private var resetDate: Date = Date()
     
     var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("Amount"), footer: Text("Flip the sign of the amount with the \(Image(systemName: "plusminus.circle")) button")) {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("AMOUNT")
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                        .padding(.top, 7)
+                        .padding(.leading, 30)
+                        .padding(.bottom, 5)
                     HStack(spacing: 8) {
                         ZStack {
                             if isPositive {
@@ -53,33 +59,65 @@ struct ResetBalanceSheet: View {
                         }
                         .buttonStyle(.bordered)
                         .buttonBorderShape(.circle)
+                    
                     }
-                }
-                .animation(.easeInOut, value: isPositive)
-                
-                Section(header: Text("Date"), footer: Text("Your current balance will be calculated from this reset amount and any future transactions.\nAll previous transactions will be uneffected, however their amounts will not have an effect going forwards")) {
+                    .padding(10)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(8)
+                    .padding(.horizontal)
+                    
+                    
+                    Text("AS OF")
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                        .padding(.top)
+                        .padding(.leading, 30)
+                        .padding(.bottom, 5)
                     DatePicker(
                         "Transaction Date/Time",
                         selection: $resetDate,
                         displayedComponents: [.date, .hourAndMinute]
                     )
                     .datePickerStyle(.graphical)
+                    .padding(5)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(8)
+                    .padding(.horizontal)
+                    
+                    Text("Your current balance will be calculated from this reset amount and any future transactions.\nAll previous transactions will be uneffected, however their amounts will not have an effect going forwards")
+                        .padding()
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(action: onCancel) {
+                            Image(systemName: "xmark")
+                                .foregroundStyle(Color.whiteInDarkBlackInLight)
+                        }
+                        .buttonBorderShape(.circle)
+                        .buttonStyle(.bordered)
+                    }
+                }
+                .navigationTitle("Correct Balance")
                 
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        onCancel()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Reset") {
-                        onSave()
-                    }
-                }
+               
             }
         }
+        
+        Button(action: {
+            onSave()
+        }) {
+            Text("Confirm Balance")
+                .bold()
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(8)
+        }
+        .padding(.horizontal)
+        .padding(.bottom)
     }
     
     private func onCancel() {
