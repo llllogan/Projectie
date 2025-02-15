@@ -24,8 +24,6 @@ struct LineGraphParent: View {
     @AppStorage("sqaureLines") private var squareLines: Bool = false
     
     
-    
-    
     var body: some View {
         
         let allBalances = chartManager.chartDataPointsLine.map { $0.balance }
@@ -61,24 +59,6 @@ struct LineGraphParent: View {
                 .symbol(.circle)
                 .symbolSize(40)
                 .foregroundStyle(Color.whiteInDarkBlackInLight)
-            }
-            
-            if ControlManager.shared.selectedBottomView == .goals {
-                ForEach(
-                    chartManager.goalsToShow.compactMap { goal -> (goal: Goal, goalDate: Date)? in
-                        guard let goalDate = goal.earliestDateWhenGoalIsMet() else { return nil }
-                        return (goal, goalDate)
-                    },
-                    id: \.goalDate
-                ) { item in
-                    PointMark(
-                        x: .value("Date", item.goalDate),
-                        y: .value("Balance", item.goal.targetAmount)
-                    )
-                    .symbol(.circle)
-                    .symbolSize(40)
-                    .foregroundStyle(Color.whiteInDarkBlackInLight)
-                }
             }
             
             ForEach(chartManager.chartDataPointsLine, id: \.date) { dataPoint in
@@ -135,19 +115,20 @@ struct LineGraphParent: View {
                                 let screenWidth = geoProxy.size.width
                                 let distanceToLeft = value.location.x
                                 
-                                chartManager.scrubHorozontalOffset = distanceToLeft - (screenWidth / 2)
+                                let scrubOffset = distanceToLeft - (screenWidth / 2)
+                                chartManager.setScrubbingHorizontalOffset(scrubOffset)
                                 
                                 if let date: Date = proxy.value(atX: locationXOnChart) {
                                     // Find the closest data point in filteredChartData
                                     if let closest = chartManager.chartDataPointsLine.min(by: {
                                         abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
                                     }) {
-                                        chartManager.selectedDate = closest.date
-                                        chartManager.selectedBalance = closest.balance
+                                        chartManager.updateSelectedValues(closest.date, closest.balance)
                                     }
                                 }
                             }
                             .onEnded { _ in
+                                print("Ended")
                                 chartManager.isInteracting = false
                             }
                     )

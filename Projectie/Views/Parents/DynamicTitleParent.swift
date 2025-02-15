@@ -81,8 +81,19 @@ struct DynamicTitleParent: View {
                             .font(.system(size: 30, weight: .bold, design: .rounded))
                     }
                     .padding(.horizontal)
+                    .background(
+                        GeometryReader { geometry in
+                            Color.clear.onAppear {
+                                controlManager.calculateMaxOffsets(geometry.size.width)
+                            }
+                        }
+                    )
                 }
             }
+        }
+        .onAppear {
+            let screenWidth = UIScreen.main.bounds.width
+            controlManager.screenWidth = screenWidth
         }
         .frame(height: 50)
         .offset(x: chartManager.isInteracting ? chartManager.scrubHorozontalOffset : 0)

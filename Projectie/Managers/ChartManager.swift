@@ -22,64 +22,33 @@ final class ChartManager: ObservableObject {
     
     @Published private(set) var chartDataPointsLine: [(date: Date, balance: Double)] = []
     
-    @Published var isInteracting: Bool = false
-    @Published var scrubHorozontalOffset: CGFloat = 0.0
-    
-    @Published var selectedDate: Date? = nil
-    @Published var selectedBalance: Double? = nil
-    
-    @Published private(set) var goalsToShow: [Goal] = []
-    
     @Published var dollarChange: Double = 0.0
     @Published var dollarChangePositive: Bool = true
     
+    @Published private(set) var selectedDate: Date? = nil
+    @Published private(set) var selectedBalance: Double? = nil
     
-    func addGoalToChart(_ goal: Goal) {
-        goalsToShow.append(goal)
-        calculateNewChartDateRange()
-    }
+    @Published var isInteracting: Bool = false
     
-    func removeGoalFromChart(_ goal: Goal) {
-        goalsToShow.removeAll { $0.id == goal.id }
-        calculateNewChartDateRange()
-    }
-    
-    private func calculateNewChartDateRange() {
-        let today = Date()
-        let calendar = Calendar.current
-        // Default start date is yesterday
-        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today) else { return }
-        
-        // Gather the earliest dates when each goal is met.
-        let goalDates = goalsToShow.compactMap { $0.earliestDateWhenGoalIsMet() }
-        
-        timeManager.timePeriod = .custom
-        
-        if let maxGoalDate = goalDates.max() {
-            // If the farthest goal date is in the past, use that as the start date
-            // and today as the end date.
-            if maxGoalDate < today {
-                timeManager.startDate = maxGoalDate
-                timeManager.endDate = today
-            } else {
-                // Otherwise, use yesterday as the start and the farthest goal date as the end.
-                timeManager.startDate = yesterday
-                timeManager.endDate = maxGoalDate
-            }
-        } else {
-            // No goals to show – default to yesterday through today.
-            timeManager.startDate = yesterday
-            timeManager.endDate = today
-        }
-        
-        financialEventManager.doUpdates()
-        recalculateChartDataPoints()
-    }
+    @Published private(set) var scrubHorozontalOffset: CGFloat = 0.0
     
     
     var endOfRangeBalance: Double {
         guard let lastDataPoint = chartDataPointsLine.last else { return 0.0 }
         return lastDataPoint.balance
+    }
+    
+    func setScrubbingHorizontalOffset(_ offset: CGFloat) {
+        
+        if(offset > ControlManager.shared.maxAllowedLeftOffset && offset < ControlManager.shared.maxAllowedRightOffset) {
+            scrubHorozontalOffset = offset
+        }
+    }
+    
+    
+    func updateSelectedValues(_ date: Date, _ balance: Double) {
+        selectedDate = date
+        selectedBalance = balance
     }
     
     

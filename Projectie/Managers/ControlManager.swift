@@ -17,6 +17,19 @@ final class ControlManager: ObservableObject {
     
     @Published var selectedBottomView: BottomViewChoice = .transactions
     @Published var selectedChartView: ChartViewChoice = .line
+    
+    @Published var screenWidth: CGFloat = 0
+    
+    @Published var maxAllowedLeftOffset: CGFloat = 0
+    @Published var maxAllowedRightOffset: CGFloat = 0
+    
+    func calculateMaxOffsets(_ titleWidth: CGFloat) {
+        let halfScreenWidth = screenWidth / 2
+        let halfTitleWidth = titleWidth / 2
+        
+        maxAllowedRightOffset = halfScreenWidth - halfTitleWidth
+        maxAllowedLeftOffset = -maxAllowedRightOffset
+    }
 }
 
 
