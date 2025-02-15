@@ -128,7 +128,6 @@ struct LineGraphParent: View {
                                 }
                             }
                             .onEnded { _ in
-                                print("Ended")
                                 chartManager.isInteracting = false
                             }
                     )
