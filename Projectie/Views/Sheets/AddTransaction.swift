@@ -215,13 +215,18 @@ struct AddTransactionSheet: View {
                     }
                     ToolbarItemGroup(placement: .keyboard) {
                         Spacer()
-                        Button("Done") {
-                            focusedField = nil
+                        Button(action: dismissKeyboard) {
+                            Image(systemName: "keyboard.chevron.compact.down.fill")
                         }
                     }
                 }
             }
         }
+    }
+    
+    
+    private func dismissKeyboard() {
+        focusedField = nil
     }
     
     

@@ -62,13 +62,14 @@ struct InitialBalanceSheet: View {
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("Done") {
-                        focusedField = nil
+                    Button(action: dismissKeyboard) {
+                        Image(systemName: "keyboard.chevron.compact.down.fill")
                     }
                 }
             }
         }
     }
+    
     
     private func saveBalance() {
         guard let amount = Double(amount) else { return }
@@ -89,7 +90,11 @@ struct InitialBalanceSheet: View {
         case title
         case note
         case occurences
-   }
+    }    
+    
+    private func dismissKeyboard() {
+        focusedField = nil
+    }
 }
 
 #Preview {

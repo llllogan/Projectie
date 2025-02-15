@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct CustomDateRangeSheet: View {
-    // Two state variables to hold the start and end dates.
     @State private var startDate: Date?
     @State private var endDate: Date?
     
@@ -17,6 +16,8 @@ struct CustomDateRangeSheet: View {
     @State private var dates: Set<DateComponents> = []
     
     @State private var showErrorAlert = false
+    
+    @FocusState private var focusedField: Field?
     
     @Environment(\.dismiss) private var dismiss
     
@@ -55,6 +56,14 @@ struct CustomDateRangeSheet: View {
                         .background(Color.blue)
                         .foregroundColor(.white)
                         .cornerRadius(8)
+                }
+            }
+        }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button(action: dismissKeyboard) {
+                    Image(systemName: "keyboard.chevron.compact.down.fill")
                 }
             }
         }
@@ -102,5 +111,16 @@ struct CustomDateRangeSheet: View {
                 showFullButtonTest = true
             }
         }
+    }
+    
+    enum Field {
+        case amount
+        case title
+        case note
+        case occurences
+    }
+    
+    private func dismissKeyboard() {
+        focusedField = nil
     }
 }

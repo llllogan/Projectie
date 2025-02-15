@@ -127,8 +127,8 @@ struct ManageTransactionSheet: View {
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("Done") {
-                        focusedField = nil
+                    Button(action: dismissKeyboard) {
+                        Image(systemName: "keyboard.chevron.compact.down.fill")
                     }
                 }
             }
@@ -149,6 +149,11 @@ struct ManageTransactionSheet: View {
                 Text("You can only edit the note of this transaction. Do that by tapping in the note form, then click done. \n\nPlease let me know which aspect of the transaction you would like to edit and I will look to impliment that.")
             }
         }
+    }
+    
+    
+    private func dismissKeyboard() {
+        focusedField = nil
     }
     
     
