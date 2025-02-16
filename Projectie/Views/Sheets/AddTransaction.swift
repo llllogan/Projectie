@@ -186,6 +186,8 @@ struct AddTransactionSheet: View {
                         }
                         .id("recurringSection")
                     }
+                    
+                    
                 }
                 .onChange(of: isRecurring) { _, newValue in
                     if newValue {
@@ -203,23 +205,37 @@ struct AddTransactionSheet: View {
                     Text("Please fill in all required fields.")
                 }
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            onCancel()
-                        }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Save") {
-                            onSave()
-                        }
-                    }
                     ToolbarItemGroup(placement: .keyboard) {
                         Spacer()
                         Button(action: dismissKeyboard) {
                             Image(systemName: "keyboard.chevron.compact.down.fill")
                         }
                     }
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(action: {
+                            onCancel()
+                        }) {
+                            Image(systemName: "xmark")
+                                .foregroundStyle(Color.whiteInDarkBlackInLight)
+                        }
+                        .buttonBorderShape(.circle)
+                        .buttonStyle(.bordered)
+                    }
                 }
+                
+                Button(action: {
+                    onSave()
+                }) {
+                    Text("Add")
+                        .bold()
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                }
+                .padding(.horizontal)
+                .padding(.bottom)
             }
         }
     }
