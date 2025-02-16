@@ -36,8 +36,7 @@ final class FinancialEventManager: ObservableObject {
     
     // TODO: Could be improved to a published variable and only updated when there is a change
     var currentBalance: Double {
-        guard let reset = balanceResetManager.resets.first else {
-            // If no reset exists, fall back to using openingBalance
+        guard let reset = balanceResetManager.resets.last else {
             return sumOfAllTransactionsUpTo(Date())
         }
         
