@@ -15,6 +15,33 @@ struct CategoryItem: Identifiable {
 }
 
 let categories: [CategoryItem] = [
+    
+    CategoryItem(
+        name: "Income",
+        systemName: "banknote.fill",
+        color: Color(hue: 97/360, saturation: 0.9, brightness: 0.77)),
+    CategoryItem(
+        name: "Savings",
+        systemName: "dollarsign.bank.building.fill",
+        color: Color(hue: 97/360, saturation: 0.9, brightness: 0.77)),
+    
+    
+    CategoryItem(
+        name: "Transport",
+        systemName: "bus",
+        color: .brown),
+    
+    
+    CategoryItem(
+        name: "Transfer",
+        systemName: "arrow.left.arrow.right.square.fill",
+        color: .pink),
+    CategoryItem(
+        name: "Payment",
+        systemName: "arrowshape.turn.up.right.fill",
+        color: .pink),
+    
+    
     CategoryItem(
         name: "Home",
         systemName: "house.fill",
@@ -51,12 +78,6 @@ let categories: [CategoryItem] = [
         name: "Self Care",
         systemName: "scissors",
         color: .green),
-    
-    
-    CategoryItem(
-        name: "Transport",
-        systemName: "bus",
-        color: .brown),
 
     
     CategoryItem(
@@ -68,24 +89,6 @@ let categories: [CategoryItem] = [
         systemName: "bag.fill",
         color: .orange),
     
-    
-    CategoryItem(
-        name: "Transfer",
-        systemName: "arrow.left.arrow.right.square.fill",
-        color: .pink),
-    CategoryItem(
-        name: "Payment",
-        systemName: "arrowshape.turn.up.right.fill",
-        color: .pink),
-
-    CategoryItem(
-        name: "Income",
-        systemName: "banknote.fill",
-        color: Color(hue: 97/360, saturation: 0.9, brightness: 0.77)),
-    CategoryItem(
-        name: "Savings",
-        systemName: "dollarsign.bank.building.fill",
-        color: Color(hue: 97/360, saturation: 0.9, brightness: 0.77)),
     
     
     CategoryItem(

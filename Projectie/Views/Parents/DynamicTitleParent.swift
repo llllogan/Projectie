@@ -24,11 +24,10 @@ struct DynamicTitleParent: View {
             if !chartManager.isInteracting {
                 HStack(alignment: .bottom) {
                     VStack(alignment: .leading, spacing: 4) {
-                        withAnimation {
-                            Text("$\(financialEventManager.currentBalance, specifier: "%.2f")")
-                                .font(.system(size: 30, weight: .bold, design: .rounded))
-                                .contentTransition(.numericText(value: financialEventManager.currentBalance))
-                        }
+                        Text("$\(financialEventManager.currentBalance, specifier: "%.2f")")
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
+                            .contentTransition(.numericText())
+
                         Text("\(Date.now, style: .date)")
                             .fontWeight(.semibold)
                             .font(.subheadline)
@@ -79,6 +78,7 @@ struct DynamicTitleParent: View {
                             .foregroundStyle(.secondary)
                         Text("$\(selectedBalance, specifier: "%.2f")")
                             .font(.system(size: 30, weight: .bold, design: .rounded))
+                            .contentTransition(.numericText())
                     }
                     .padding(.horizontal)
                     .background(
