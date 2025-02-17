@@ -15,6 +15,7 @@ struct MainView: View {
     // MARK: - App Storage (Persistent User Settings)
     @AppStorage("hasSetInitialBalance") private var hasSetInitialBalance: Bool = false
     @AppStorage("sqaureLines") private var squareLines: Bool = false
+    @AppStorage("currentAppIcon") private var appIcon: String = "Orange"
     
     // MARK: - Environment
     @Environment(\.modelContext) private var context
@@ -80,6 +81,13 @@ struct MainView: View {
             .onChange(of: themeManager.selectedTheme) { _, newTheme in
                 if newTheme == .carrotCustom && !themeManager.hasSetCustomColour {
                     activeSheet = .pickColour
+                }
+            }
+            .onChange(of: appIcon) { _, newValue in
+                if (newValue == "Orange") {
+                    UIApplication.shared.setAlternateIconName(nil)
+                } else {
+                    UIApplication.shared.setAlternateIconName(newValue)
                 }
             }
             .sheet(item: $activeSheet) { sheet in
@@ -152,6 +160,18 @@ struct MainView: View {
                             }
                         } label: {
                             Text("Colour Scheme")
+                                .tint(.primary)
+                        }
+                        Menu {
+                            Picker("App Icon", selection: $appIcon) {
+                                let customIcons: [String] = ["Orange", "Purple", "OG"]
+                                ForEach(customIcons,id: \.self) { icon in
+                                    Text(icon)
+                                        .tag(icon)
+                                }
+                            }
+                        } label: {
+                            Text("App Icon")
                                 .tint(.primary)
                         }
                     } label: {
