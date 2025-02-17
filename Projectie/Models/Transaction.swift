@@ -68,6 +68,34 @@ class Transaction: Identifiable {
     func getCategory() -> CategoryItem? {
         return categories.first { $0.systemName == categorySystemName }
     }
+    
+    var reoccurancesPerYear: Double {
+        switch recurrenceFrequency {
+        case .yearly:
+            return 1 / Double(recurrenceInterval)
+        case .monthly:
+            return 12 / Double(recurrenceInterval)
+        case .weekly:
+            return 52 / Double(recurrenceInterval)
+        case .daily:
+            return 365 / Double(recurrenceInterval)
+        default:
+            return 0
+        }
+    }
+    
+    
+    var pricePerWeek: Double {
+        return abs((amount * reoccurancesPerYear) / 52)
+    }
+    
+    var pricePerMonth: Double {
+        return abs((amount * reoccurancesPerYear) / 12)
+    }
+    
+    var pricePerDay: Double {
+        return abs((amount * reoccurancesPerYear) / 365)
+    }
 
 }
 

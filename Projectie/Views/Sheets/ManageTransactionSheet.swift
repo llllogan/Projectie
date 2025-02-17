@@ -43,12 +43,12 @@ struct ManageTransactionSheet: View {
                 
                 Text("\(transaction.isCredit ? "" : "-")$\(transaction.unsignedAmount, format: .number.precision(.fractionLength(2)))")
                     .font(.system(size: 45, weight: .bold, design: .rounded))
-                    .padding(.bottom, 8)
+                    .padding(.bottom, 20)
                     
                 
                 HStack(alignment: .top) {
                     
-                    VStack (alignment: .leading, spacing: 4) {
+                    VStack (alignment: .leading, spacing: 8) {
                         HStack {
                             Image(systemName: "clock")
                             Text("\(transaction.date, format: .dateTime.minute().hour())")
@@ -61,8 +61,9 @@ struct ManageTransactionSheet: View {
 
                     }
                     .frame(maxWidth: .infinity)
+                    .padding(.vertical, 5)
                     
-                    VStack (alignment: .leading, spacing: 4) {
+                    VStack (alignment: .leading, spacing: 8) {
                         HStack {
                             Image(systemName: "tray.full")
                             Text(transaction.getCategory()?.name ?? "Unknown")
@@ -82,17 +83,33 @@ struct ManageTransactionSheet: View {
                         }
                     }
                     .frame(maxWidth: .infinity)
+                    .padding(.vertical, 5)
+
                 }
-                .frame(maxWidth: .infinity)
+                .padding(.vertical)
+                .background(in: Rectangle())
+                .backgroundStyle(Color.gray.opacity(0.2))
+                .cornerRadius(10)
                 .padding(.horizontal)
-                .padding(.bottom, 40)
                 
-                TextField("Description", text: $testFieldString)
-                    .padding(10)
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(8)
+//                TextField("Description", text: $testFieldString)
+//                    .padding(10)
+//                    .background(Color.gray.opacity(0.2))
+//                    .cornerRadius(8)
+//                    .padding(.horizontal)
+                
+                InfoModule(title: "Description", info: "\n", subtitle: "")
                     .padding(.horizontal)
-                    
+                
+                
+                HStack {
+                    InfoModule(title: "Amount Per", info: String(transaction.pricePerMonth), isMoney: true, isCredit: transaction.isCredit, subtitle: "Momth")
+                    InfoModule(title: "Amount Per", info: String(transaction.pricePerWeek), isMoney: true, isCredit: transaction.isCredit, subtitle: "Week")
+                    InfoModule(title: "Amount Per", info: String(transaction.pricePerDay), isMoney: true, isCredit: transaction.isCredit, subtitle: "Day")
+                }
+                .padding(.horizontal)
+
+                                    
 
                 Spacer()
                 
@@ -241,6 +258,63 @@ struct ManageTransactionSheet: View {
 }
 
 
+struct InfoModule: View {
+    
+    var title: String
+    var info: String
+    var isMoney = false
+    var isCredit = false
+    var subtitle: String
+    
+    
+    var body: some View {
+        
+
+        VStack {
+            HStack {
+                Text(title)
+                    .font(.system(size: 15, weight: .regular, design: .default))
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal, 10)
+            .padding(.top, 10)
+            
+            Divider()
+            
+            HStack {
+                if isMoney {
+                    Text("\(isCredit ? "" : "-")$\(Double(info) ?? 0.0, format: .number.precision(.fractionLength(2)))")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .lineLimit(1)
+                } else {
+                    Text(info)
+                        .font(.system(size: 15, weight: .regular, design: .default))
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 10)
+            
+            HStack {
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal, 10)
+            
+        }
+        .padding(.vertical, 5)
+        .padding(.bottom, 5)
+        .background(in: Rectangle())
+        .backgroundStyle(Color.gray.opacity(0.2))
+        .cornerRadius(10)
+            
+        
+    }
+}
+
+
 #Preview {
     ManageTransactionSheet(
         transaction: Transaction(
@@ -249,7 +323,10 @@ struct ManageTransactionSheet: View {
             isCredit: true,
             date: Date(),
             account: Account(name: "Test", type: .saving),
-            categorySystemName: "circle.dashed"
+            categorySystemName: "circle.dashed",
+            isRecurring: true,
+            recurrenceFrequency: .monthly,
+            recurrenceInterval: 1
         ),
         instanceDate: Date()
     )
