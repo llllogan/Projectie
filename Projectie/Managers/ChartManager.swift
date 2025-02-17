@@ -43,6 +43,14 @@ final class ChartManager: ObservableObject {
         if(offset > ControlManager.shared.maxAllowedLeftOffset && offset < ControlManager.shared.maxAllowedRightOffset) {
             scrubHorozontalOffset = offset
         }
+        
+        if (offset < ControlManager.shared.maxAllowedLeftOffset) {
+            scrubHorozontalOffset = ControlManager.shared.maxAllowedLeftOffset
+        }
+        
+        if (offset > ControlManager.shared.maxAllowedRightOffset) {
+            scrubHorozontalOffset = ControlManager.shared.maxAllowedRightOffset
+        }
     }
     
     

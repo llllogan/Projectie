@@ -20,8 +20,31 @@ struct DynamicTitleParent: View {
     
     var body: some View {
         
+        let isInteracting = chartManager.isInteracting
+        
         VStack {
-            if !chartManager.isInteracting {
+            if isInteracting {
+                if let selectedDate = chartManager.selectedDate, let selectedBalance = chartManager.selectedBalance {
+                    VStack(alignment: .center, spacing: 4) {
+                        Text("\(selectedDate, style: .date)")
+                            .fontWeight(.semibold)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Text("$\(selectedBalance, specifier: "%.2f")")
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
+                            .contentTransition(.numericText())
+                    }
+                    .padding(.horizontal)
+                    .background(
+                        GeometryReader { geometry in
+                            Color.clear.onAppear {
+                                controlManager.calculateMaxOffsets(geometry.size.width)
+                            }
+                        }
+                    )
+                    .offset(x: chartManager.isInteracting ? chartManager.scrubHorozontalOffset : 0)
+                }
+            } else {
                 HStack(alignment: .bottom) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("$\(financialEventManager.currentBalance, specifier: "%.2f")")
@@ -69,26 +92,6 @@ struct DynamicTitleParent: View {
                     chartManager.recalculateChartDataPoints()
                     financialEventManager.doUpdates()
                 }
-            } else {
-                if let selectedDate = chartManager.selectedDate, let selectedBalance = chartManager.selectedBalance {
-                    VStack(alignment: .center, spacing: 4) {
-                        Text("\(selectedDate, style: .date)")
-                            .fontWeight(.semibold)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Text("$\(selectedBalance, specifier: "%.2f")")
-                            .font(.system(size: 30, weight: .bold, design: .rounded))
-                            .contentTransition(.numericText())
-                    }
-                    .padding(.horizontal)
-                    .background(
-                        GeometryReader { geometry in
-                            Color.clear.onAppear {
-                                controlManager.calculateMaxOffsets(geometry.size.width)
-                            }
-                        }
-                    )
-                }
             }
         }
         .onAppear {
@@ -96,7 +99,6 @@ struct DynamicTitleParent: View {
             controlManager.screenWidth = screenWidth
         }
         .frame(height: 50)
-        .offset(x: chartManager.isInteracting ? chartManager.scrubHorozontalOffset : 0)
         .onChange(of: timeManager.startDate) {
             getPercentageChange()
         }
