@@ -137,7 +137,8 @@ struct LineGraphParent: View {
             chartManager.recalculateChartDataPoints()
         }
         .sensoryFeedback(.selection, trigger: chartManager.selectedDate) { oldValue, newValue in
-            oldValue != newValue
+            
+            ControlManager.shared.selectedBottomView == .transactions && oldValue != newValue
         }
     }
 }
