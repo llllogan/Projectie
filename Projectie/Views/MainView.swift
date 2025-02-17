@@ -164,7 +164,7 @@ struct MainView: View {
                         }
                         Menu {
                             Picker("App Icon", selection: $appIcon) {
-                                let customIcons: [String] = ["Orange", "Purple", "OG"]
+                                let customIcons: [String] = ["Orange", "Purple"]
                                 ForEach(customIcons,id: \.self) { icon in
                                     Text(icon)
                                         .tag(icon)

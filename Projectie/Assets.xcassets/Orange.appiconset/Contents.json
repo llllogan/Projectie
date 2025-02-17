@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "OrrangeLight.jpg",
+      "filename" : "O-L.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,7 +13,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "OrrangeDark.png",
+      "filename" : "O-D.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -25,7 +25,7 @@
           "value" : "tinted"
         }
       ],
-      "filename" : "OrrangeTinted.jpg",
+      "filename" : "O-T.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
