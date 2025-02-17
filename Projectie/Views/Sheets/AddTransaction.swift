@@ -155,6 +155,15 @@ struct AddTransactionSheet: View {
                         )
                         .datePickerStyle(.graphical)
                         
+                        HStack {
+                            Text("\(Date(), format: .dateTime.hour().minute())")
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button("Change time to now") {
+                                transactionDate = Date()
+                            }
+                        }
+                        
                         Toggle("Recurring Transaction", isOn: $isRecurring)
                     }
                     
