@@ -71,10 +71,15 @@ final class FinancialEventManager: ObservableObject {
     private func updateAllEvents() {
         
         let transactionOccurrences = TransactionManager.shared.transactions.flatMap { txn in
-            if txn.isRecurring {
+            
+            let isArchived = txn.isArchived ?? false
+            
+            if txn.isRecurring && !isArchived {
                 return txn.recurrenceDates.compactMap { date in
                     FinancialEventOccurence(type: .transaction(txn), recurringTransactionDate: date)
                 }
+            } else if txn.isRecurring && isArchived {
+                return [FinancialEventOccurence(type: .transaction(txn), recurringTransactionDate: txn.date)]
             } else {
                 return [FinancialEventOccurence(type: .transaction(txn))]
             }

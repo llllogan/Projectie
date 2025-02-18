@@ -23,13 +23,20 @@ actor TransactionArchiver {
             transaction.recurrenceDates.contains(where: { $0 < now })
         }
         
-        for transaction in filteredTransactions {
-            print(transaction.amount)
-        }
-        
         print("Found \(filteredTransactions.count) recurring transactions with dates in the past")
         
-        
+        for transaction in filteredTransactions {
+            
+            print(transaction.title)
+            
+            let instancesToArchive: [Date] = transaction.recurrenceDates.filter { $0 < now }
+            
+            for instance in instancesToArchive {
+                
+                print("Archiving transaction for instance: \(instance)")
+                
+            }
+        }
         
     }
 }
