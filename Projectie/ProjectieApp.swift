@@ -17,7 +17,7 @@ struct ProjectieApp: App {
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            return try ModelContainer(for: schema, migrationPlan: CarrotMigrationPlan.self)
         } catch {
             fatalError("Failed to create model container wamp wamp: \(error)")
         }

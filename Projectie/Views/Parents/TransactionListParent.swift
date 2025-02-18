@@ -115,6 +115,10 @@ struct TransactionListParent: View {
         .sensoryFeedback(.impact, trigger: centeredTransactionViewId) { oldValue, newValue in
             oldValue != newValue && !ignoreChangeInCenteredTransactionViewId
         }
+        .task(priority: .background) {
+            let archiver = TransactionArchiver(modelContainer: context.container)
+            await archiver.archive()
+        }
     }
     
     

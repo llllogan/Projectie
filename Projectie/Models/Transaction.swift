@@ -17,8 +17,14 @@ enum RecurrenceFrequency: String, Codable, CaseIterable, Identifiable {
     var id: Self { self }
 }
 
+enum TransactionDeleteChoice: String {
+    case all = "all"
+    case thisOne = "thisOne"
+    case future = "future"
+}
+
 @Model
-class Transaction: Identifiable {
+final class Transaction: Identifiable {
     @Attribute(.unique) var id: UUID
     var title: String
     var amount: Double
@@ -29,13 +35,12 @@ class Transaction: Identifiable {
     var categorySystemName: String
     
     var isRecurring: Bool
-        
+    
     var recurrenceFrequency: RecurrenceFrequency?
     var recurrenceInterval: Int
     var recurrenceDates: [Date]
     
-
-    var unsignedAmount: Double { amount.sign == .minus ? -amount : amount }
+    var isArchived: Bool?
     
     init(
         title: String,
@@ -48,7 +53,8 @@ class Transaction: Identifiable {
         isRecurring: Bool = false,
         recurrenceFrequency: RecurrenceFrequency? = nil,
         recurrenceInterval: Int = 1,
-        recurrenceDates: [Date] = []
+        recurrenceDates: [Date] = [],
+        isArchived: Bool? = false
     ) {
         self.id = UUID()
         self.title = title
@@ -63,11 +69,14 @@ class Transaction: Identifiable {
         self.recurrenceFrequency = recurrenceFrequency
         self.recurrenceInterval = recurrenceInterval
         self.recurrenceDates = recurrenceDates
+        self.isArchived = isArchived
     }
     
     func getCategory() -> CategoryItem? {
         return categories.first { $0.systemName == categorySystemName }
     }
+    
+    var unsignedAmount: Double { amount.sign == .minus ? -amount : amount }
     
     var reoccurancesPerYear: Double {
         switch recurrenceFrequency {
@@ -96,11 +105,6 @@ class Transaction: Identifiable {
     var pricePerDay: Double {
         return abs((amount * reoccurancesPerYear) / 365)
     }
-
+    
 }
 
-enum TransactionDeleteChoice: String {
-    case all = "all"
-    case thisOne = "thisOne"
-    case future = "future"
-}
