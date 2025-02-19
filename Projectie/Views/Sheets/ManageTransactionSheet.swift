@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 
-struct ManageTransactionSheet: View {
+struct TransactionSheet: View {
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
@@ -162,7 +162,7 @@ struct ManageTransactionSheet: View {
                 .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showEditSheet) {
-                TransactionSheet(transaction: transaction)
+                ManageTransactionSheet(transaction: transaction)
             }
         }
     }
@@ -315,7 +315,7 @@ struct InfoModule: View {
 
 
 #Preview {
-    ManageTransactionSheet(
+    TransactionSheet(
         transaction: Transaction(
             title: "Test",
             amount: 9.0,

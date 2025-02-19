@@ -72,7 +72,7 @@ struct TransactionListElement: View {
             showManageTransactionSheet = true
         }
         .sheet(isPresented: $showManageTransactionSheet) {
-            ManageTransactionSheet(transaction: transaction, instanceDate: displayDate)
+            TransactionSheet(transaction: transaction, instanceDate: displayDate)
                 .presentationDragIndicator(.visible)
         }
     }

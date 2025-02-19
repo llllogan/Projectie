@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 
-struct TransactionSheet: View {
+struct ManageTransactionSheet: View {
     
     @Environment(\.modelContext) private var context
     
@@ -513,6 +513,6 @@ struct TransactionSheet: View {
 
 
 #Preview {
-    TransactionSheet()
+    ManageTransactionSheet()
         .modelContainer(for: Transaction.self)
 }
