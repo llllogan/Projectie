@@ -93,7 +93,7 @@ struct MainView: View {
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                     case .addTransaction:
-                        AddTransactionSheet()
+                        TransactionSheet()
                             .presentationDragIndicator(.visible)
                     case .resetBalance:
                         ResetBalanceSheet()

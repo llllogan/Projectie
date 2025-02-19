@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 
-struct AddTransactionSheet: View {
+struct TransactionSheet: View {
     
     @Environment(\.modelContext) private var context
     
@@ -39,6 +39,10 @@ struct AddTransactionSheet: View {
     
     @State private var showErrorAlert = false
     
+    
+    @State private var editMode = false
+    
+    
     enum Field {
         case amount
         case title
@@ -46,7 +50,7 @@ struct AddTransactionSheet: View {
         case occurences
    }
     
-    init() {
+    init(transaction: Transaction? = nil) {
         let now = Date()
         let calendar = Calendar.current
         let components = calendar.dateComponents([.year, .month, .day], from: now)
@@ -55,6 +59,24 @@ struct AddTransactionSheet: View {
             _transactionDate = State(initialValue: midnight)
         } else {
             _transactionDate = State(initialValue: now)
+        }
+        
+        if let transaction = transaction {
+            _editMode = State(initialValue: true)
+            
+            _transactionTitle = State(initialValue: transaction.title)
+            _transactionDate = State(initialValue: transaction.date)
+            _transactionNote = State(initialValue: transaction.note ?? "")
+            _transactionAmount = State(initialValue: String(transaction.amount))
+            
+            _isCredit = State(initialValue: transaction.isCredit)
+            _selectedCategorySystemName = State(initialValue: transaction.categorySystemName)
+            
+            if transaction.isRecurring {
+                _isRecurring = State(initialValue: transaction.isRecurring)
+                _recurrenceFrequency = State(initialValue: transaction.recurrenceFrequency!)
+                _recurrenceInterval = State(initialValue: transaction.recurrenceInterval)
+            }
         }
     }
     
@@ -205,7 +227,7 @@ struct AddTransactionSheet: View {
                         }
                     }
                 }
-                .navigationTitle("Add Transaction")
+                .navigationTitle(self.editMode ? "Edit Transaction" : "Add Transaction")
                 .alert("Field cannot be empty", isPresented: $showErrorAlert) {
                     Button("OK", role: .cancel) {
                         showErrorAlert = false
@@ -233,9 +255,14 @@ struct AddTransactionSheet: View {
                 }
                 
                 Button(action: {
-                    onSave()
+                    
+                    if editMode {
+                        
+                    } else {
+                        onSave()
+                    }
                 }) {
-                    Text("Add")
+                    Text(self.editMode ? "Save" : "Add")
                         .bold()
                         .padding()
                         .frame(maxWidth: .infinity)
@@ -380,6 +407,6 @@ struct AddTransactionSheet: View {
 
 
 #Preview {
-    AddTransactionSheet()
+    TransactionSheet()
         .modelContainer(for: Transaction.self)
 }
