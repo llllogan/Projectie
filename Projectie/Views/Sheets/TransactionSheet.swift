@@ -39,8 +39,9 @@ struct TransactionSheet: View {
     
     @State private var showErrorAlert = false
     
-    
     @State private var editMode = false
+    
+    @State private var transaction: Transaction?
     
     
     enum Field {
@@ -62,6 +63,9 @@ struct TransactionSheet: View {
         }
         
         if let transaction = transaction {
+            
+            _transaction = State(initialValue: transaction)
+            
             _editMode = State(initialValue: true)
             
             _transactionTitle = State(initialValue: transaction.title)
@@ -257,7 +261,7 @@ struct TransactionSheet: View {
                 Button(action: {
                     
                     if editMode {
-                        
+                        onEditConfirm()
                     } else {
                         onSave()
                     }
@@ -321,6 +325,105 @@ struct TransactionSheet: View {
         focusedField = nil
         dismiss()
     }
+    
+    
+    private func onEditConfirm() {
+        guard var amount = Double(transactionAmount) else {
+            print("Invalid amount entered.")
+            return
+        }
+        if (!isCredit) {
+            amount *= -1
+        }
+    
+        focusedField = nil
+        
+        
+        var dateArray: [Date]
+        
+        // If the transaction was not recurring, but has been changed to be
+        if !transaction!.isRecurring && isRecurring {
+            let start = transactionDate
+            
+            let limitDate = useEndDate ? endDate : nil
+            let maxCount = useOccurrenceCount ? Int(occurrenceCount) : nil
+            
+            dateArray = computeRecurrenceDates(
+                startDate: start,
+                frequency: recurrenceFrequency,
+                interval: recurrenceInterval,
+                maxOccurrences: maxCount,
+                endDate: limitDate
+            )
+            
+            print("Transaction went from not recurring to recurring")
+            
+            
+        } else if (
+        // Else if the recurrance has been changed
+            (useEndDate ||
+            useOccurrenceCount ||
+            recurrenceFrequency != transaction!.recurrenceFrequency ||
+            recurrenceInterval != transaction!.recurrenceInterval)
+            && isRecurring
+        ) {
+            let start = transactionDate
+            
+            let limitDate = useEndDate ? endDate : nil
+            let maxCount = useOccurrenceCount ? Int(occurrenceCount) : nil
+            
+            dateArray = computeRecurrenceDates(
+                startDate: start,
+                frequency: recurrenceFrequency,
+                interval: recurrenceInterval,
+                maxOccurrences: maxCount,
+                endDate: limitDate
+            )
+            
+            print("Transaction recurrence has been changed")
+            
+            
+        } else {
+        // Otherwise, just assign the current recurrance
+            dateArray = transaction!.recurrenceDates
+            
+            print("No change to recurrence")
+        }
+        
+        if transactionTitle.isEmpty {
+            print("Needs title")
+            showErrorAlert = true
+            return
+        }
+        
+        if amount == 0 {
+            print("Needs amount")
+            showErrorAlert = true
+            return
+        }
+        
+        if AccountManager.shared.selectedAccount == nil {
+            print("There is no account selected")
+            showErrorAlert = true
+            return
+        }
+        
+        transaction!.title = transactionTitle
+        transaction!.amount = amount
+        transaction!.isCredit = isCredit
+        transaction!.date = transactionDate
+        transaction!.note = transactionNote
+        transaction!.categorySystemName = selectedCategorySystemName!
+        transaction!.isRecurring = isRecurring
+        transaction!.recurrenceFrequency = isRecurring ? recurrenceFrequency : nil
+        transaction!.recurrenceInterval = recurrenceInterval
+        transaction!.recurrenceDates = dateArray
+        
+        try? context.save()
+        
+        dismiss()
+    }
+    
     
     private func onSave() {
         guard var amount = Double(transactionAmount) else {

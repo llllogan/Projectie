@@ -59,7 +59,7 @@ struct ManageTransactionSheet: View {
                         
                         HStack {
                             Image(systemName: "calendar")
-                            Text("\(transaction.date, format: .dateTime.day().month().year())")
+                            Text("\(instanceDate, format: .dateTime.day().month().year())")
                         }
 
                     }
