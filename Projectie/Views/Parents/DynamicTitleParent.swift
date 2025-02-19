@@ -17,10 +17,10 @@ struct DynamicTitleParent: View {
     @EnvironmentObject private var timeManager: TimeManager
     @EnvironmentObject private var controlManager: ControlManager
     
+    @State private var isInteracting = ChartManager.shared.isInteracting
+    
     
     var body: some View {
-        
-        let isInteracting = chartManager.isInteracting
         
         VStack {
             if isInteracting {
