@@ -20,7 +20,7 @@ actor TransactionArchiver {
         guard let transactions: [Transaction] = try? modelContext.fetch(descriptor) else { return }
         
         let filteredTransactions = transactions.filter { transaction in
-            transaction.recurrenceDates.contains(where: { $0 < now }) && transaction.isArchived == false
+            transaction.recurrenceDates.contains(where: { $0 < now }) && (transaction.isArchived == false || transaction.isArchived == nil)
         }
         
         print("Found \(filteredTransactions.count) recurring transactions with dates in the past")

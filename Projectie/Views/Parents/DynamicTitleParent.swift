@@ -17,13 +17,11 @@ struct DynamicTitleParent: View {
     @EnvironmentObject private var timeManager: TimeManager
     @EnvironmentObject private var controlManager: ControlManager
     
-    @State private var isInteracting = ChartManager.shared.isInteracting
-    
     
     var body: some View {
         
         VStack {
-            if isInteracting {
+            if ChartManager.shared.isInteracting {
                 if let selectedDate = chartManager.selectedDate, let selectedBalance = chartManager.selectedBalance {
                     VStack(alignment: .center, spacing: 4) {
                         Text("\(selectedDate, style: .date)")
