@@ -362,9 +362,10 @@ struct TransactionSheet: View {
         } else if (
         // Else if the recurrance has been changed
             (useEndDate ||
-            useOccurrenceCount ||
-            recurrenceFrequency != transaction!.recurrenceFrequency ||
-            recurrenceInterval != transaction!.recurrenceInterval)
+             useOccurrenceCount ||
+             recurrenceFrequency != transaction!.recurrenceFrequency ||
+             recurrenceInterval != transaction!.recurrenceInterval ||
+             transactionDate != transaction!.date)
             && isRecurring
         ) {
             let start = transactionDate
@@ -420,6 +421,8 @@ struct TransactionSheet: View {
         transaction!.recurrenceDates = dateArray
         
         try? context.save()
+        
+        FinancialEventManager.shared.doUpdates()
         
         dismiss()
     }

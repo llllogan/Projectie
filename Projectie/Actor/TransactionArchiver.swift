@@ -46,6 +46,15 @@ actor TransactionArchiver {
         
         if let index = transaction.recurrenceDates.firstIndex(of: instance) {
             transaction.recurrenceDates.remove(at: index)
+            
+            let now = Date()
+            if let nextDate = transaction.recurrenceDates
+                .filter({ $0 > now })
+                .min(by: { $0.timeIntervalSince(now) < $1.timeIntervalSince(now) }) {
+                
+                transaction.date = nextDate
+            }
+            
         } else {
             print("Instance date not found in recurrenceDates.")
         }
