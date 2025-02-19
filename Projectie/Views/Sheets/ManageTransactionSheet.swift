@@ -1,168 +1,281 @@
 //
-//  ManageTransactionSheet.swift
+//  AddTransaction.swift
 //  Projectie
 //
-//  Created by Logan Janssen | Codify on 20/1/2025.
+//  Created by Logan Janssen | Codify on 11/1/2025.
 //
 
 import SwiftUI
 import SwiftData
 
-struct TransactionSheet: View {
+struct ManageTransactionSheet: View {
     
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     
-    @State private var showDeleteOptions = false
-    @State private var showEditTransactionAlert = false
-    @State private var showEditSheet = false
+    @Environment(\.dismiss) private var dismiss
     
-    @State private var testFieldString: String = ""
+    @State private var transactionTitle: String = ""
+    @State private var transactionNote: String = ""
+    @State private var transactionAmount: String = ""
+    @State private var isCredit = true
+    @State private var selectedCategorySystemName: String?
+    @State private var transactionDate: Date
     
+    
+    @State private var isRecurring: Bool = false
+    @State private var recurrenceFrequency: RecurrenceFrequency = .weekly
+    @State private var recurrenceInterval: Int = 1
+    
+    // Optional End Conditions
+    @State private var endDate: Date = Date()
+    @State private var useEndDate: Bool = false
+    
+    @State private var useOccurrenceCount: Bool = false
+    @State private var occurrenceCount: String = ""
+    
+    
+    @State private var showCategoryPicker = false
     @FocusState private var focusedField: Field?
     
-    @State var transaction: Transaction
-    @State var instanceDate: Date
+    @State private var showErrorAlert = false
+    
+    @State private var editMode = false
+    
+    @State private var transaction: Transaction?
     
     
-
+    enum Field {
+        case amount
+        case title
+        case note
+        case occurences
+   }
+    
+    init(transaction: Transaction? = nil) {
+        let now = Date()
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month, .day], from: now)
+        
+        if let midnight = calendar.date(from: components) {
+            _transactionDate = State(initialValue: midnight)
+        } else {
+            _transactionDate = State(initialValue: now)
+        }
+        
+        if let transaction = transaction {
+            
+            _transaction = State(initialValue: transaction)
+            
+            _editMode = State(initialValue: true)
+            
+            _transactionTitle = State(initialValue: transaction.title)
+            _transactionDate = State(initialValue: transaction.date)
+            _transactionNote = State(initialValue: transaction.note ?? "")
+            _transactionAmount = State(initialValue: String(transaction.amount))
+            
+            _isCredit = State(initialValue: transaction.isCredit)
+            _selectedCategorySystemName = State(initialValue: transaction.categorySystemName)
+            
+            if transaction.isRecurring {
+                _isRecurring = State(initialValue: transaction.isRecurring)
+                _recurrenceFrequency = State(initialValue: transaction.recurrenceFrequency!)
+                _recurrenceInterval = State(initialValue: transaction.recurrenceInterval)
+            }
+        }
+    }
+    
+    
     var body: some View {
         
-        let categoryImageName = transaction.categorySystemName
-        
         NavigationView {
-            VStack {
+            ScrollViewReader { proxy in
                 
-                Image(systemName: categoryImageName)
-                    .foregroundStyle(transaction.getCategory()?.color ?? .secondary)
-                    .font(.largeTitle)
-                
-                
-                Text(transaction.title)
-                    .font(.largeTitle)
-                    .padding(.top)
-                
-                Text("\(transaction.isCredit ? "" : "-")$\(transaction.unsignedAmount, format: .number.precision(.fractionLength(2)))")
-                    .font(.system(size: 45, weight: .bold, design: .rounded))
-                    .padding(.bottom, 20)
-                
-                Text("\(transaction.isArchived ?? false ? "Archived" : "Active")")
+                Form {
+                    // ---- Amount Section ----
+                    Section(header: Text("Amount")) {
+                        HStack(spacing: 8) {
+                            Text(isCredit ? "$" : "-$")
+                                .font(.system(size: 40, weight: .medium, design: .rounded))
+                            
+                            TextField("0.00", text: $transactionAmount)
+                                .keyboardType(.decimalPad)
+                                .font(.system(size: 40, weight: .medium, design: .rounded))
+                                .multilineTextAlignment(.leading)
+                                .focused($focusedField, equals: .amount)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        TransactionPresetTickers { preset in
+                            populatePreset(with: preset)
+                        }
+                    }
                     
-                
-                HStack(alignment: .top) {
+                    // ---- Details Section ----
+                    Section(header: Text("Descriptors")) {
+                        TextField("Title", text: $transactionTitle)
+                            .focused($focusedField, equals: .title)
+                        TextEditor(text: $transactionNote)
+                            .frame(minHeight: 100)
+                            .focused($focusedField, equals: .note)
+                    }
                     
-                    VStack (alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "clock")
-                            Text("\(transaction.date, format: .dateTime.minute().hour())")
+                    Section {
+                        Button(action: {
+                            isCredit.toggle()
+                            hapticButtonPress()
+                        }) {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(isCredit ? "Credit" : "Debit")
+                                    Text(isCredit ? "Add money to the account" : "Remove money from the account")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: isCredit ? "tray.and.arrow.down" : "tray.and.arrow.up")
+                                    .font(.system(size: 25))
+                            }
+                            .frame(minHeight: 60)
                         }
                         
-                        HStack {
-                            Image(systemName: "calendar")
-                            Text("\(instanceDate, format: .dateTime.day().month().year())")
-                        }
-
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 5)
-                    
-                    VStack (alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "tray.full")
-                            Text(transaction.getCategory()?.name ?? "Unknown")
-                        }
-                        HStack {
-                            
-                            if transaction.isRecurring {
-                                Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
-                                Text(getRecurrenceDescription())
-                            } else {
-                                Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
-                                    .foregroundStyle(.secondary)
-                                Text("Not recurring")
-                                    .foregroundStyle(.secondary)
+                        Button(action: {
+                            showCategoryPicker.toggle()
+                        }) {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    if let systemName = selectedCategorySystemName,
+                                       let category = getCategory(by: systemName) {
+                                        Text(category.name)
+                                        Text("Transaction Category")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                    } else {
+                                        Text("Transaction Category")
+                                    }
+                                }
+                                Spacer()
+                                Image(systemName: selectedCategorySystemName ?? "plus.square.dashed")
+                                    .font(.system(size: 30))
                             }
-                                                   
+                            .frame(minHeight: 60)
+                        }
+                        .sheet(isPresented: $showCategoryPicker) {
+                            CategoryPicker(
+                                onSystemNameSelected: { category in
+                                    if category != "__nil_category__" {
+                                        selectedCategorySystemName = category
+                                    } else {
+                                        selectedCategorySystemName = nil
+                                    }
+                                },
+                                currentSelection: $selectedCategorySystemName
+                            )
                         }
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 5)
-
-                }
-                .padding(.vertical)
-                .background(in: Rectangle())
-                .backgroundStyle(Color.gray.opacity(0.2))
-                .cornerRadius(10)
-                .padding(.horizontal)
-                
-//                TextField("Description", text: $testFieldString)
-//                    .padding(10)
-//                    .background(Color.gray.opacity(0.2))
-//                    .cornerRadius(8)
-//                    .padding(.horizontal)
-                
-                InfoModule(title: "Description", info: "\n", subtitle: "")
-                    .padding(.horizontal)
-                
-                
-                HStack {
-                    InfoModule(title: "Amount Per", info: String(transaction.pricePerMonth), isMoney: true, isCredit: transaction.isCredit, subtitle: "Momth")
-                    InfoModule(title: "Amount Per", info: String(transaction.pricePerWeek), isMoney: true, isCredit: transaction.isCredit, subtitle: "Week")
-                    InfoModule(title: "Amount Per", info: String(transaction.pricePerDay), isMoney: true, isCredit: transaction.isCredit, subtitle: "Day")
-                }
-                .padding(.horizontal)
-
-                                    
-
-                Spacer()
-                
-                VStack(spacing: 10) {
-                    Button(action: {
-                        showEditSheet = true
-                    }) {
-                        Text("Edit")
-                            .padding(.vertical, 10)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .padding(.horizontal)
-                    .buttonStyle(.bordered)
-                    .tint(Color.primary)
-
                     
-                    Button(action: {
-                        showDeleteOptions = true
-                    }) {
-                        Text("Deleting Options")
-                            .padding(.vertical, 10)
-                            .frame(maxWidth: .infinity)
+                    Section(header: Text("Date")) {
+                        DatePicker(
+                            "Transaction Date/Time",
+                            selection: $transactionDate,
+                            displayedComponents: [.date, .hourAndMinute]
+                        )
+                        .datePickerStyle(.graphical)
+                        
+                        HStack {
+                            Text("\(Date(), format: .dateTime.hour().minute())")
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button("Change time to now") {
+                                transactionDate = Date()
+                            }
+                        }
+                        
+                        Toggle("Recurring Transaction", isOn: $isRecurring)
                     }
-                    .padding(.horizontal)
-                    .buttonStyle(.bordered)
-                    .tint(Color.red)
-                    .padding(.bottom)
+                    
+                    // Recurring Details
+                    if isRecurring {
+                        Section(header: Text("Recurring Details")) {
+                            Picker("Frequency", selection: $recurrenceFrequency) {
+                                ForEach(RecurrenceFrequency.allCases) { freq in
+                                    Text(freq.rawValue).tag(freq)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            
+                            Stepper("Every \(recurrenceInterval) \(getRecurrenceNoun())",
+                                    value: $recurrenceInterval,
+                                    in: 1...30)
+                            
+                            Toggle("End by Date", isOn: $useEndDate)
+                            if useEndDate {
+                                DatePicker("End Date", selection: $endDate, displayedComponents: .date)
+                            }
+                            
+                            Toggle("End by Occurrence Count", isOn: $useOccurrenceCount)
+                            if useOccurrenceCount {
+                                TextField("Max Occurrences", text: $occurrenceCount)
+                                    .keyboardType(.numberPad)
+                                    .focused($focusedField, equals: .occurences)
+                            }
+                        }
+                        .id("recurringSection")
+                    }
+                    
+                    
+                }
+                .onChange(of: isRecurring) { _, newValue in
+                    if newValue {
+                        withAnimation {
+                            proxy.scrollTo("recurringSection", anchor: .bottom)
+                        }
+                    }
+                }
+                .navigationTitle(self.editMode ? "Edit Transaction" : "Add Transaction")
+                .alert("Field cannot be empty", isPresented: $showErrorAlert) {
+                    Button("OK", role: .cancel) {
+                        showErrorAlert = false
+                    }
+                } message: {
+                    Text("Please fill in all required fields.")
+                }
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button(action: dismissKeyboard) {
+                            Image(systemName: "keyboard.chevron.compact.down.fill")
+                        }
+                    }
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(action: {
+                            onCancel()
+                        }) {
+                            Image(systemName: "xmark")
+                                .foregroundStyle(Color.whiteInDarkBlackInLight)
+                        }
+                        .buttonBorderShape(.circle)
+                        .buttonStyle(.bordered)
+                    }
                 }
                 
-            }
-            .padding(.top, 60)
-            .toolbar {
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button(action: dismissKeyboard) {
-                        Image(systemName: "keyboard.chevron.compact.down.fill")
+                Button(action: {
+                    
+                    if editMode {
+                        onEditConfirm()
+                    } else {
+                        onSave()
                     }
+                }) {
+                    Text(self.editMode ? "Save" : "Add")
+                        .bold()
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
                 }
-            }
-            .sheet(isPresented: $showDeleteOptions) {
-                DeleteTransactionSheet { selectedOption in
-                    print(selectedOption)
-                    showDeleteOptions = false
-                    handleDeleteTransaction(with: selectedOption)
-                }
-                .presentationDetents(.init([.fraction(0.6)]))
-                .presentationDragIndicator(.visible)
-            }
-            .sheet(isPresented: $showEditSheet) {
-                ManageTransactionSheet(transaction: transaction)
+                .padding(.horizontal)
+                .padding(.bottom)
             }
         }
     }
@@ -173,160 +286,233 @@ struct TransactionSheet: View {
     }
     
     
-    private func handleDeleteTransaction(with choice: TransactionDeleteChoice) {
-        switch choice {
-        case .all:
-            deleteAllOccurrences()
-        case .thisOne:
-            deleteJustThisOne()
-        case .future:
-            deleteFutureOccurrences()
+    private func getRecurrenceNoun() -> String {
+        
+        switch recurrenceFrequency {
+            case .daily:
+                return "Day"
+            case .weekly:
+                return "Week"
+            case .monthly:
+                return "Month"
+            case .yearly:
+                return "Year"
         }
+        
+    }
+
+    
+    private func getCategory(by systemName: String) -> CategoryItem? {
+        return categories.first { $0.systemName == systemName }
+    }
+    
+    private func populatePreset(with preset: TransactionPreset) {
+        transactionTitle = preset.title
+        transactionNote = preset.note
+        isCredit = preset.isCredit
+        selectedCategorySystemName = preset.category.systemName
+    }
+    
+    // Helper to format the date
+    private func dateString(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+    
+    private func onCancel() {
+        focusedField = nil
         dismiss()
     }
     
-    private func deleteAllOccurrences() {
-        context.delete(transaction)
-        try? context.save()
-    }
     
-    private func deleteJustThisOne() {
-        if let index = transaction.recurrenceDates.firstIndex(of: instanceDate) {
-            transaction.recurrenceDates.remove(at: index)
+    private func onEditConfirm() {
+        guard var amount = Double(transactionAmount) else {
+            print("Invalid amount entered.")
+            return
+        }
+        if (!isCredit) {
+            amount *= -1
+        }
+    
+        focusedField = nil
+        
+        
+        var dateArray: [Date]
+        
+        // If the transaction was not recurring, but has been changed to be
+        if !transaction!.isRecurring && isRecurring {
+            let start = transactionDate
             
-            try? context.save()
+            let limitDate = useEndDate ? endDate : nil
+            let maxCount = useOccurrenceCount ? Int(occurrenceCount) : nil
+            
+            dateArray = computeRecurrenceDates(
+                startDate: start,
+                frequency: recurrenceFrequency,
+                interval: recurrenceInterval,
+                maxOccurrences: maxCount,
+                endDate: limitDate
+            )
+            
+            print("Transaction went from not recurring to recurring")
+            
+            
+        } else if (
+        // Else if the recurrance has been changed
+            (useEndDate ||
+             useOccurrenceCount ||
+             recurrenceFrequency != transaction!.recurrenceFrequency ||
+             recurrenceInterval != transaction!.recurrenceInterval ||
+             transactionDate != transaction!.date)
+            && isRecurring
+        ) {
+            let start = transactionDate
+            
+            let limitDate = useEndDate ? endDate : nil
+            let maxCount = useOccurrenceCount ? Int(occurrenceCount) : nil
+            
+            dateArray = computeRecurrenceDates(
+                startDate: start,
+                frequency: recurrenceFrequency,
+                interval: recurrenceInterval,
+                maxOccurrences: maxCount,
+                endDate: limitDate
+            )
+            
+            print("Transaction recurrence has been changed")
+            
+            
         } else {
-            print("Instance date not found in recurrenceDates.")
+        // Otherwise, just assign the current recurrance
+            dateArray = transaction!.recurrenceDates
+            
+            print("No change to recurrence")
         }
-    }
-    
-    private func deleteFutureOccurrences() {
-        transaction.recurrenceDates = transaction.recurrenceDates.filter { $0 < instanceDate }
         
-        // Save the updated transaction
+        if transactionTitle.isEmpty {
+            print("Needs title")
+            showErrorAlert = true
+            return
+        }
+        
+        if amount == 0 {
+            print("Needs amount")
+            showErrorAlert = true
+            return
+        }
+        
+        if AccountManager.shared.selectedAccount == nil {
+            print("There is no account selected")
+            showErrorAlert = true
+            return
+        }
+        
+        transaction!.title = transactionTitle
+        transaction!.amount = amount
+        transaction!.isCredit = isCredit
+        transaction!.date = transactionDate
+        transaction!.note = transactionNote
+        transaction!.categorySystemName = selectedCategorySystemName!
+        transaction!.isRecurring = isRecurring
+        transaction!.recurrenceFrequency = isRecurring ? recurrenceFrequency : nil
+        transaction!.recurrenceInterval = recurrenceInterval
+        transaction!.recurrenceDates = dateArray
+        
         try? context.save()
+        
+        FinancialEventManager.shared.doUpdates()
+        
+        dismiss()
     }
     
     
+    private func onSave() {
+        guard var amount = Double(transactionAmount) else {
+            print("Invalid amount entered.")
+            return
+        }
+        if (!isCredit) {
+            amount *= -1
+        }
     
-    private func getRecurrenceDescription() -> String {
+        focusedField = nil
         
-        if (transaction.recurrenceInterval == 1) {
-            switch transaction.recurrenceFrequency {
-                case .daily:
-                    return "Daily"
-                case .weekly:
-                    return "Weekly"
-                case .monthly:
-                    return "Monthly"
-                case .yearly:
-                    return "Annually"
-            case .none:
-                return ""
-            }
+        let dateArray: [Date]
+        
+        if isRecurring {
+            let start = transactionDate
+            
+            // End conditions
+            let limitDate = useEndDate ? endDate : nil
+            let maxCount = useOccurrenceCount ? Int(occurrenceCount) : nil
+            
+            dateArray = computeRecurrenceDates(
+                startDate: start,
+                frequency: recurrenceFrequency,
+                interval: recurrenceInterval,
+                maxOccurrences: maxCount,
+                endDate: limitDate
+            )
+            
+            
+        } else {
+            dateArray = [transactionDate]
         }
         
-        if (transaction.recurrenceInterval == 2 && transaction.recurrenceFrequency == .weekly) {
-            return "Fortnightly"
+        if transactionTitle.isEmpty {
+            print("Needs title")
+            showErrorAlert = true
+            return
         }
         
-        switch transaction.recurrenceFrequency {
-        case .daily:
-            return "\(transaction.recurrenceInterval) Days"
-        case .weekly:
-            return "\(transaction.recurrenceInterval) Weeks"
-        case .monthly:
-            return "\(transaction.recurrenceInterval) Months"
-        case .yearly:
-            return "\(transaction.recurrenceInterval) Years"
-        case .none:
-            return ""
+        if amount == 0 {
+            print("Needs amount")
+            showErrorAlert = true
+            return
         }
         
-    }
-    
-    
-    enum Field {
-        case amount
-        case title
-        case note
-        case occurences
-        case notes
-    }
-
-}
-
-
-struct InfoModule: View {
-    
-    var title: String
-    var info: String
-    var isMoney = false
-    var isCredit = false
-    var subtitle: String
-    
-    
-    var body: some View {
-        
-
-        VStack {
-            HStack {
-                Text(title)
-                    .font(.system(size: 15, weight: .regular, design: .default))
-                    .foregroundStyle(.secondary)
-                Spacer()
-            }
-            .padding(.horizontal, 10)
-            .padding(.top, 10)
-            
-            Divider()
-            
-            HStack {
-                if isMoney {
-                    Text("\(isCredit ? "" : "-")$\(Double(info) ?? 0.0, format: .number.precision(.fractionLength(2)))")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .lineLimit(1)
-                } else {
-                    Text(info)
-                        .font(.system(size: 15, weight: .regular, design: .default))
-                }
-                Spacer()
-            }
-            .padding(.horizontal, 10)
-            
-            HStack {
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Spacer()
-            }
-            .padding(.horizontal, 10)
-            
+        if selectedCategorySystemName == nil {
+            selectedCategorySystemName = "circle.dashed"
         }
-        .padding(.vertical, 5)
-        .padding(.bottom, 5)
-        .background(in: Rectangle())
-        .backgroundStyle(Color.gray.opacity(0.2))
-        .cornerRadius(10)
-            
         
+        if AccountManager.shared.selectedAccount == nil {
+            print("There is no account selected")
+            showErrorAlert = true
+            return
+        }
+        
+        
+        let newTxn = Transaction(
+            title: transactionTitle,
+            amount: amount,
+            isCredit: isCredit,
+            date: transactionDate,
+            account: AccountManager.shared.selectedAccount!,
+            note: transactionNote,
+            categorySystemName: selectedCategorySystemName!,
+            isRecurring: isRecurring,
+            recurrenceFrequency: isRecurring ? recurrenceFrequency : nil,
+            recurrenceInterval: recurrenceInterval,
+            recurrenceDates: dateArray
+        )
+        
+        print("Attempting to save transaction: \n\(newTxn.title)\n\(newTxn.amount)")
+        
+        do {
+            context.insert(newTxn)
+            try context.save()
+            
+            dismiss()
+        } catch {
+            print("Failed to save transaction to model: \(error)")
+        }
     }
 }
 
 
 #Preview {
-    TransactionSheet(
-        transaction: Transaction(
-            title: "Test",
-            amount: 9.0,
-            isCredit: true,
-            date: Date(),
-            account: Account(name: "Test", type: .saving),
-            categorySystemName: "circle.dashed",
-            isRecurring: true,
-            recurrenceFrequency: .monthly,
-            recurrenceInterval: 1
-        ),
-        instanceDate: Date()
-    )
+    ManageTransactionSheet()
+        .modelContainer(for: Transaction.self)
 }
