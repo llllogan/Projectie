@@ -45,8 +45,6 @@ struct TransactionSheet: View {
                 Text("\(transaction.isCredit ? "" : "-")$\(transaction.unsignedAmount, format: .number.precision(.fractionLength(2)))")
                     .font(.system(size: 45, weight: .bold, design: .rounded))
                     .padding(.bottom, 20)
-                
-                Text("\(transaction.isArchived ?? false ? "Archived" : "Active")")
                     
                 
                 HStack(alignment: .top) {
@@ -101,7 +99,7 @@ struct TransactionSheet: View {
 //                    .cornerRadius(8)
 //                    .padding(.horizontal)
                 
-                InfoModule(title: "Description", info: "\n", subtitle: "")
+                InfoModule(title: "Description", info: transaction.note ?? "-", subtitle: "")
                     .padding(.horizontal)
                 
                 
