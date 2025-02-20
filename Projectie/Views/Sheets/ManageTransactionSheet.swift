@@ -8,6 +8,11 @@
 import SwiftUI
 import SwiftData
 
+struct OnEditConfirmOptions: Identifiable {
+    let id = UUID()
+    let datesPreceeding: [Date]
+}
+
 struct ManageTransactionSheet: View {
     
     @Environment(\.modelContext) private var context
@@ -42,6 +47,10 @@ struct ManageTransactionSheet: View {
     @State private var editMode = false
     
     @State private var transaction: Transaction?
+    @State private var instanceDate: Date?
+    
+    @State private var showIfInstanceIsNotFirstDate: Bool = false
+    @State private var editConfirmOptions: OnEditConfirmOptions = .init(datesPreceeding: [])
     
     
     enum Field {
@@ -51,7 +60,7 @@ struct ManageTransactionSheet: View {
         case occurences
    }
     
-    init(transaction: Transaction? = nil) {
+    init(transaction: Transaction? = nil, instanceDate: Date? = nil) {
         let now = Date()
         let calendar = Calendar.current
         let components = calendar.dateComponents([.year, .month, .day], from: now)
@@ -80,6 +89,8 @@ struct ManageTransactionSheet: View {
                 _isRecurring = State(initialValue: transaction.isRecurring)
                 _recurrenceFrequency = State(initialValue: transaction.recurrenceFrequency!)
                 _recurrenceInterval = State(initialValue: transaction.recurrenceInterval)
+                
+                _instanceDate = State(initialValue: instanceDate)
             }
         }
     }
@@ -261,6 +272,7 @@ struct ManageTransactionSheet: View {
                 Button(action: {
                     
                     if editMode {
+                        // MARK: - On Edit Confirm
                         onEditConfirm()
                     } else {
                         onSave()
@@ -276,6 +288,29 @@ struct ManageTransactionSheet: View {
                 }
                 .padding(.horizontal)
                 .padding(.bottom)
+            }
+            .alert(
+                "Apply Changes To",
+                isPresented: $showIfInstanceIsNotFirstDate,
+                presenting: editConfirmOptions
+            ) { details in
+                
+                Button() {
+                    
+                    dismiss()
+                } label: {
+                    Text("All")
+                }
+                
+                Button() {
+                    
+                    dismiss()
+                } label: {
+                    Text("This one moving forwards")
+                }
+                
+            } message: { details in
+                Text("")
             }
         }
     }
@@ -324,6 +359,15 @@ struct ManageTransactionSheet: View {
     private func onCancel() {
         focusedField = nil
         dismiss()
+    }
+    
+    
+    private func createNewTransaction(from transaction: Transaction, on dates: [Date]) {
+        
+    }
+    
+    private func remove(dates: [Date], from transaction: Transaction) {
+        
     }
     
     

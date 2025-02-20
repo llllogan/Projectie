@@ -147,7 +147,7 @@ struct TransactionSheet: View {
                             .padding(.bottom)
                         } else {
                             Button(action: {
-                                if (isArchived) {
+                                if (isArchived || transaction.date < Date()) {
                                     deleteAlertDetails = .init(isArchived: true)
                                 } else {
                                     deleteAlertDetails = .init(isArchived: false)
