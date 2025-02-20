@@ -101,18 +101,11 @@ struct TransactionSheet: View {
                 .cornerRadius(10)
                 .padding(.horizontal)
                 
-//                TextField("Description", text: $testFieldString)
-//                    .padding(10)
-//                    .background(Color.gray.opacity(0.2))
-//                    .cornerRadius(8)
-//                    .padding(.horizontal)
-                
                 InfoModule(title: "Description", info: transaction.note ?? "-", subtitle: "")
                     .padding(.horizontal)
                 
                 
                 HStack {
-                    InfoModule(title: "Amount Per", info: String(transaction.pricePerMonth), isMoney: true, isCredit: transaction.isCredit, subtitle: "Momth")
                     InfoModule(title: "Amount Per", info: String(transaction.pricePerWeek), isMoney: true, isCredit: transaction.isCredit, subtitle: "Week")
                     InfoModule(title: "Amount Per", info: String(transaction.pricePerDay), isMoney: true, isCredit: transaction.isCredit, subtitle: "Day")
                 }
@@ -323,7 +316,7 @@ struct InfoModule: View {
                     .foregroundStyle(.secondary)
                 Spacer()
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 15)
             .padding(.top, 10)
             
             Divider()
@@ -339,7 +332,7 @@ struct InfoModule: View {
                 }
                 Spacer()
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 15)
             
             HStack {
                 Text(subtitle)
@@ -347,7 +340,7 @@ struct InfoModule: View {
                     .foregroundStyle(.secondary)
                 Spacer()
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 15)
             
         }
         .padding(.vertical, 5)

@@ -26,26 +26,60 @@ class TimeManager: ObservableObject {
     
     static let shared = TimeManager()
     private init() {
+        
+        if let storedData = UserDefaults.standard.string(forKey: "time_period") {
+            switch storedData {
+            case "week":
+                timePeriod = .week
+            case "fortnight":
+                timePeriod = .fortnight
+            case "month":
+                timePeriod = .month
+            case "year":
+                timePeriod = .year
+            default:
+                timePeriod = .month
+            }
+        } else {
+            timePeriod = TimePeriod.month
+        }
+        
+        
         calculateDates()
     }
     
-    @Published var timePeriod: TimePeriod = .month {
+    @Published var timePeriod: TimePeriod {
         didSet {
             if timePeriod != .custom {
                 periodOffset = 0
                 calculateDates()
             }
+            
+            saveTimePeriod(timePeriod)
         }
     }
     
     @Published var startDate: Date = Date()
     @Published var endDate: Date = Date()
     
-//    @Published private(set) var xAxisReference: [AxisMark] = []
-    
     /// For non-custom periods, we keep track of an offset so that shifting the period updates the dates accordingly.
     private var periodOffset: Int = 0
     
+    
+    private func saveTimePeriod(_ period: TimePeriod) {
+        switch period {
+        case .week:
+            UserDefaults.standard.set("week", forKey: "time_period")
+        case .fortnight:
+            UserDefaults.standard.set("fortnight", forKey: "time_period")
+        case .month:
+            UserDefaults.standard.set("month", forKey: "time_period")
+        case .year:
+            UserDefaults.standard.set("year", forKey: "time_period")
+        default:
+            UserDefaults.standard.set("month", forKey: "time_period")
+        }
+    }
     
     private let calendar: Calendar = {
         var cal = Calendar(identifier: .gregorian)
