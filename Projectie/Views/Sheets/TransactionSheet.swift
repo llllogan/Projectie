@@ -8,6 +8,11 @@
 import SwiftUI
 import SwiftData
 
+struct DeleteAlertDetails: Identifiable {
+    let id = UUID()
+    let isArchived: Bool
+}
+
 struct TransactionSheet: View {
     
     @Environment(\.dismiss) private var dismiss
@@ -15,11 +20,14 @@ struct TransactionSheet: View {
     
     @State private var showDeleteOptions = false
     @State private var showEditTransactionAlert = false
+    @State private var showDeleteConfirmation = false
     @State private var showEditSheet = false
     
     @State private var testFieldString: String = ""
     
     @FocusState private var focusedField: Field?
+    
+    @State private var deleteAlertDetails: DeleteAlertDetails = .init(isArchived: false)
     
     @State var transaction: Transaction
     @State var instanceDate: Date
@@ -125,19 +133,44 @@ struct TransactionSheet: View {
                     .padding(.horizontal)
                     .buttonStyle(.bordered)
                     .tint(Color.primary)
-
                     
-                    Button(action: {
-                        showDeleteOptions = true
-                    }) {
-                        Text("Deleting Options")
-                            .padding(.vertical, 10)
-                            .frame(maxWidth: .infinity)
+                    
+                    
+                    let isArchived = transaction.isArchived ?? false
+                    let showDeletingOptions: Bool = transaction.isRecurring && !isArchived
+                    
+                    Group {
+                        if showDeletingOptions {
+                            Button(action: {
+                                showDeleteOptions = true
+                            }) {
+                                Text("Deleting Options")
+                                    .padding(.vertical, 10)
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .padding(.horizontal)
+                            .buttonStyle(.bordered)
+                            .tint(Color.red)
+                            .padding(.bottom)
+                        } else {
+                            Button(action: {
+                                if (isArchived) {
+                                    deleteAlertDetails = .init(isArchived: true)
+                                } else {
+                                    deleteAlertDetails = .init(isArchived: false)
+                                }
+                                showDeleteConfirmation = true
+                            }) {
+                                Text("Delete")
+                                    .padding(.vertical, 10)
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .padding(.horizontal)
+                            .buttonStyle(.borderedProminent)
+                            .tint(Color.red)
+                            .padding(.bottom)
+                        }
                     }
-                    .padding(.horizontal)
-                    .buttonStyle(.bordered)
-                    .tint(Color.red)
-                    .padding(.bottom)
                 }
                 
             }
@@ -161,6 +194,22 @@ struct TransactionSheet: View {
             }
             .sheet(isPresented: $showEditSheet) {
                 ManageTransactionSheet(transaction: transaction)
+            }
+            .alert(
+                "Confirm Delete",
+                isPresented: $showDeleteConfirmation,
+                presenting: deleteAlertDetails
+            ) { details in
+                
+                Button(role: .destructive) {
+                    deleteAllOccurrences()
+                    dismiss()
+                } label: {
+                    Text("Delete")
+                }
+                
+            } message: { details in
+                Text(details.isArchived ? "Deleting this transaction may have an effect on your current balance.\nAre you sure?" : "Are you sure?")
             }
         }
     }
