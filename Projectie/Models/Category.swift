@@ -17,29 +17,18 @@ struct CategoryItem: Identifiable {
 let categories: [CategoryItem] = [
     
     CategoryItem(
-        name: "Income",
-        systemName: "banknote.fill",
-        color: Color(hue: 97/360, saturation: 0.9, brightness: 0.77)),
+        name: "Sport",
+        systemName: "american.football.fill",
+        color: .indigo),
     CategoryItem(
-        name: "Savings",
-        systemName: "dollarsign.bank.building.fill",
-        color: Color(hue: 97/360, saturation: 0.9, brightness: 0.77)),
-    
+        name: "Entertainment",
+        systemName: "ticket.fill",
+        color: .indigo),
     
     CategoryItem(
         name: "Transport",
         systemName: "bus",
         color: .brown),
-    
-    
-    CategoryItem(
-        name: "Transfer",
-        systemName: "arrow.left.arrow.right.square.fill",
-        color: .pink),
-    CategoryItem(
-        name: "Payment",
-        systemName: "arrowshape.turn.up.right.fill",
-        color: .pink),
     
     
     CategoryItem(
@@ -58,7 +47,40 @@ let categories: [CategoryItem] = [
         name: "Bill",
         systemName: "text.document.fill",
         color: .blue),
+    
+    
+    CategoryItem(
+        name: "Income",
+        systemName: "banknote.fill",
+        color: Color(hue: 97/360, saturation: 0.9, brightness: 0.77)),
+    CategoryItem(
+        name: "Savings",
+        systemName: "dollarsign.bank.building.fill",
+        color: Color(hue: 97/360, saturation: 0.9, brightness: 0.77)),
+    
 
+    CategoryItem(
+        name: "Transfer",
+        systemName: "arrow.left.arrow.right.square.fill",
+        color: .pink),
+    CategoryItem(
+        name: "Payment",
+        systemName: "arrowshape.turn.up.right.fill",
+        color: .pink),
+    CategoryItem(
+        name: "Cash",
+        systemName: "banknote.fill",
+        color: .pink),
+    
+    
+    CategoryItem(
+        name: "Personal",
+        systemName: "person.fill",
+        color: .orange),
+    CategoryItem(
+        name: "Shopping",
+        systemName: "bag.fill",
+        color: .orange),
     
     
     CategoryItem(
@@ -79,27 +101,6 @@ let categories: [CategoryItem] = [
         systemName: "scissors",
         color: .green),
 
-    
-    CategoryItem(
-        name: "Personal",
-        systemName: "person.fill",
-        color: .orange),
-    CategoryItem(
-        name: "Shopping",
-        systemName: "bag.fill",
-        color: .orange),
-    
-    
-    
-    CategoryItem(
-        name: "Sport",
-        systemName: "american.football.fill",
-        color: .indigo),
-    CategoryItem(
-        name: "Entertainment",
-        systemName: "ticket.fill",
-        color: .indigo),
-    
     
     CategoryItem(
         name: "None",

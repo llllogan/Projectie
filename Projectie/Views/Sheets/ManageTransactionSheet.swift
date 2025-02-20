@@ -71,7 +71,7 @@ struct ManageTransactionSheet: View {
             _transactionTitle = State(initialValue: transaction.title)
             _transactionDate = State(initialValue: transaction.date)
             _transactionNote = State(initialValue: transaction.note ?? "")
-            _transactionAmount = State(initialValue: String(transaction.amount))
+            _transactionAmount = State(initialValue: String(transaction.unsignedAmount))
             
             _isCredit = State(initialValue: transaction.isCredit)
             _selectedCategorySystemName = State(initialValue: transaction.categorySystemName)
