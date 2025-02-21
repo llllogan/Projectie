@@ -50,7 +50,7 @@ struct ManageTransactionSheet: View {
     @State private var initialInstanceDate: Date?
     @State private var isArchived: Bool = false
     
-    @State private var showIfInstanceIsNotFirstDate: Bool = false
+    @State private var showEditTypeDesicionDialog: Bool = false
     @State private var editConfirmOptions: OnEditConfirmOptions = .init(datesPreceeding: [])
     
     
@@ -301,7 +301,7 @@ struct ManageTransactionSheet: View {
                 Button(action: {
                     
                     if editMode {
-                        checkIfInstanceIsFirst()
+                        makeEditTypeDecision()
                     } else {
                         onSave()
                     }
@@ -319,7 +319,7 @@ struct ManageTransactionSheet: View {
             }
             .alert(
                 "Apply Changes To..",
-                isPresented: $showIfInstanceIsNotFirstDate,
+                isPresented: $showEditTypeDesicionDialog,
                 presenting: editConfirmOptions
             ) { details in
                 
@@ -393,26 +393,20 @@ struct ManageTransactionSheet: View {
     }
     
     
-    private func checkIfInstanceIsFirst() {
-        
-        if (originalTransaction!.date != originalTransaction!.recurrenceDates.first) {
-            showIfInstanceIsNotFirstDate = true
-        } else {
-            editAllInstances()
-        }
-        
-    }
-    
-    
     private func makeEditTypeDecision() {
         
+        if defaultToEditAll {
+            editAllInstances()
+            return
+        }
         
+        if transactionDate != originalTransaction!.date {
+            editInstancesMovingForwards(from: initialInstanceDate!)
+            return
+        }
         
-        
-        
+        showEditTypeDesicionDialog = true
     }
-    
-    
     
     
     
@@ -520,14 +514,32 @@ struct ManageTransactionSheet: View {
     
     private func editInstancesMovingForwards(from instanceDate: Date) {
         
+        var unchangedDates: [Date] = originalTransaction!.recurrenceDates.filter { $0 < instanceDate}
+        
+        createNewTransaction(from: originalTransaction!, on: unchangedDates)
+        
+        remove(unchangedDates, from: originalTransaction!)
+        
+        try? context.save()
+        
+        editAllInstances()
     }
     
     
     private func createNewTransaction(from transaction: Transaction, on dates: [Date]) {
         
+        var unchangedTransaction = Transaction(
+            title: transaction.title,
+            amount: transaction.amount,
+            isCredit: transaction.isCredit,
+            date: transaction.date,
+            account: transaction.account,
+            categorySystemName: transaction.categorySystemName
+        )
+        
     }
     
-    private func remove(dates: [Date], from transaction: Transaction) {
+    private func remove(_ dates: [Date], from transaction: Transaction) {
         
     }
     
