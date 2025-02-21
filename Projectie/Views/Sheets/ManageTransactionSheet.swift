@@ -46,12 +46,18 @@ struct ManageTransactionSheet: View {
     
     @State private var editMode = false
     
-    @State private var transaction: Transaction?
-    @State private var instanceDate: Date?
+    @State private var originalTransaction: Transaction?
+    @State private var initialInstanceDate: Date?
     @State private var isArchived: Bool = false
     
     @State private var showIfInstanceIsNotFirstDate: Bool = false
     @State private var editConfirmOptions: OnEditConfirmOptions = .init(datesPreceeding: [])
+    
+    
+    // MARK: - Control Flag
+    @State private var lockChangeToRecurrance: Bool = false
+    @State private var defaultToEditAll: Bool = false
+    @State private var defaultToEditForwards: Bool = false
     
     
     enum Field {
@@ -74,7 +80,7 @@ struct ManageTransactionSheet: View {
         
         if let transaction = transaction {
             
-            _transaction = State(initialValue: transaction)
+            _originalTransaction = State(initialValue: transaction)
             
             _editMode = State(initialValue: true)
             
@@ -91,13 +97,27 @@ struct ManageTransactionSheet: View {
                 _recurrenceFrequency = State(initialValue: transaction.recurrenceFrequency!)
                 _recurrenceInterval = State(initialValue: transaction.recurrenceInterval)
                 
-                _instanceDate = State(initialValue: instanceDate)
+                _initialInstanceDate = State(initialValue: instanceDate)
             }
             
-            if let isArchived = transaction.isArchived {
-                _isArchived = State(initialValue: isArchived)
-            } else {
-                _isArchived = State(initialValue: false)
+            var isArchiverd: Bool = false
+            
+            if transaction.isArchived != nil {
+                isArchiverd = transaction.isArchived!
+            }
+            
+            if isArchiverd && transaction.isRecurring {
+                _lockChangeToRecurrance = State(initialValue: true)
+            }
+            
+            // If the user selected the first future instance of a recurrence
+            if transaction.isRecurring && instanceDate! > Date() && instanceDate == transaction.recurrenceDates.first {
+                _defaultToEditAll = State(initialValue: true)
+            }
+            
+            // If the transaction is archived or has a single instance
+            if isArchiverd || !transaction.isRecurring {
+                _defaultToEditAll = State(initialValue: true)
             }
         }
     }
@@ -209,11 +229,11 @@ struct ManageTransactionSheet: View {
                         }
                         
                         Toggle("Recurring Transaction", isOn: $isRecurring)
-                            .disabled(isArchived)
+                            .disabled(lockChangeToRecurrance)
                     }
                     
                     // Recurring Details
-                    if isRecurring && !isArchived {
+                    if isRecurring && !lockChangeToRecurrance {
                         Section(header: Text("Recurring Details")) {
                             Picker("Frequency", selection: $recurrenceFrequency) {
                                 ForEach(RecurrenceFrequency.allCases) { freq in
@@ -304,13 +324,13 @@ struct ManageTransactionSheet: View {
             ) { details in
                 
                 Button() {
-                    editAddInstances()
+                    editAllInstances()
                 } label: {
                     Text("Yes, All")
                 }
                 
                 Button() {
-                    editInstancesMovingForwards(from: instanceDate!)
+                    editInstancesMovingForwards(from: initialInstanceDate!)
                 } label: {
                     Text("No, just from this one onwards")
                 }
@@ -375,33 +395,28 @@ struct ManageTransactionSheet: View {
     
     private func checkIfInstanceIsFirst() {
         
-        if (transaction!.date != transaction!.recurrenceDates.first) {
+        if (originalTransaction!.date != originalTransaction!.recurrenceDates.first) {
             showIfInstanceIsNotFirstDate = true
         } else {
-            editAddInstances()
+            editAllInstances()
         }
         
     }
     
-    private func editAddInstances() {
+    
+    private func makeEditTypeDecision() {
         
-    }
-    
-    private func editInstancesMovingForwards(from instanceDate: Date) {
         
-    }
-    
-    
-    private func createNewTransaction(from transaction: Transaction, on dates: [Date]) {
         
-    }
-    
-    private func remove(dates: [Date], from transaction: Transaction) {
+        
         
     }
     
     
-    private func onEditConfirm() {
+    
+    
+    
+    private func editAllInstances() {
         guard var amount = Double(transactionAmount) else {
             print("Invalid amount entered.")
             return
@@ -416,7 +431,7 @@ struct ManageTransactionSheet: View {
         var dateArray: [Date]
         
         // If the transaction was not recurring, but has been changed to be
-        if !transaction!.isRecurring && isRecurring {
+        if !originalTransaction!.isRecurring && isRecurring {
             let start = transactionDate
             
             let limitDate = useEndDate ? endDate : nil
@@ -437,9 +452,9 @@ struct ManageTransactionSheet: View {
         // Else if the recurrance has been changed
             (useEndDate ||
              useOccurrenceCount ||
-             recurrenceFrequency != transaction!.recurrenceFrequency ||
-             recurrenceInterval != transaction!.recurrenceInterval ||
-             transactionDate != transaction!.date)
+             recurrenceFrequency != originalTransaction!.recurrenceFrequency ||
+             recurrenceInterval != originalTransaction!.recurrenceInterval ||
+             transactionDate != originalTransaction!.date)
             && isRecurring
         ) {
             let start = transactionDate
@@ -460,7 +475,7 @@ struct ManageTransactionSheet: View {
             
         } else {
         // Otherwise, just assign the current recurrance
-            dateArray = transaction!.recurrenceDates
+            dateArray = originalTransaction!.recurrenceDates
             
             print("No change to recurrence")
         }
@@ -483,16 +498,16 @@ struct ManageTransactionSheet: View {
             return
         }
         
-        transaction!.title = transactionTitle
-        transaction!.amount = amount
-        transaction!.isCredit = isCredit
-        transaction!.date = transactionDate
-        transaction!.note = transactionNote
-        transaction!.categorySystemName = selectedCategorySystemName!
-        transaction!.isRecurring = isRecurring
-        transaction!.recurrenceFrequency = isRecurring ? recurrenceFrequency : nil
-        transaction!.recurrenceInterval = recurrenceInterval
-        transaction!.recurrenceDates = dateArray
+        originalTransaction!.title = transactionTitle
+        originalTransaction!.amount = amount
+        originalTransaction!.isCredit = isCredit
+        originalTransaction!.date = transactionDate
+        originalTransaction!.note = transactionNote
+        originalTransaction!.categorySystemName = selectedCategorySystemName!
+        originalTransaction!.isRecurring = isRecurring
+        originalTransaction!.recurrenceFrequency = isRecurring ? recurrenceFrequency : nil
+        originalTransaction!.recurrenceInterval = recurrenceInterval
+        originalTransaction!.recurrenceDates = dateArray
         
         try? context.save()
         
@@ -500,6 +515,24 @@ struct ManageTransactionSheet: View {
         
         dismiss()
     }
+    
+    
+    
+    private func editInstancesMovingForwards(from instanceDate: Date) {
+        
+    }
+    
+    
+    private func createNewTransaction(from transaction: Transaction, on dates: [Date]) {
+        
+    }
+    
+    private func remove(dates: [Date], from transaction: Transaction) {
+        
+    }
+    
+    
+    
     
     
     private func onSave() {

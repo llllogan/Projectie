@@ -186,7 +186,7 @@ struct TransactionSheet: View {
                 .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showEditSheet) {
-                ManageTransactionSheet(transaction: transaction)
+                ManageTransactionSheet(transaction: transaction, instanceDate: instanceDate)
             }
             .alert(
                 "Confirm Delete",
