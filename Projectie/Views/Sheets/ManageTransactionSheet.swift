@@ -48,6 +48,7 @@ struct ManageTransactionSheet: View {
     
     @State private var transaction: Transaction?
     @State private var instanceDate: Date?
+    @State private var isArchived: Bool = false
     
     @State private var showIfInstanceIsNotFirstDate: Bool = false
     @State private var editConfirmOptions: OnEditConfirmOptions = .init(datesPreceeding: [])
@@ -91,6 +92,12 @@ struct ManageTransactionSheet: View {
                 _recurrenceInterval = State(initialValue: transaction.recurrenceInterval)
                 
                 _instanceDate = State(initialValue: instanceDate)
+            }
+            
+            if let isArchived = transaction.isArchived {
+                _isArchived = State(initialValue: isArchived)
+            } else {
+                _isArchived = State(initialValue: false)
             }
         }
     }
@@ -184,7 +191,7 @@ struct ManageTransactionSheet: View {
                         }
                     }
                     
-                    Section(header: Text("Date")) {
+                    Section(header: Text("Date"), footer: Text(isArchived ? "Recurrence is locked as this transaction occurs in the past. Please edit a future transaction to change recurrence." : "")) {
                         DatePicker(
                             "Transaction Date/Time",
                             selection: $transactionDate,
@@ -202,10 +209,11 @@ struct ManageTransactionSheet: View {
                         }
                         
                         Toggle("Recurring Transaction", isOn: $isRecurring)
+                            .disabled(isArchived)
                     }
                     
                     // Recurring Details
-                    if isRecurring {
+                    if isRecurring && !isArchived {
                         Section(header: Text("Recurring Details")) {
                             Picker("Frequency", selection: $recurrenceFrequency) {
                                 ForEach(RecurrenceFrequency.allCases) { freq in
@@ -235,21 +243,6 @@ struct ManageTransactionSheet: View {
                     
                     
                 }
-                .onChange(of: isRecurring) { _, newValue in
-                    if newValue {
-                        withAnimation {
-                            proxy.scrollTo("recurringSection", anchor: .bottom)
-                        }
-                    }
-                }
-                .navigationTitle(self.editMode ? "Edit Transaction" : "Add Transaction")
-                .alert("Field cannot be empty", isPresented: $showErrorAlert) {
-                    Button("OK", role: .cancel) {
-                        showErrorAlert = false
-                    }
-                } message: {
-                    Text("Please fill in all required fields.")
-                }
                 .toolbar {
                     ToolbarItemGroup(placement: .keyboard) {
                         Spacer()
@@ -268,12 +261,27 @@ struct ManageTransactionSheet: View {
                         .buttonStyle(.bordered)
                     }
                 }
+                .onChange(of: isRecurring) { _, newValue in
+                    if newValue {
+                        withAnimation {
+                            proxy.scrollTo("recurringSection", anchor: .bottom)
+                        }
+                    }
+                }
+                .navigationTitle(self.editMode ? "Edit Transaction" : "Add Transaction")
+                .alert("Field cannot be empty", isPresented: $showErrorAlert) {
+                    Button("OK", role: .cancel) {
+                        showErrorAlert = false
+                    }
+                } message: {
+                    Text("Please fill in all required fields.")
+                }
+                
                 
                 Button(action: {
                     
                     if editMode {
-                        // MARK: - On Edit Confirm
-                        onEditConfirm()
+                        checkIfInstanceIsFirst()
                     } else {
                         onSave()
                     }
@@ -290,27 +298,30 @@ struct ManageTransactionSheet: View {
                 .padding(.bottom)
             }
             .alert(
-                "Apply Changes To",
+                "Apply Changes To..",
                 isPresented: $showIfInstanceIsNotFirstDate,
                 presenting: editConfirmOptions
             ) { details in
                 
                 Button() {
-                    
-                    dismiss()
+                    editAddInstances()
                 } label: {
-                    Text("All")
+                    Text("Yes, All")
                 }
                 
                 Button() {
-                    
-                    dismiss()
+                    editInstancesMovingForwards(from: instanceDate!)
                 } label: {
-                    Text("This one moving forwards")
+                    Text("No, just from this one onwards")
+                }
+                
+                Button(role: .cancel) {
+                } label: {
+                    Text("Cancel")
                 }
                 
             } message: { details in
-                Text("")
+                Text("There are some recurrences which happen before this one. Would you like those to be edited as well?")
             }
         }
     }
@@ -359,6 +370,25 @@ struct ManageTransactionSheet: View {
     private func onCancel() {
         focusedField = nil
         dismiss()
+    }
+    
+    
+    private func checkIfInstanceIsFirst() {
+        
+        if (transaction!.date != transaction!.recurrenceDates.first) {
+            showIfInstanceIsNotFirstDate = true
+        } else {
+            editAddInstances()
+        }
+        
+    }
+    
+    private func editAddInstances() {
+        
+    }
+    
+    private func editInstancesMovingForwards(from instanceDate: Date) {
+        
     }
     
     
