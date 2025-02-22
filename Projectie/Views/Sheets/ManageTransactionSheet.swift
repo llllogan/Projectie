@@ -85,7 +85,8 @@ struct ManageTransactionSheet: View {
             _editMode = State(initialValue: true)
             
             _transactionTitle = State(initialValue: transaction.title)
-            _transactionDate = State(initialValue: transaction.date)
+            _transactionDate = State(initialValue: instanceDate!)
+            _initialInstanceDate = State(initialValue: instanceDate!)
             _transactionNote = State(initialValue: transaction.note ?? "")
             _transactionAmount = State(initialValue: String(transaction.unsignedAmount))
             
@@ -324,7 +325,7 @@ struct ManageTransactionSheet: View {
             ) { details in
                 
                 Button() {
-                    editAllInstances()
+                    editAllInstances(withOriginalDate: true)
                 } label: {
                     Text("Yes, All")
                 }
@@ -396,11 +397,11 @@ struct ManageTransactionSheet: View {
     private func makeEditTypeDecision() {
         
         if defaultToEditAll {
-            editAllInstances()
+            editAllInstances(withOriginalDate: true)
             return
         }
         
-        if transactionDate != originalTransaction!.date {
+        if transactionDate != initialInstanceDate {
             editInstancesMovingForwards(from: initialInstanceDate!)
             return
         }
@@ -410,7 +411,12 @@ struct ManageTransactionSheet: View {
     
     
     
-    private func editAllInstances() {
+    private func editAllInstances(withOriginalDate useOriginalDate: Bool = false) {
+        
+        if useOriginalDate {
+            transactionDate = originalTransaction!.date
+        }
+        
         guard var amount = Double(transactionAmount) else {
             print("Invalid amount entered.")
             return
@@ -514,13 +520,11 @@ struct ManageTransactionSheet: View {
     
     private func editInstancesMovingForwards(from instanceDate: Date) {
         
-        var unchangedDates: [Date] = originalTransaction!.recurrenceDates.filter { $0 < instanceDate}
+        let unchangedDates: [Date] = originalTransaction!.recurrenceDates.filter { $0 < instanceDate}
         
         createNewTransaction(from: originalTransaction!, on: unchangedDates)
         
         remove(unchangedDates, from: originalTransaction!)
-        
-        try? context.save()
         
         editAllInstances()
     }
@@ -528,19 +532,37 @@ struct ManageTransactionSheet: View {
     
     private func createNewTransaction(from transaction: Transaction, on dates: [Date]) {
         
-        var unchangedTransaction = Transaction(
+        let unchangedTransaction = Transaction(
             title: transaction.title,
             amount: transaction.amount,
             isCredit: transaction.isCredit,
             date: transaction.date,
             account: transaction.account,
-            categorySystemName: transaction.categorySystemName
+            categorySystemName: transaction.categorySystemName,
+            isRecurring: transaction.isRecurring,
+            recurrenceDates: dates,
+            isArchived: false
         )
         
+        if transaction.isRecurring {
+            unchangedTransaction.recurrenceFrequency = transaction.recurrenceFrequency
+            unchangedTransaction.recurrenceInterval = transaction.recurrenceInterval
+        }
+        
+        context.insert(unchangedTransaction)
+        
+        try? context.save()
     }
     
     private func remove(_ dates: [Date], from transaction: Transaction) {
         
+        for date in dates {
+            if let index = transaction.recurrenceDates.firstIndex(of: date) {
+                transaction.recurrenceDates.remove(at: index)
+            }
+        }
+        
+        try? context.save()
     }
     
     
