@@ -512,6 +512,7 @@ struct ManageTransactionSheet: View {
         try? context.save()
         
         FinancialEventManager.shared.doUpdates()
+        ChartManager.shared.recalculateChartDataPoints()
         
         dismiss()
     }
