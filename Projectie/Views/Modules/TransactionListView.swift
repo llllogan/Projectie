@@ -35,7 +35,7 @@ struct TransactionListView: View {
                 List {
                     ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
                         Section(header: Text(date, format: .dateTime.weekday(.wide).day().month(.wide))) {
-                            transactionListDayOrganiser(occurenceList: occurrences)
+                            transactionListDayOrganiser(occurenceList: occurrences.sorted { $0.date < $1.date })
                         }
                         .id(date)
                     }

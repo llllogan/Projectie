@@ -397,7 +397,7 @@ struct ManageTransactionSheet: View {
     private func makeEditTypeDecision() {
         
         if defaultToEditAll {
-            editAllInstances(withOriginalDate: true)
+            editAllInstances()
             return
         }
         
