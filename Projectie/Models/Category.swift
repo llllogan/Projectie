@@ -16,19 +16,15 @@ struct CategoryItem: Identifiable {
 
 let categories: [CategoryItem] = [
     
-    CategoryItem(
-        name: "Sport",
-        systemName: "american.football.fill",
-        color: .indigo),
-    CategoryItem(
-        name: "Entertainment",
-        systemName: "ticket.fill",
-        color: .indigo),
     
     CategoryItem(
-        name: "Transport",
-        systemName: "bus",
-        color: .brown),
+        name: "Income",
+        systemName: "banknote.fill",
+        color: Color(hue: 97/360, saturation: 0.9, brightness: 0.77)),
+    CategoryItem(
+        name: "Savings",
+        systemName: "dollarsign.bank.building.fill",
+        color: Color(hue: 97/360, saturation: 0.9, brightness: 0.77)),
     
     
     CategoryItem(
@@ -50,16 +46,6 @@ let categories: [CategoryItem] = [
     
     
     CategoryItem(
-        name: "Income",
-        systemName: "banknote.fill",
-        color: Color(hue: 97/360, saturation: 0.9, brightness: 0.77)),
-    CategoryItem(
-        name: "Savings",
-        systemName: "dollarsign.bank.building.fill",
-        color: Color(hue: 97/360, saturation: 0.9, brightness: 0.77)),
-    
-
-    CategoryItem(
         name: "Transfer",
         systemName: "arrow.left.arrow.right.square.fill",
         color: .pink),
@@ -73,21 +59,25 @@ let categories: [CategoryItem] = [
         color: .pink),
     
     
+    
     CategoryItem(
-        name: "Personal",
-        systemName: "person.fill",
-        color: .orange),
+        name: "Travel",
+        systemName: "airplane.departure",
+        color: Color(hue: 300/360, saturation: 0.9, brightness: 0.77)),
     CategoryItem(
-        name: "Shopping",
-        systemName: "bag.fill",
-        color: .orange),
+        name: "Ride Share",
+        systemName: "car.top.door.rear.left.open.fill",
+        color: Color(hue: 300/360, saturation: 0.9, brightness: 0.77)),
+    CategoryItem(
+        name: "Transport",
+        systemName: "bus",
+        color: Color(hue: 300/360, saturation: 0.9, brightness: 0.77)),
     
     
     CategoryItem(
         name: "Groceries",
         systemName: "cart.fill",
         color: .green),
-    
     CategoryItem(
         name: "Health",
         systemName: "heart.fill",
@@ -100,12 +90,31 @@ let categories: [CategoryItem] = [
         name: "Self Care",
         systemName: "scissors",
         color: .green),
-
     
     CategoryItem(
-        name: "None",
-        systemName: "circle.dashed",
-        color: .black),
+        name: "Personal",
+        systemName: "person.fill",
+        color: .orange),
+    CategoryItem(
+        name: "Shopping",
+        systemName: "bag.fill",
+        color: .orange),
+    
+    
+    
+    CategoryItem(
+        name: "Entertainment",
+        systemName: "ticket.fill",
+        color: .indigo),
+    CategoryItem(
+        name: "Sport",
+        systemName: "american.football.fill",
+        color: .indigo),
+    
+    
+    
+    
+    
 ]
 
 func findCategoryBySystemName(_ systemName: String) -> CategoryItem {

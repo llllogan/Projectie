@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct CategoryPicker: View {
-    /// Hard-coded list of system icon names.
         
     private let columns = [
         GridItem(.flexible()),
@@ -68,29 +67,28 @@ struct CategoryPicker: View {
                     }
                     .buttonStyle(.plain)
                 }
-                Button {
-                    onSystemNameSelected("__nil_category__")
-                    hapticCancel()
-                    presentationMode.wrappedValue.dismiss()
-                } label: {
-                    VStack(spacing: 8) {
-                        ZStack {
-                            Circle()
-                                .foregroundColor(Color.blue.opacity(0.8))
-                                .frame(width: 77, height: 77)
-                            Image(systemName: "delete.left.fill")
-                                .foregroundColor(.white.opacity(0.7))
-                                .imageScale(.large)
-                        }
-                        Text("Clear")
-                            .font(.caption)
-                            .multilineTextAlignment(.center)
-                        
-                    }
-                }
-                .buttonStyle(.plain)
             }
             .padding()
+            
+            Button {
+                onSystemNameSelected("__nil_category__")
+                hapticCancel()
+                presentationMode.wrappedValue.dismiss()
+            } label: {
+                VStack(spacing: 8) {
+                    ZStack {
+                        RoundedRectangle(cornerSize: .init(width: 100, height: 100))
+                            .foregroundColor(Color.blue.opacity(0.8))
+                            .frame(width: 205, height: 50)
+                        Label("Remove Category", systemImage: "delete.left.fill")
+                            .foregroundColor(.white.opacity(0.7))
+                            .imageScale(.large)
+                            .fontWeight(.semibold)
+                    }
+                    
+                }
+            }
+            .buttonStyle(.plain)
         }
     }
 }
