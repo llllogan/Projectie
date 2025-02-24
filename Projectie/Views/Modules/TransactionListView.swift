@@ -18,6 +18,8 @@ struct TransactionListView: View {
     @State var allowedToAutoScroll: Bool = false
     
     @State private var scrollPosition: Date? = nil
+    
+    let today = Calendar.current.startOfDay(for: Date())
 
     var body: some View {
         
@@ -34,10 +36,27 @@ struct TransactionListView: View {
             ScrollViewReader { proxy in
                 List {
                     ForEach(groupedOccurrences, id: \.key) { (date, occurrences) in
-                        Section(header: Text(date, format: .dateTime.weekday(.wide).day().month(.wide))) {
-                            transactionListDayOrganiser(occurenceList: occurrences.sorted { $0.date < $1.date })
+                        
+                        if (occurrences.first!.type == .todayMark) {
+                            Section(header: Text("Today")) {
+                                transactionListDayOrganiser(occurenceList: occurrences.sorted { $0.date < $1.date })
+                            }
+                            .id(date)
+                            .listRowBackground(Color.clear)
+                            .listRowSpacing(0)
+                            .frame(maxHeight: 0)
+                            .padding(.bottom, 0)
+                        } else if (date == today) {
+                            Section(header: Text("Today")) {
+                                transactionListDayOrganiser(occurenceList: occurrences.sorted { $0.date < $1.date })
+                            }
+                            .id(date)
+                        } else {
+                            Section(header: Text(date, format: .dateTime.weekday(.wide).day().month(.wide))) {
+                                transactionListDayOrganiser(occurenceList: occurrences.sorted { $0.date < $1.date })
+                            }
+                            .id(date)
                         }
-                        .id(date)
                     }
                 }
                 .scrollPosition(id: $scrollPosition, anchor: .top)
@@ -54,6 +73,7 @@ struct TransactionListView: View {
                     }
                     
                 }
+                .scrollContentBackground(.hidden)
             }
         }
     }
@@ -103,9 +123,26 @@ struct transactionListDayOrganiser: View {
                 )
             case .reset(let rst):
                 BalanceResetListElement(reset: rst)
+            case .todayMark:
+                DashedLine()
             }
             
         }
         
+    }
+}
+
+
+struct DashedLine: View {
+    var body: some View {
+        GeometryReader { geometry in
+            Path { path in
+                let midY = geometry.size.height / 2
+                path.move(to: CGPoint(x: 0, y: midY))
+                path.addLine(to: CGPoint(x: geometry.size.width, y: midY))
+            }
+            .stroke(Color.gray, style: StrokeStyle(lineWidth: 1, dash: [5, 3]))
+        }
+        .frame(height: 1)
     }
 }

@@ -32,6 +32,8 @@ struct FinancialEventOccurence: Identifiable {
             return recurringTransactionDate ?? transaction.date
         case .reset(let balanceReset):
             return balanceReset.date
+        case .todayMark:
+            return Date()
         }
     }
     
@@ -41,12 +43,15 @@ struct FinancialEventOccurence: Identifiable {
             return "\(transaction.id)-\(date.timeIntervalSince1970)"
         case .reset(let balanceReset):
             return "\(balanceReset.id)-\(date.timeIntervalSince1970)"
+        case .todayMark:
+            return "today"
         }
 
     }
 }
 
-enum EventType {
+enum EventType: Equatable {
     case transaction(Transaction)
     case reset(BalanceReset)
+    case todayMark
 }

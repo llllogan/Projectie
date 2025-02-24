@@ -103,17 +103,20 @@ final class FinancialEventManager: ObservableObject {
     private func compileGroupedEventList(from startDate: Date, to endDate: Date) -> [(key: Date, value: [FinancialEventOccurence])] {
         let calendar = Calendar.current
 
-        // 4. Filter occurrences that lie within this shifted range
         let visibleOccurrences = allEvents.filter {
             $0.date >= startDate && $0.date <= endDate
         }
 
-        // 5. Group by start of day
-        let grouped = Dictionary(grouping: visibleOccurrences) { occ in
+        var grouped = Dictionary(grouping: visibleOccurrences) { occ in
             calendar.startOfDay(for: occ.date)
         }
+        
+        let today = Calendar.current.startOfDay(for: Date())
 
-        // 6. Return them sorted by day
+        if (!grouped.contains(where: { $0.key == today }) && startDate <= today && endDate >= today) {
+            grouped[today, default: []].append(FinancialEventOccurence(type: .todayMark))
+        }
+
         return grouped
             .sorted { $0.key < $1.key }
     }
