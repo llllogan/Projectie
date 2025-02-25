@@ -19,6 +19,7 @@ struct MainView: View {
     
     // MARK: - Environment
     @Environment(\.modelContext) private var context
+    @Environment(\.scenePhase) private var scenePhase
     
     @EnvironmentObject private var chartDataManager: ChartManager
     @EnvironmentObject private var timeManager: TimeManager
@@ -72,6 +73,12 @@ struct MainView: View {
             
                 if (!hasSetInitialBalance && !ProcessInfo.processInfo.isRunningInXcodePreview) {
                     showAddInitialBalanceSheet = true
+                }
+            }
+            .onChange(of: scenePhase) { _, newValue in
+                if newValue == .active {
+                    accountManager.setContext(context)
+                    timeManager.calculateDates()
                 }
             }
             .onChange(of: timeManager.timePeriod) { _, newValue in

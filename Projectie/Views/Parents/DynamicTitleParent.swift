@@ -17,6 +17,10 @@ struct DynamicTitleParent: View {
     @EnvironmentObject private var timeManager: TimeManager
     @EnvironmentObject private var controlManager: ControlManager
     
+    @Environment(\.scenePhase) private var scenePhase
+    
+    @State private var now = Date()
+    
     
     var body: some View {
         
@@ -49,7 +53,7 @@ struct DynamicTitleParent: View {
                             .font(.system(size: 30, weight: .bold, design: .rounded))
                             .contentTransition(.numericText())
 
-                        Text("\(Date.now, style: .date)")
+                        Text("\(now, style: .date)")
                             .fontWeight(.semibold)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -95,6 +99,11 @@ struct DynamicTitleParent: View {
         .onAppear {
             let screenWidth = UIScreen.main.bounds.width
             controlManager.screenWidth = screenWidth
+        }
+        .onChange(of: scenePhase) { _, newValue in
+            if newValue == .active {
+                now = Date()
+            }
         }
         .frame(height: 50)
         .onChange(of: timeManager.startDate) {
