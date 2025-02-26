@@ -12,6 +12,8 @@ struct BalanceResetListElement: View {
     @State var reset: BalanceReset
     @Environment(\.modelContext) private var context
     
+    @State private var showConfirmDeleteAlert: Bool = false
+    
     
     
     var body: some View {
@@ -32,8 +34,7 @@ struct BalanceResetListElement: View {
             
             
             Button(action: {
-                context.delete(reset)
-                try? context.save()
+                showConfirmDeleteAlert = true
             }) {
                 Image(systemName: "trash")
                     .foregroundColor(.secondary)
@@ -44,6 +45,17 @@ struct BalanceResetListElement: View {
             
         }
         .frame(maxWidth: .infinity)
+        .alert("Confirm Delete", isPresented: $showConfirmDeleteAlert) {
+            Button("Cancel", role: .cancel) {
+                showConfirmDeleteAlert = false
+            }
+            Button("Delete", role: .destructive) {
+                context.delete(reset)
+                try? context.save()
+            }
+        } message: {
+            Text("Are you sure you want to delete this balance?")
+        }
     }
     
     
