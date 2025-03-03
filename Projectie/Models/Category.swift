@@ -19,7 +19,7 @@ let categories: [CategoryItem] = [
     
     CategoryItem(
         name: "Income",
-        systemName: "banknote.fill",
+        systemName: "envelope.open.fill",
         color: Color(hue: 97/360, saturation: 0.9, brightness: 0.77)),
     CategoryItem(
         name: "Savings",
@@ -91,16 +91,6 @@ let categories: [CategoryItem] = [
         systemName: "scissors",
         color: .green),
     
-    CategoryItem(
-        name: "Personal",
-        systemName: "person.fill",
-        color: .orange),
-    CategoryItem(
-        name: "Shopping",
-        systemName: "bag.fill",
-        color: .orange),
-    
-    
     
     CategoryItem(
         name: "Entertainment",
@@ -110,6 +100,20 @@ let categories: [CategoryItem] = [
         name: "Sport",
         systemName: "american.football.fill",
         color: .indigo),
+    
+    
+    CategoryItem(
+        name: "Personal",
+        systemName: "person.fill",
+        color: .orange),
+    CategoryItem(
+        name: "Shopping",
+        systemName: "bag.fill",
+        color: .orange),
+    CategoryItem(
+        name: "Parts",
+        systemName: "wrench.adjustable.fill",
+        color: .orange),
     
     
     
